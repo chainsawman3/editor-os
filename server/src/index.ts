@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { seedDb } from './seed';
@@ -50,6 +51,42 @@ app.use('/api/settings', settingsRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '2.0.0', system: 'Editor OS' });
+});
+
+app.post('/api/auth/log-failed-pin', async (req, res) => {
+  const { pin } = req.body;
+  
+  // Extract info
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown IP';
+  const userAgent = req.headers['user-agent'] || 'Unknown Device';
+  
+  // Format date/time
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ka-GE'); 
+  const timeStr = now.toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
+
+  console.log(`[SECURITY] Failed PIN attempt: ${pin} | IP: ${ip} | Device: ${userAgent}`);
+
+  const googleWebhookUrl = process.env.GOOGLE_SHEET_WEBHOOK;
+  if (googleWebhookUrl) {
+    try {
+      await fetch(googleWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          pin, 
+          date: dateStr,
+          time: timeStr,
+          ip: typeof ip === 'string' ? ip : ip?.[0], 
+          userAgent 
+        })
+      });
+    } catch (e) {
+      console.error('Failed to log to Google Sheets', e);
+    }
+  }
+
+  res.json({ success: true });
 });
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {

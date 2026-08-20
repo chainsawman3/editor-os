@@ -12,8 +12,10 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { InboxPage } from './pages/InboxPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SectionType } from './types';
+import { PinScreen } from './components/PinScreen';
 
 export function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentTab, setCurrentTab] = useState<string>('content');
   const [selectedSection, setSelectedSection] = useState<SectionType>('video_editing');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -42,6 +44,26 @@ export function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    const authCookie = localStorage.getItem('editor_os_auth');
+    if (authCookie) {
+      const timestamp = parseInt(authCookie, 10);
+      // 1 day = 24 * 60 * 60 * 1000
+      if (Date.now() - timestamp < 86400000) {
+        setIsAuthenticated(true);
+      }
+    }
+  }, []);
+
+  const handleAuthSuccess = () => {
+    localStorage.setItem('editor_os_auth', Date.now().toString());
+    setIsAuthenticated(true);
+  };
+
+  if (!isAuthenticated) {
+    return <PinScreen onSuccess={handleAuthSuccess} />;
+  }
 
   const handleNavigate = (tab: string, entityId?: string) => {
     if (tab === 'project_detail' && entityId) {
