@@ -360,9 +360,10 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
         )}
       </div>
 
-      {/* 2. SECTION CONTENT: VIDEO EDITING / MARKETING / SKILLS */}
-      {activeSection !== 'freelance' && (
-        <div className="space-y-6">
+      {/* 2. SECTION CONTENT: VIDEO EDITING / MARKETING / SKILLS / FREELANCE */}
+      <div key={activeSection + (marketingPlatform || '')} className="page-transition space-y-6">
+        {activeSection !== 'freelance' && (
+          <div className="space-y-6">
           {/* MAIN GOALS LIST */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -652,6 +653,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
           </div>
         </div>
       )}
+      </div>
 
       {/* MODAL: CREATE MAIN GOAL */}
       {showGoalModal && (

@@ -315,18 +315,20 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
         </div>
       </div>
 
-      {/* 2. TAB 1: SCRIPT EDITOR & WORD (.DOCX) EXPORT */}
-      {activeTab === 'script' && (
-        <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 space-y-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
-            <div>
-              <h2 className="text-base font-bold font-mono text-zinc-100 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-400" /> SCRIPT & PRODUCTION BREAKDOWN
-              </h2>
-              <p className="text-xs text-zinc-400 font-sans mt-0.5">
-                Write hooks, visual notes, voiceover scripts, audio cues, and export directly as a Word document.
-              </p>
-            </div>
+      {/* ACTIVE TAB CONTENT WITH SMOOTH TRANSITION */}
+      <div key={activeTab} className="page-transition">
+        {/* 2. TAB 1: SCRIPT EDITOR & WORD (.DOCX) EXPORT */}
+        {activeTab === 'script' && (
+          <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 space-y-4 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+              <div>
+                <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-400" /> SCRIPT & PRODUCTION BREAKDOWN
+                </h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Write hooks, visual notes, voiceover scripts, audio cues, and export directly as a Word document.
+                </p>
+              </div>
 
             <div className="flex items-center gap-2">
               <button
@@ -591,6 +593,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
           </div>
         </div>
       )}
+      </div>
 
       {/* MODAL: ADD REFERENCE */}
       {showRefModal && (

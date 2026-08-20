@@ -8,6 +8,51 @@
   }
 }
 
+/* Smooth Page & Component Transitions */
+@keyframes smoothFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes smoothFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.page-transition {
+  animation: smoothFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+.fade-in {
+  animation: smoothFade 0.2s ease-out forwards;
+}
+
+.modal-transition {
+  animation: scaleFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Custom Monochrome Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -29,9 +74,14 @@
 
 /* Inputs & Form styling */
 input, textarea, select {
-  @apply bg-zinc-950 border border-zinc-800 text-zinc-100 placeholder-zinc-500 rounded px-3 py-2 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-colors;
+  @apply bg-zinc-950 border border-zinc-800 text-zinc-100 placeholder-zinc-500 rounded-lg px-3 py-2 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all duration-150;
 }
 
 button {
-  @apply transition-colors;
+  @apply transition-all duration-150 active:scale-[0.98];
+}
+
+/* Card hover transitions */
+.hover-card {
+  @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg;
 }

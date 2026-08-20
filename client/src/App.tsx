@@ -120,7 +120,9 @@ export function App() {
         />
 
         <main className="flex-1 overflow-y-auto bg-zinc-950/60 pb-12">
-          {renderContent()}
+          <div key={currentTab + (selectedProjectId || '')} className="page-transition min-h-full">
+            {renderContent()}
+          </div>
         </main>
       </div>
 
