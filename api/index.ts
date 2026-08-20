@@ -47,10 +47,28 @@ app.use('/api/reports', reportsRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/settings', settingsRouter);
 
+import { syncFromCloud } from '../server/src/db';
+
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '2.0.0', system: 'Editor OS', env: 'vercel' });
+  res.json({
+    status: 'ok',
+    version: '2.0.0',
+    system: 'Editor OS',
+    env: 'vercel',
+    cloud_database: !!process.env.MONGODB_URI
+  });
 });
 
-export default function handler(req: any, res: any) {
+let cloudSynced = false;
+
+export default async function handler(req: any, res: any) {
+  if (process.env.MONGODB_URI && !cloudSynced) {
+    try {
+      await syncFromCloud();
+      cloudSynced = true;
+    } catch (e) {
+      console.error('Cloud initial sync error:', e);
+    }
+  }
   return app(req, res);
 }

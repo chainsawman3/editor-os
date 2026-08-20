@@ -267,19 +267,77 @@ const defaultDatabase: DatabaseSchema = {
   comments: []
 };
 
-let memoryDb: DatabaseSchema = { ...defaultDatabase };
+import { MongoClient } from 'mongodb';
+
+const mongoUri = process.env.MONGODB_URI;
+let mongoClient: MongoClient | null = null;
+
+async function getMongoCollection() {
+  if (!mongoUri) return null;
+  try {
+    if (!mongoClient) {
+      mongoClient = new MongoClient(mongoUri);
+      await mongoClient.connect();
+    }
+    const db = mongoClient.db('editor_os_db');
+    return db.collection('app_state');
+  } catch (err) {
+    console.error('⚠️ MongoDB connection error, falling back to local file/memory:', err);
+    return null;
+  }
+}
+
+export async function syncFromCloud(): Promise<DatabaseSchema | null> {
+  const collection = await getMongoCollection();
+  if (!collection) return null;
+  try {
+    const doc = await collection.findOne({ _id: 'active_db' as any });
+    if (doc && doc.data) {
+      memoryDb = doc.data as DatabaseSchema;
+      return memoryDb;
+    } else if (memoryDb && memoryDb.settings && memoryDb.settings.length > 0) {
+      await collection.updateOne(
+        { _id: 'active_db' as any },
+        { $set: { data: memoryDb, updated_at: new Date().toISOString() } },
+        { upsert: true }
+      );
+    }
+  } catch (e) {
+    console.error('Error syncing from cloud:', e);
+  }
+  return null;
+}
+
+export async function syncToCloud(data: DatabaseSchema) {
+  const collection = await getMongoCollection();
+  if (!collection) return;
+  try {
+    await collection.updateOne(
+      { _id: 'active_db' as any },
+      { $set: { data, updated_at: new Date().toISOString() } },
+      { upsert: true }
+    );
+  } catch (e) {
+    console.error('Error syncing to cloud:', e);
+  }
+}
 
 export function loadDatabase(): DatabaseSchema {
   if (fs.existsSync(dbFilePath)) {
     try {
       const content = fs.readFileSync(dbFilePath, 'utf-8');
       memoryDb = JSON.parse(content);
-      return memoryDb;
     } catch (e) {
       console.error('Error reading database file, initializing fallback:', e);
     }
+  } else {
+    saveDatabase(defaultDatabase);
   }
-  saveDatabase(defaultDatabase);
+
+  if (mongoUri) {
+    syncFromCloud().catch(() => {});
+  }
+
   return memoryDb;
 }
 
@@ -291,6 +349,10 @@ export function saveDatabase(data: DatabaseSchema) {
     fs.renameSync(tempPath, dbFilePath);
   } catch (err) {
     // In serverless/read-only environment, memoryDb persists during execution
+  }
+
+  if (mongoUri) {
+    syncToCloud(data).catch(() => {});
   }
 }
 
