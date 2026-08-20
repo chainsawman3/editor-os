@@ -3,6 +3,8 @@
 
 A dark, high-contrast, monochrome operating system and productivity suite tailored specifically for freelance video editors, motion designers, and content creators.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fchainsawman3%2Feditor-os)
+
 ---
 
 ## ⚡ Key Features
