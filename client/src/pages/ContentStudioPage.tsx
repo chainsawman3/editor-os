@@ -13,7 +13,8 @@ import {
   Clock,
   User,
   Layers,
-  Plus
+  Check,
+  X
 } from 'lucide-react';
 
 interface ContentStudioPageProps {
@@ -26,6 +27,9 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
   const [goals, setGoals] = useState<Goal[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Confirmation Modal State for Task Checkbox
+  const [confirmTask, setConfirmTask] = useState<Task | null>(null);
 
   const loadData = async () => {
     try {
@@ -45,8 +49,10 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
     loadData();
   }, []);
 
-  const handleToggleTask = async (task: Task) => {
-    await api.updateTask(task.id, { completed: !task.completed });
+  const handleConfirmComplete = async () => {
+    if (!confirmTask) return;
+    await api.updateTask(confirmTask.id, { completed: true });
+    setConfirmTask(null);
     loadData();
   };
 
@@ -96,14 +102,14 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
             </span>
             <div>
               <h1 className="text-xl font-bold text-zinc-100 tracking-tight">CONTENT STUDIO & RADAR</h1>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 font-medium">
                 Visual Kanban Pipeline, Stage Distribution, and Dynamic Action Steps
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 text-xs">
-            <span className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-300 font-medium">
+            <span className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-300 font-semibold">
               {projects.length} Total Projects
             </span>
           </div>
@@ -116,11 +122,11 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-400" />
             <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">
-              Top 5 Upcoming Action Steps (Auto-Advancing)
+              Top 5 Upcoming Action Steps (Auto-Replenishing)
             </h2>
           </div>
-          <span className="text-xs text-zinc-400">
-            Ticking a task crosses it out on the project & loads the next item
+          <span className="text-xs text-zinc-400 font-medium">
+            Click card to open Project Workspace • Click circle to complete
           </span>
         </div>
 
@@ -133,19 +139,34 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
               return (
                 <div
                   key={t.id}
-                  onClick={() => handleToggleTask(t)}
-                  className="bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-emerald-700/80 rounded-xl p-3.5 cursor-pointer group transition-all flex flex-col justify-between space-y-3 shadow-sm"
+                  onClick={() => {
+                    if (t.project_id) {
+                      onOpenProject(t.project_id);
+                    }
+                  }}
+                  className="bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-600 rounded-xl p-3.5 cursor-pointer group transition-all flex flex-col justify-between space-y-3 shadow-sm hover:shadow-md"
+                  title="Click to open this project's workspace"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
-                      <span className="text-xs font-bold text-zinc-500 group-hover:text-emerald-400">
+                      <span className="text-xs font-bold text-zinc-500 group-hover:text-blue-400 transition-colors">
                         #{idx + 1}
                       </span>
-                      <span className="text-xs font-semibold text-zinc-200 line-clamp-2 leading-snug">
+                      <span className="text-xs font-semibold text-zinc-200 group-hover:text-white line-clamp-2 leading-snug transition-colors">
                         {t.title}
                       </span>
                     </div>
-                    <button type="button" className="text-zinc-500 group-hover:text-emerald-400 shrink-0 p-0.5">
+
+                    {/* Checkbox circle with confirmation modal trigger */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmTask(t);
+                      }}
+                      className="text-zinc-500 hover:text-emerald-400 shrink-0 p-1 hover:bg-emerald-950/40 rounded-full transition-colors"
+                      title="Mark as completed"
+                    >
                       <Circle className="w-4 h-4" />
                     </button>
                   </div>
@@ -187,7 +208,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
 
                 <div className="space-y-3 min-h-[220px]">
                   {colProjects.length === 0 ? (
-                    <div className="h-32 flex items-center justify-center text-xs text-zinc-500 border border-dashed border-zinc-900 rounded-lg">
+                    <div className="h-32 flex items-center justify-center text-xs text-zinc-500 border border-dashed border-zinc-900 rounded-lg font-medium">
                       No projects in this stage
                     </div>
                   ) : (
@@ -245,6 +266,42 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
           })}
         </div>
       </div>
+
+      {/* 4. TASK COMPLETION CONFIRMATION DIALOG MODAL */}
+      {confirmTask && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-full bg-emerald-950/80 border border-emerald-700 text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
+              <Check className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-base font-bold text-zinc-100 font-sans">შეასრულეთ ეს თასქი?</h3>
+              <p className="text-xs text-zinc-300 font-medium px-2 py-1.5 bg-zinc-900 rounded-lg border border-zinc-800 line-clamp-2">
+                "{confirmTask.title}"
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setConfirmTask(null)}
+                className="py-2.5 px-4 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+              >
+                <X className="w-3.5 h-3.5" /> No / არა
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmComplete}
+                className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" /> Yes / დიახ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
