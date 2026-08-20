@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import { DashboardSummaryResponse } from '../types';
+import { getLocalSummary } from '../clientDb';
 import { ProgressBar } from '../components/common/ProgressBar';
 import { HealthBadge } from '../components/common/HealthBadge';
 import { DifficultyBadge } from '../components/common/DifficultyBadge';
@@ -68,9 +69,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, onOpen
     );
   }
 
-  if (!data) return null;
-
-  const { summary, categoryProgress, nextActions, activeBlockers, todayTasks, recentActivities } = data;
+  const currentData = data || getLocalSummary();
+  const { summary, categoryProgress, nextActions, activeBlockers, todayTasks, recentActivities } = currentData;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
