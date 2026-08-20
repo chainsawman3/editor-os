@@ -190,12 +190,12 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                       onOpenProject(t.project_id);
                     }
                   }}
-                  className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-3.5 cursor-pointer group transition-all flex flex-col justify-between space-y-3 shadow-md shadow-black/40 hover:shadow-xl"
+                  className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-4 sm:p-5 cursor-pointer group transition-all flex flex-col justify-between space-y-3.5 shadow-md shadow-black/40 hover:shadow-xl"
                   title="Click to open this project's workspace"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
-                      <span className="text-[11px] font-mono font-bold text-blue-400 bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-800/60">
+                      <span className="text-[11px] font-mono font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/60">
                         #{idx + 1}
                       </span>
                       <span className="text-xs font-bold text-zinc-100 group-hover:text-white line-clamp-2 leading-snug transition-colors">
@@ -217,8 +217,8 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                     </button>
                   </div>
 
-                  <div className="pt-2 border-t border-zinc-800 text-[11px] flex items-center justify-between text-zinc-400">
-                    <span className="truncate max-w-[100px] text-zinc-300 font-medium">{p?.name || 'Project'}</span>
+                  <div className="pt-3 border-t border-zinc-800 text-[11px] flex items-center justify-between text-zinc-400">
+                    <span className="truncate max-w-[110px] text-zinc-300 font-medium">{p?.name || 'Project'}</span>
                     <span className="text-purple-400 font-bold">{t.due_date || 'Today'}</span>
                   </div>
                 </div>
@@ -241,8 +241,8 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
           {kanbanColumns.map((col) => {
             const colProjects = projects.filter((p) => p.status === col.id);
             return (
-              <div key={col.id} className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 space-y-3 shadow-sm">
-                <div className="flex items-center justify-between pb-2 border-b border-zinc-850">
+              <div key={col.id} className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 sm:p-5 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-850">
                   <div>
                     <h3 className="font-bold text-xs text-zinc-200 uppercase">{col.title}</h3>
                     <p className="text-[10px] text-zinc-500">{col.desc}</p>
@@ -252,7 +252,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                   </span>
                 </div>
 
-                <div className="space-y-3 min-h-[220px]">
+                <div className="space-y-3.5 min-h-[220px]">
                   {colProjects.length === 0 ? (
                     <div className="h-32 flex items-center justify-center text-xs text-zinc-500 border border-dashed border-zinc-900 rounded-lg font-medium">
                       No projects in this stage
@@ -264,16 +264,16 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                         <div
                           key={p.id}
                           onClick={() => onOpenProject(p.id)}
-                          className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-4 cursor-pointer group transition-all space-y-2.5 shadow-md shadow-black/40 hover:shadow-xl"
+                          className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-5 cursor-pointer group transition-all space-y-3.5 shadow-md shadow-black/40 hover:shadow-xl"
                         >
                           <div className="flex items-center justify-between">
-                            <span className={`px-2 py-0.5 text-[10px] rounded border ${getPriorityColor(p.priority)}`}>
+                            <span className={`px-2.5 py-1 text-[10px] rounded border ${getPriorityColor(p.priority)}`}>
                               {p.priority}
                             </span>
                             <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider">{p.section.replace('_', ' ')}</span>
                           </div>
 
-                          <h4 className="text-sm font-bold text-zinc-100 group-hover:text-white line-clamp-1">
+                          <h4 className="text-sm font-bold text-zinc-100 group-hover:text-white line-clamp-1 leading-snug">
                             {p.name}
                           </h4>
 
@@ -281,7 +281,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                             <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed font-normal">{p.description}</p>
                           )}
 
-                          <div className="pt-2 border-t border-zinc-800 space-y-1.5 text-xs">
+                          <div className="pt-3 border-t border-zinc-800 space-y-2 text-xs">
                             {goal && (
                               <div className="text-purple-300 font-medium truncate text-[11px]">
                                 🎯 {goal.title}
@@ -293,12 +293,12 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                               </div>
                             )}
                             <div className="flex items-center justify-between text-zinc-400 pt-1 text-[11px]">
-                              <span className="flex items-center gap-1 font-medium">
-                                <CalendarIcon className="w-3 h-3 text-zinc-500" />
+                              <span className="flex items-center gap-1.5 font-medium">
+                                <CalendarIcon className="w-3.5 h-3.5 text-zinc-500" />
                                 {p.deadline || 'No Date'}
                               </span>
                               <span className="text-zinc-200 group-hover:text-blue-400 flex items-center gap-1 font-bold transition-colors">
-                                Workspace <ArrowRight className="w-3 h-3" />
+                                Workspace <ArrowRight className="w-3.5 h-3.5" />
                               </span>
                             </div>
                           </div>

@@ -490,15 +490,15 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                     <div
                       key={p.id}
                       onClick={() => onOpenProject(p.id)}
-                      className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-4.5 cursor-pointer group transition-all flex flex-col justify-between space-y-4 shadow-md shadow-black/40 hover:shadow-xl"
+                      className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-5 sm:p-6 cursor-pointer group transition-all flex flex-col justify-between space-y-4 shadow-md shadow-black/40 hover:shadow-xl"
                     >
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 text-[9px] font-mono rounded bg-cyan-950/80 border border-cyan-800/80 text-cyan-300 font-bold uppercase">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-1 text-[10px] font-mono rounded bg-cyan-950/80 border border-cyan-800/80 text-cyan-300 font-bold uppercase tracking-wider">
                               {p.status}
                             </span>
-                            <span className={`px-2 py-0.5 text-[9px] font-mono rounded border ${getPriorityColor(p.priority)}`}>
+                            <span className={`px-2.5 py-1 text-[10px] font-mono rounded border ${getPriorityColor(p.priority)} font-bold`}>
                               {p.priority}
                             </span>
                           </div>
@@ -506,20 +506,20 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                             onClick={(e) => handleDeleteProject(p.id, e)}
                             className="p-1 text-zinc-400 hover:text-rose-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
 
-                        <h3 className="text-base font-bold text-zinc-100 group-hover:text-white font-sans transition-colors">
+                        <h3 className="text-base font-bold text-zinc-100 group-hover:text-white font-sans transition-colors leading-snug">
                           {p.name}
                         </h3>
 
                         {p.description && (
-                          <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">{p.description}</p>
+                          <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed font-normal">{p.description}</p>
                         )}
                       </div>
 
-                      <div className="space-y-2 pt-2 border-t border-zinc-800">
+                      <div className="space-y-2.5 pt-3.5 border-t border-zinc-800">
                         {goal && (
                           <div className="text-[11px] font-mono text-purple-300 font-semibold truncate">
                             🎯 Goal: {goal.title}
@@ -531,12 +531,12 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                           </div>
                         )}
                         <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 pt-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-zinc-500" />
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-zinc-500" />
                             {p.deadline || 'No deadline'}
                           </span>
                           <span className="flex items-center gap-1 text-zinc-200 font-bold group-hover:text-blue-400 transition-colors">
-                            Open Workspace <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                            Open Workspace <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                           </span>
                         </div>
                       </div>
