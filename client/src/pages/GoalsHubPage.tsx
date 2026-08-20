@@ -74,7 +74,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
       const [g, p, c] = await Promise.all([api.getGoals(), api.getProjects(), api.getClients()]);
       setGoals(g);
       setProjects(p);
-      setClients(c.clients);
+      setClients(Array.isArray(c) ? c : (c as any)?.clients || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -126,14 +126,16 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
       priority: projPriority,
       deadline: projDeadline || null,
       client_name: projClientName.trim() || undefined,
-      status: 'Planning',
-      tasks: [
-        { title: 'Script & Concept outline', stage: 'Planning', due_date: projDeadline },
-        { title: 'Select footage & references', stage: 'Editing', due_date: projDeadline },
-        { title: 'Assemble rough cut & pacing', stage: 'Editing', due_date: projDeadline },
-        { title: 'Sound Design & Final Polish', stage: 'Sound Design', due_date: projDeadline }
-      ]
+      status: 'Planning'
     });
+
+    // Create initial 4 tasks for this project
+    await Promise.all([
+      api.createTask({ project_id: newP.id, title: 'Script & Concept outline', stage: 'Planning', due_date: projDeadline || '' }),
+      api.createTask({ project_id: newP.id, title: 'Select footage & references', stage: 'Editing', due_date: projDeadline || '' }),
+      api.createTask({ project_id: newP.id, title: 'Assemble rough cut & pacing', stage: 'Editing', due_date: projDeadline || '' }),
+      api.createTask({ project_id: newP.id, title: 'Sound Design & Final Polish', stage: 'Sound Design', due_date: projDeadline || '' })
+    ]);
 
     setProjName('');
     setProjDesc('');
