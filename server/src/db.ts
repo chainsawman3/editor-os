@@ -271,6 +271,8 @@ import { MongoClient } from 'mongodb';
 import pg from 'pg';
 const { Pool } = pg;
 
+let memoryDb: DatabaseSchema;
+
 const mongoUri = process.env.MONGODB_URI;
 let mongoClient: MongoClient | null = null;
 
