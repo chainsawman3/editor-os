@@ -51,4 +51,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '2.0.0', system: 'Editor OS', env: 'vercel' });
 });
 
-export default app;
+export default function handler(req: any, res: any) {
+  return app(req, res);
+}
