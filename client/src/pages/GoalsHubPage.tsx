@@ -393,31 +393,31 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                   return (
                     <div
                       key={g.id}
-                      className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700/80 rounded-xl p-5 transition-all space-y-3"
+                      className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-purple-700/60 ring-1 ring-purple-500/[0.08] rounded-xl p-5 sm:p-6 transition-all space-y-4 shadow-md shadow-black/40 hover:shadow-xl"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-purple-950/60 border border-purple-800/80 text-purple-300 uppercase font-bold">
-                              🎯 MAIN GOAL
+                            <span className="px-2.5 py-1 text-[10px] font-mono rounded bg-purple-950/70 border border-purple-800/70 text-purple-300 uppercase font-bold tracking-wider">
+                              🎯 MAIN OBJECTIVE
                             </span>
-                            <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${getPriorityColor(g.priority)}`}>
+                            <span className={`px-2.5 py-1 text-[10px] font-mono rounded border ${getPriorityColor(g.priority)} font-bold`}>
                               {g.priority || 'High'}
                             </span>
                           </div>
-                          <h3 className="text-base font-bold text-zinc-100 font-sans mt-1.5">{g.title}</h3>
+                          <h3 className="text-base font-bold text-zinc-100 font-sans leading-snug">{g.title}</h3>
                         </div>
                         <button
                           onClick={(e) => handleDeleteGoal(g.id, e)}
                           className="p-1 text-zinc-400 hover:text-rose-400 rounded transition-colors"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
 
-                      {g.description && <p className="text-xs text-zinc-400 leading-relaxed">{g.description}</p>}
+                      {g.description && <p className="text-xs text-zinc-400 leading-relaxed font-normal">{g.description}</p>}
 
-                      <div className="flex items-center justify-between text-xs font-mono text-zinc-400 pt-2 border-t border-zinc-900">
+                      <div className="flex items-center justify-between text-xs font-mono text-zinc-400 pt-3 border-t border-purple-950/70">
                         <span className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-purple-400" />
                           {g.target_date ? `Deadline: ${g.target_date}` : 'No deadline'}
@@ -427,21 +427,21 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
 
                       {/* Nested Projects inside this Goal */}
                       {linkedProjects.length > 0 && (
-                        <div className="space-y-1.5 pt-2">
-                          <span className="text-[10px] font-mono uppercase text-zinc-400 block">Linked Projects:</span>
-                          <div className="space-y-1.5">
+                        <div className="space-y-2 pt-1">
+                          <span className="text-[10px] font-mono uppercase text-zinc-400 block tracking-wider">Linked Projects:</span>
+                          <div className="space-y-2">
                             {linkedProjects.map((lp) => (
                               <div
                                 key={lp.id}
                                 onClick={() => onOpenProject(lp.id)}
-                                className="p-2.5 bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 rounded-lg flex items-center justify-between cursor-pointer group transition-all"
+                                className="p-3 bg-[#1b1728]/80 hover:bg-[#231e34] border border-purple-900/35 rounded-lg flex items-center justify-between cursor-pointer group transition-all"
                               >
-                                <div className="flex items-center gap-2">
-                                  <Video className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-100" />
-                                  <span className="text-xs font-medium text-zinc-200 group-hover:text-white">{lp.name}</span>
+                                <div className="flex items-center gap-2.5">
+                                  <Video className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-300" />
+                                  <span className="text-xs font-semibold text-zinc-200 group-hover:text-white">{lp.name}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className={`px-1.5 py-0.5 text-[9px] font-mono rounded border ${getPriorityColor(lp.priority)}`}>
+                                  <span className={`px-2 py-0.5 text-[9px] font-mono rounded border ${getPriorityColor(lp.priority)}`}>
                                     {lp.priority}
                                   </span>
                                   <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-100 transition-transform group-hover:translate-x-0.5" />
