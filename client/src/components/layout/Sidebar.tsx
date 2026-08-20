@@ -1,26 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  LayoutDashboard,
   Target,
-  FolderKanban,
-  Video,
   Clapperboard,
-  Calendar,
-  Sparkles,
-  Briefcase,
-  BookOpen,
-  Bookmark,
-  History,
-  Trophy,
   BarChart3,
+  Inbox,
   Settings,
   PlusCircle,
-  Inbox
+  Video,
+  Megaphone,
+  Briefcase,
+  GraduationCap,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 
 interface SidebarProps {
   currentTab: string;
-  onSelectTab: (tab: string) => void;
+  onSelectTab: (tab: string, section?: string) => void;
   onOpenQuickCapture: () => void;
   cycleDay: number;
   cycleTotalDays: number;
@@ -33,28 +29,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   cycleDay,
   cycleTotalDays
 }) => {
-  const mainNavItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'goals', label: 'Goals', icon: Target },
-    { id: 'inbox', label: 'Idea Inbox', icon: Inbox },
-    { id: 'categories', label: 'Categories', icon: FolderKanban },
-    { id: 'projects', label: 'Projects Hub', icon: Video },
-    { id: 'content', label: 'Content Studio', icon: Clapperboard },
-    { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen },
-    { id: 'references', label: 'Reference Library', icon: Bookmark },
-    { id: 'reports', label: 'Reports', icon: BarChart3 },
-    { id: 'devlog', label: 'Development Log', icon: History },
-    { id: 'wins', label: 'Wins & Results', icon: Trophy },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings }
-  ];
+  const [isGoalsExpanded, setIsGoalsExpanded] = useState(true);
 
-  const categorySubItems = [
-    { id: 'cat_video_editing', label: 'Video Editing' },
-    { id: 'cat_marketing', label: 'Marketing' },
-    { id: 'cat_freelance', label: 'Freelance / Clients' },
-    { id: 'cat_skills', label: 'Skills / Learning' }
+  const goalSubSections = [
+    { id: 'video_editing', label: '1. Video Editing', icon: Clapperboard },
+    { id: 'marketing', label: '2. Marketing', icon: Megaphone },
+    { id: 'freelance', label: '3. Freelance / Clients', icon: Briefcase },
+    { id: 'skills', label: '4. Skills / Learning', icon: GraduationCap }
   ];
 
   return (
@@ -68,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div>
               <h1 className="font-mono font-bold text-sm text-zinc-100 tracking-tight">EDITOR OS</h1>
-              <p className="text-[10px] text-zinc-400 font-mono leading-none">v2.0 MERGED SYSTEM</p>
+              <p className="text-[10px] text-zinc-400 font-mono leading-none">v2.0 GOAL SYSTEM</p>
             </div>
           </div>
         </div>
@@ -99,67 +80,129 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <PlusCircle className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-100" />
               Quick Capture
             </span>
-            <kbd className="text-[10px] bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-800 text-zinc-400">
+            <kbd className="px-1.5 py-0.5 text-[9px] bg-zinc-950 text-zinc-400 border border-zinc-800 rounded font-sans">
               ⌘K
             </kbd>
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="px-2 space-y-0.5 overflow-y-auto max-h-[calc(100vh-290px)]">
-          {mainNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onSelectTab(item.id)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-mono transition-colors text-left ${
-                  isActive
-                    ? 'bg-zinc-100 text-zinc-950 font-bold shadow-sm'
-                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-zinc-950' : 'text-zinc-400'}`} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-
-          {/* Subcategory shortcuts */}
-          <div className="pt-3 pb-1 px-3">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
-              Categories
-            </span>
-          </div>
-          {categorySubItems.map((sub) => (
-            <button
-              key={sub.id}
-              onClick={() => onSelectTab(sub.id)}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 rounded text-[11px] font-mono transition-colors text-left pl-6 ${
-                currentTab === sub.id
-                  ? 'text-zinc-100 font-bold bg-zinc-900'
-                  : 'text-zinc-400 hover:text-zinc-200'
+        {/* NAVIGATION LINKS */}
+        <nav className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-280px)]">
+          {/* 1. PRIMARY GOAL HUB */}
+          <div className="space-y-0.5">
+            <div
+              onClick={() => {
+                onSelectTab('goals');
+                setIsGoalsExpanded(true);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-mono rounded-md transition-colors cursor-pointer ${
+                currentTab.startsWith('goal')
+                  ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-purple-500'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
               }`}
             >
-              <span className="text-zinc-600">↳</span>
-              <span className="truncate">{sub.label}</span>
-            </button>
-          ))}
+              <div className="flex items-center gap-2.5">
+                <Target className="w-4 h-4 text-purple-400" />
+                <span>🎯 GOAL</span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsGoalsExpanded(!isGoalsExpanded);
+                }}
+                className="p-1 text-zinc-400 hover:text-zinc-200"
+              >
+                {isGoalsExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {/* Sub-sections inside GOAL */}
+            {isGoalsExpanded && (
+              <div className="pl-6 pr-1 py-1 space-y-0.5 border-l border-zinc-850 ml-4">
+                {goalSubSections.map((sub) => {
+                  const isSubActive = currentTab === `goal_${sub.id}` || (currentTab === 'goals' && sub.id === 'video_editing');
+                  const Icon = sub.icon;
+                  return (
+                    <button
+                      key={sub.id}
+                      onClick={() => onSelectTab(`goal_${sub.id}`, sub.id)}
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs font-mono rounded transition-colors text-left ${
+                        isSubActive
+                          ? 'bg-zinc-850 text-zinc-100 font-semibold'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>{sub.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 2. CONTENT STUDIO (Merged with Dashboard & Calendar) */}
+          <button
+            onClick={() => onSelectTab('content')}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono rounded-md transition-colors ${
+              currentTab === 'content' || currentTab === 'dashboard'
+                ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-blue-500'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+            }`}
+          >
+            <Clapperboard className="w-4 h-4 text-blue-400" />
+            <span>CONTENT STUDIO</span>
+          </button>
+
+          {/* 3. ANALYTICS */}
+          <button
+            onClick={() => onSelectTab('analytics')}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono rounded-md transition-colors ${
+              currentTab === 'analytics'
+                ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-cyan-500'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4 text-cyan-400" />
+            <span>ANALYTICS</span>
+          </button>
+
+          {/* 4. IDEA INBOX */}
+          <button
+            onClick={() => onSelectTab('inbox')}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono rounded-md transition-colors ${
+              currentTab === 'inbox'
+                ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-amber-500'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+            }`}
+          >
+            <Inbox className="w-4 h-4 text-amber-400" />
+            <span>IDEA INBOX</span>
+          </button>
+
+          {/* 5. SETTINGS */}
+          <button
+            onClick={() => onSelectTab('settings')}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono rounded-md transition-colors ${
+              currentTab === 'settings'
+                ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-zinc-400'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+            }`}
+          >
+            <Settings className="w-4 h-4 text-zinc-400" />
+            <span>SETTINGS</span>
+          </button>
         </nav>
       </div>
 
-      {/* User Footer Profile */}
-      <div className="p-3 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between text-xs font-mono">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <div className="w-6 h-6 rounded bg-zinc-800 flex items-center justify-center font-bold text-[10px] text-zinc-200 shrink-0">
-            AE
-          </div>
-          <div className="truncate">
-            <p className="text-zinc-200 font-medium truncate">Video Editor</p>
-            <p className="text-[10px] text-zinc-400">Personal OS</p>
-          </div>
+      {/* Footer / User Profile */}
+      <div className="p-3 border-t border-zinc-800/80 bg-zinc-950 font-mono text-[11px] text-zinc-400 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-zinc-300 font-medium truncate max-w-[140px]">Alex (Editor)</span>
         </div>
+        <span className="text-zinc-400 text-[10px]">SYNCED</span>
       </div>
     </aside>
   );

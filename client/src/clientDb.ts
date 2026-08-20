@@ -38,288 +38,389 @@ export interface LocalDatabaseSchema {
   comments: any[];
 }
 
-const STORAGE_KEY = 'editor_os_local_db';
+const STORAGE_KEY = 'editor_os_local_db_v2';
 
-const initialDefaultDatabase: LocalDatabaseSchema = {
+const today = new Date();
+const todayStr = today.toISOString().split('T')[0];
+const in3DaysStr = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+const in5DaysStr = new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0];
+const in7DaysStr = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+const in14DaysStr = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+
+export const initialDefaultDatabase: LocalDatabaseSchema = {
   settings: [
     {
       id: 1,
-      cycle_start_date: new Date().toISOString().split('T')[0],
+      cycle_start_date: todayStr,
       cycle_duration_days: 90,
-      streak_days: 0,
+      streak_days: 12,
       user_name: 'Alex (Video Editor)',
       created_at: new Date().toISOString()
     }
   ],
-  categories: [
-    {
-      id: 'cat_video_editing',
-      name: 'Video Editing',
-      icon: 'Clapperboard',
-      status: 'In Progress',
-      parent_id: null,
-      order_index: 1,
-      next_action: 'Refine commercial editing portfolio with 4K assets',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'cat_marketing',
-      name: 'Marketing',
-      icon: 'Megaphone',
-      status: 'In Progress',
-      parent_id: null,
-      order_index: 2,
-      next_action: 'Prepare the first Before/After Reel for Instagram',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'cat_freelance',
-      name: 'Freelance / Clients',
-      icon: 'Briefcase',
-      status: 'In Progress',
-      parent_id: null,
-      order_index: 3,
-      next_action: 'Reach out to 3 local sports brands with video audit',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'cat_skills',
-      name: 'Skills / Learning',
-      icon: 'GraduationCap',
-      status: 'In Progress',
-      parent_id: null,
-      order_index: 4,
-      next_action: 'Master 3D Camera Tracking in After Effects',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_portfolio',
-      name: 'Portfolio',
-      icon: 'Folder',
-      status: 'In Progress',
-      parent_id: 'cat_video_editing',
-      order_index: 1,
-      next_action: 'Finalize Sports Drink Commercial sound mix',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_premiere',
-      name: 'Premiere Pro',
-      icon: 'Video',
-      status: 'In Progress',
-      parent_id: 'cat_video_editing',
-      order_index: 2,
-      next_action: 'Create automated rough cut shortcut macro',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_ae',
-      name: 'After Effects',
-      icon: 'Layers',
-      status: 'In Progress',
-      parent_id: 'cat_video_editing',
-      order_index: 3,
-      next_action: 'Practice kinetic typography transitions',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_mograph',
-      name: 'Motion Graphics',
-      icon: 'Sparkles',
-      status: 'In Progress',
-      parent_id: 'cat_video_editing',
-      order_index: 4,
-      next_action: 'Build custom lower thirds pack',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_color',
-      name: 'Color Grading',
-      icon: 'Palette',
-      status: 'In Progress',
-      parent_id: 'cat_video_editing',
-      order_index: 5,
-      next_action: 'Study DaVinci Resolve color space transforms',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_sound',
-      name: 'Sound Design',
-      icon: 'Volume2',
-      status: 'In Progress',
-      parent_id: 'cat_video_editing',
-      order_index: 6,
-      next_action: 'Organize SFX library by whoosh, risers, and hits',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_ai_video',
-      name: 'AI Video',
-      icon: 'Cpu',
-      status: 'Planning',
-      parent_id: 'cat_video_editing',
-      order_index: 7,
-      next_action: 'Test Runway Gen-3 camera controls',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_insta',
-      name: 'Instagram',
-      icon: 'Instagram',
-      status: 'In Progress',
-      parent_id: 'cat_marketing',
-      order_index: 1,
-      next_action: 'Prepare first Before/After Reel',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_tiktok',
-      name: 'TikTok',
-      icon: 'Music2',
-      status: 'In Progress',
-      parent_id: 'cat_marketing',
-      order_index: 2,
-      next_action: 'Publish 3 short viral editing breakdowns',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_behance',
-      name: 'Behance',
-      icon: 'Globe',
-      status: 'Planning',
-      parent_id: 'cat_marketing',
-      order_index: 3,
-      next_action: 'Create case study layout for Nike style spec ad',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'sub_fiverr',
-      name: 'Fiverr',
-      icon: 'DollarSign',
-      status: 'In Progress',
-      parent_id: 'cat_marketing',
-      order_index: 4,
-      next_action: 'Optimize Gig #1 tags and video preview',
-      created_at: new Date().toISOString()
-    }
-  ],
+  categories: [],
   goals: [
     {
-      id: 'goal_1',
-      title: 'Earn $3,000/mo from Freelance Video Editing',
-      category_id: 'cat_freelance',
-      target_date: '2026-11-20',
+      id: 'goal_portfolio_update',
+      section: 'video_editing',
+      sub_section: null,
+      title: 'PORTFOLIO UPDATE (2026)',
+      description: 'Create 3 ultra-high retention spec commercials and 2 podcast talking-head cuts to land premium $1,500+ clients.',
+      target_date: in14DaysStr,
+      priority: 'High',
       status: 'In Progress',
-      next_action: 'Send proposals to 5 YouTube creators with retention breakdown',
+      next_action: 'Finalize sound design & kinetic captions on Talking Head AD',
+      notes: 'Focus on aggressive pacing, sound effects on cuts, and color accuracy.',
       created_at: new Date().toISOString()
     },
     {
-      id: 'goal_2',
-      title: 'Build High-Retention Short-Form Portfolio',
-      category_id: 'cat_video_editing',
-      target_date: '2026-10-15',
+      id: 'goal_insta_viral',
+      section: 'marketing',
+      sub_section: 'instagram',
+      title: 'Instagram Before/After Growth Sprint',
+      description: 'Publish 10 high-value video editing workflow transformations to gain 5,000 targeted followers.',
+      target_date: in7DaysStr,
+      priority: 'Medium',
       status: 'In Progress',
-      next_action: 'Record voiceover and mix sound effects for fitness ad spec',
+      next_action: 'Record screen-record workflow in DaVinci Resolve',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'goal_youtube_pack',
+      section: 'marketing',
+      sub_section: 'youtube',
+      title: 'YouTube Creator Outbound Package',
+      description: 'Build targeted retention edits for top creators and reach out with personalized samples.',
+      target_date: in14DaysStr,
+      priority: 'High',
+      status: 'In Progress',
+      next_action: 'Prepare 3 sample hooks with visual sound redesign',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'goal_freelance_4k',
+      section: 'freelance',
+      sub_section: null,
+      title: 'Scale Outbound CRM to $4,000/mo',
+      description: 'Contact 20 high-fit creators/brands weekly, convert at least 3 into recurring monthly retainers.',
+      target_date: in14DaysStr,
+      priority: 'High',
+      status: 'In Progress',
+      next_action: 'Follow up with Sophie Davis on sample reel proposal',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'goal_skills_3d',
+      section: 'skills',
+      sub_section: null,
+      title: 'Master 3D Camera Tracking & Unreal Engine Projections',
+      description: 'Integrate 3D typography into live footage to offer high-end commercial VFX packages.',
+      target_date: in14DaysStr,
+      priority: 'Medium',
+      status: 'In Progress',
+      next_action: 'Complete After Effects 3D Camera solver tutorial #4',
       created_at: new Date().toISOString()
     }
   ],
   projects: [
     {
-      id: 'proj_1',
-      name: 'Talking Head Video, Podcast',
-      type: 'Portfolio',
-      category_id: 'sub_portfolio',
-      status: 'Planning',
-      priority: 'High',
+      id: 'proj_talking_head_ad',
+      goal_id: 'goal_portfolio_update',
+      section: 'video_editing',
+      sub_section: null,
+      name: 'Talking Head - AD',
+      description: 'Fast-paced talking head commercial spec for Apex Fitness featuring zooms, graphic popups, and sound design hits.',
+      priority: 'Hard',
+      deadline: in3DaysStr,
+      client_name: 'Apex Gym & Fitness (David Miller)',
+      status: 'In Progress',
       health_status: 'On Track',
-      start_date: new Date().toISOString().split('T')[0],
-      deadline: '2026-08-25',
-      description: 'Dynamic fast-paced talking head edit with zooms, SFX, and b-roll inserts.',
-      expected_difficulty: 'Medium',
-      actual_difficulty: null,
-      next_action: 'Find footage, write script, find references',
+      start_date: todayStr,
+      script_content: `[HOOK - 0:00 - 0:03]
+(Visual: Aggressive crash zoom onto speaker holding shaker bottle)
+(Audio: Sub bass drop + camera shutter hit)
+VOICEOVER: "Stop wasting 2 hours in the gym doing workouts that give zero results."
+
+[PROBLEM - 0:03 - 0:09]
+(Visual: Fast jump cuts with red highlight text overlays: "Overworking", "Wrong Splits")
+(Audio: Fast ticking clock + glitch transition)
+VOICEOVER: "Most people fail not because of lack of effort, but because their split is completely broken."
+
+[SOLUTION & DEMO - 0:09 - 0:20]
+(Visual: Cinematic slow-motion workout footage with clean DaVinci color grade & glowing muscle HUD)
+(Audio: Heavy synth wave riser into punchy drop)
+VOICEOVER: "Here is the exact 4-day compound split designed by Olympic trainers to build lean muscle in half the time."
+
+[CALL TO ACTION - 0:20 - 0:30]
+(Visual: Floating 3D phone mockup showing the Apex app + download link button pulsing)
+(Audio: Satisfying chime + whoosh sound)
+VOICEOVER: "Download the complete routine free at the link below. Start today."`,
+      references: [
+        {
+          id: 'ref_1',
+          title: 'Nike Fast Paced Edit Reference',
+          url: 'https://youtube.com/watch?v=sample1',
+          type: 'video',
+          notes: 'Notice the 0.4s cut rhythm and match cuts on beat.'
+        },
+        {
+          id: 'ref_2',
+          title: 'Cinematic Gym Lighting Moodboard',
+          url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48',
+          type: 'image',
+          notes: 'High contrast teal and orange rim lighting.'
+        }
+      ],
+      creative_ideas: [
+        'Add camera shake on every heavy dumbbell hit',
+        'Use floating kinetic typography synced to voice emphasis words',
+        'Speed ramp the bench press rep from 50% to 200%'
+      ],
+      next_action: 'Fine-tune sound design layers (whooshes, risers, impacts)',
       final_output_url: '',
       lessons_learned: '',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'proj_podcast_highlight',
+      goal_id: 'goal_portfolio_update',
+      section: 'video_editing',
+      sub_section: null,
+      name: 'Tech Podcast Micro-Reel',
+      description: 'High energy clip with AI subtitles, b-roll overlays, and sound design for Spotify podcast.',
+      priority: 'Medium',
+      deadline: in5DaysStr,
+      client_name: 'Mark K. (Tech Podcast)',
+      status: 'Planning',
+      health_status: 'On Track',
+      script_content: `[HOOK]
+"This one AI tool will replace 80% of junior video editing by 2027."
+
+[BREAKDOWN]
+Show Runway Gen-3 screen recording and comparison.
+
+[CTA]
+Full episode on Spotify link.`,
+      references: [],
+      creative_ideas: ['Use split screen comparison', 'Include audio wave visualizer'],
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'proj_insta_reel_1',
+      goal_id: 'goal_insta_viral',
+      section: 'marketing',
+      sub_section: 'instagram',
+      name: 'Before/After Sound Design Reel #1',
+      description: 'Show raw audio vs 7 layers of sound design for high viral engagement.',
+      priority: 'Medium',
+      deadline: in7DaysStr,
+      client_name: 'Self Brand',
+      status: 'Planning',
+      health_status: 'On Track',
+      script_content: 'Turn up your volume: Raw Audio vs Final Sound Mix.',
+      references: [],
+      creative_ideas: ['Add waveform animation at the bottom'],
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'proj_yt_creator_pitch',
+      goal_id: 'goal_youtube_pack',
+      section: 'marketing',
+      sub_section: 'youtube',
+      name: 'Sophie Davis Retention Hook Spec',
+      description: 'Re-edited 60 seconds of creator footage with retention graph optimization.',
+      priority: 'Hard',
+      deadline: in3DaysStr,
+      client_name: 'Sophie Davis',
+      status: 'In Progress',
+      health_status: 'On Track',
+      script_content: 'Custom pitch edit showcasing 3x pacing speed.',
+      references: [],
+      creative_ideas: [],
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'proj_skills_camera_tracker',
+      goal_id: 'goal_skills_3d',
+      section: 'skills',
+      sub_section: null,
+      name: '3D Cyberpunk City Text Track Practice',
+      description: 'Practice complex moving camera solve and shadow cast rendering.',
+      priority: 'Low',
+      deadline: in14DaysStr,
+      client_name: 'Internal Learning',
+      status: 'Ready',
+      health_status: 'On Track',
+      script_content: '',
+      references: [],
+      creative_ideas: [],
       created_at: new Date().toISOString()
     }
   ],
   tasks: [
     {
-      id: 't_1',
-      title: 'Find Footage & Selects',
-      project_id: 'proj_1',
+      id: 'task_1',
+      project_id: 'proj_talking_head_ad',
+      title: 'Cut rough sequence & remove pauses',
       stage: 'Editing',
-      completed: false,
+      due_date: todayStr,
+      completed: true,
       order_index: 1,
       created_at: new Date().toISOString()
     },
     {
-      id: 't_2',
-      title: 'Write Script & Bullet Outline',
-      project_id: 'proj_1',
+      id: 'task_2',
+      project_id: 'proj_talking_head_ad',
+      title: 'Add kinetic captions & zoom punch-ins',
       stage: 'Editing',
+      due_date: todayStr,
       completed: false,
       order_index: 2,
       created_at: new Date().toISOString()
     },
     {
-      id: 't_3',
-      title: 'Find Reference Examples & Sound Assets',
-      project_id: 'proj_1',
-      stage: 'Editing',
+      id: 'task_3',
+      project_id: 'proj_talking_head_ad',
+      title: 'Layer sound design (risers, whooshes, sub hits)',
+      stage: 'Sound Design',
+      due_date: in3DaysStr,
       completed: false,
       order_index: 3,
       created_at: new Date().toISOString()
-    }
-  ],
-  blockers: [],
-  time_logs: [],
-  before_after_entries: [],
-  content_items: [
+    },
     {
-      id: 'cont_1',
-      title: 'How I Cut 2 Hours Off My Edit Time (Short)',
-      platforms: ['Instagram', 'TikTok'],
-      status: 'Planning',
-      content_type: 'Short Form',
-      main_idea: 'Editing workflow speed tips',
-      hook: 'Cut 2 hours off your Premiere timeline in 3 clicks.',
-      hours_invested: 1.5,
-      scheduled_date: '2026-08-23',
-      views: 0,
-      likes: 0,
-      saves: 0,
+      id: 'task_4',
+      project_id: 'proj_talking_head_ad',
+      title: 'DaVinci Resolve color grade & export master 4K',
+      stage: 'Export',
+      due_date: in3DaysStr,
+      completed: false,
+      order_index: 4,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'task_5',
+      project_id: 'proj_yt_creator_pitch',
+      title: 'Cut 30-sec retention hook sample for Sophie Davis',
+      stage: 'Editing',
+      due_date: todayStr,
+      completed: false,
+      order_index: 1,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'task_6',
+      project_id: 'proj_podcast_highlight',
+      title: 'Select best 45-second soundbite from episode #12',
+      stage: 'Editing',
+      due_date: in5DaysStr,
+      completed: false,
+      order_index: 1,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'task_7',
+      project_id: 'proj_insta_reel_1',
+      title: 'Record DaVinci Resolve screen timelapse',
+      stage: 'Filming',
+      due_date: in7DaysStr,
+      completed: false,
+      order_index: 1,
       created_at: new Date().toISOString()
     }
   ],
   clients: [
     {
       id: 'cli_1',
-      name: 'Peak Energy Labs',
-      contact_method: 'Instagram DM',
-      status: 'Discussion',
-      contact_date: '2026-08-15',
-      follow_up_date: '2026-08-22',
-      potential_project: '3x Product Launch Reels ($1,200)',
+      name: 'David Miller (Apex Gym)',
+      contact_method: 'Instagram DM & Email',
+      status: 'Client',
+      priority: 'High',
+      contact_date: '2026-08-10',
+      deadline: in3DaysStr,
+      linked_project_id: 'proj_talking_head_ad',
+      potential_project: 'Talking Head Commercial ($800)',
+      revenue: 800,
+      notes: 'Loved the fast pacing sample. Ready to sign 3-month retainer if this performs.',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'cli_2',
+      name: 'Sophie Davis (YouTube Creator)',
+      contact_method: 'Twitter / X DM',
+      status: 'Agreed',
+      priority: 'High',
+      contact_date: '2026-08-16',
+      deadline: in7DaysStr,
+      linked_project_id: 'proj_yt_creator_pitch',
+      potential_project: '4x Long-form Edits / Month ($1,200)',
       revenue: 1200,
-      notes: 'Client loved the sound design sample. Sending contract draft on Friday.',
+      notes: 'Approved the proposal rate. Waiting for footage upload via Google Drive.',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'cli_3',
+      name: 'Mark K. (Tech Podcast)',
+      contact_method: 'LinkedIn Outreach',
+      status: 'Contacted',
+      priority: 'Medium',
+      contact_date: '2026-08-18',
+      deadline: in5DaysStr,
+      linked_project_id: 'proj_podcast_highlight',
+      potential_project: 'Podcast Highlights Package ($600)',
+      revenue: 600,
+      notes: 'Sent personalized audit video showing where audience retention drops.',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'cli_4',
+      name: 'Elena Rostova (Fashion Brand)',
+      contact_method: 'Email Cold Pitch',
+      status: 'Ignored',
+      priority: 'Low',
+      contact_date: '2026-08-12',
+      deadline: null,
+      linked_project_id: null,
+      potential_project: 'Product Lookbook Video ($500)',
+      revenue: 0,
+      notes: 'No reply after 2 follow-ups. Placed on pause.',
       created_at: new Date().toISOString()
     }
   ],
+  quick_ideas: [
+    {
+      id: 'idea_1',
+      text: 'Create a split screen Before/After Reel comparing Premiere default color vs Custom Film Emulation LUT',
+      captured_at: new Date().toISOString(),
+      target_section: 'marketing',
+      triaged: false,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'idea_2',
+      text: 'Offer a "First 30 Seconds Free Retention Hook" offer to top 10 fitness influencers',
+      captured_at: new Date().toISOString(),
+      target_section: 'freelance',
+      triaged: false,
+      created_at: new Date().toISOString()
+    }
+  ],
+  blockers: [],
+  time_logs: [],
+  before_after_entries: [],
+  content_items: [],
   development_logs: [
     {
       id: 'log_1',
-      date: new Date().toISOString().split('T')[0],
-      project_id: 'proj_1',
-      title: 'Initialized Editor OS System',
-      comment: 'Sprint Cycle started. Ready for focused execution.',
-      is_strategy_change: false,
+      date: todayStr,
+      title: 'Editor OS Structure Upgraded to GOAL-Centric Architecture',
+      comment: 'Unified GOAL hub (Video Editing, Marketing, Freelance, Skills), merged Content Studio with dynamic Top 5 tasks and color-coded calendar.',
+      is_strategy_change: true,
       created_at: new Date().toISOString()
     }
   ],
   knowledge_entries: [],
   reference_items: [],
-  quick_ideas: [],
   wins: [],
   reports: [],
   comments: []
@@ -331,7 +432,7 @@ export function getLocalDb(): LocalDatabaseSchema {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.settings && parsed.categories) {
+      if (parsed && parsed.projects && parsed.goals) {
         return parsed;
       }
     }
@@ -374,25 +475,31 @@ export function getLocalSummary(): DashboardSummaryResponse {
   const allTasks = db.tasks;
   const overdueTasks = allTasks.filter((t) => !t.completed && t.due_date && t.due_date < todayStr);
 
-  const primaryCategories = db.categories.filter((c) => !c.parent_id);
+  const primaryCategories = [
+    { id: 'video_editing', name: 'Video Editing', icon: 'Clapperboard' },
+    { id: 'marketing', name: 'Marketing', icon: 'Megaphone' },
+    { id: 'freelance', name: 'Freelance / Clients', icon: 'Briefcase' },
+    { id: 'skills', name: 'Skills / Learning', icon: 'GraduationCap' }
+  ];
+
   const categoryProgress = primaryCategories.map((cat) => {
-    const subcats = db.categories.filter((c) => c.parent_id === cat.id);
-    const subcatIds = [cat.id, ...subcats.map((s) => s.id)];
-    const catTasks = allTasks.filter((t) => t.category_id && subcatIds.includes(t.category_id));
+    const catProjects = db.projects.filter((p) => p.section === cat.id);
+    const catProjectIds = catProjects.map((p) => p.id);
+    const catTasks = allTasks.filter((t) => t.project_id && catProjectIds.includes(t.project_id));
     const catDone = catTasks.filter((t) => t.completed).length;
     const progressPercent = catTasks.length > 0 ? Math.round((catDone / catTasks.length) * 100) : 0;
-    const activeProjectsCount = db.projects.filter((p) => p.category_id && subcatIds.includes(p.category_id)).length;
+    const mainGoal = db.goals.find((g) => g.section === cat.id);
 
     return {
       id: cat.id,
       name: cat.name,
       icon: cat.icon,
-      status: cat.status,
+      status: 'In Progress',
       totalTasks: catTasks.length,
       completedTasks: catDone,
       progressPercent,
-      activeProjectsCount,
-      nextAction: cat.next_action || (subcats.length > 0 ? subcats[0].next_action : null)
+      activeProjectsCount: catProjects.length,
+      nextAction: mainGoal?.next_action || (catProjects[0]?.next_action ?? null)
     };
   });
 
@@ -413,35 +520,68 @@ export function getLocalSummary(): DashboardSummaryResponse {
     }))
   ];
 
-  const activeBlockers = db.blockers.filter((b) => b.active).map((b) => {
-    const proj = db.projects.find((p) => p.id === b.related_entity_id);
-    return {
-      ...b,
-      entityTitle: proj ? proj.name : 'Unknown Project'
-    };
-  });
+  const activeBlockers: Array<Blocker & { entityTitle: string }> = [];
 
-  const todayTasks = allTasks.filter((t) => !t.completed).slice(0, 5);
+  // Top uncompleted tasks
+  const todayTasks = allTasks
+    .filter((t) => !t.completed)
+    .sort((a, b) => {
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return a.due_date.localeCompare(b.due_date);
+    })
+    .slice(0, 5)
+    .map((t) => {
+      const p = db.projects.find((proj) => proj.id === t.project_id);
+      return {
+        ...t,
+        projectName: p?.name || 'General Task'
+      };
+    });
 
   const upcomingDeadlines: Array<{
     id: string;
     title: string;
-    type: 'Project' | 'Task' | 'Content';
+    type: 'Goal' | 'Project' | 'Task';
     date: string;
     isOverdue: boolean;
   }> = [];
+
+  db.goals.forEach((g) => {
+    if (g.target_date) {
+      upcomingDeadlines.push({
+        id: g.id,
+        title: `🎯 ${g.title}`,
+        type: 'Goal',
+        date: g.target_date,
+        isOverdue: g.target_date < todayStr
+      });
+    }
+  });
 
   activeProjects.forEach((p) => {
     if (p.deadline) {
       upcomingDeadlines.push({
         id: p.id,
-        title: p.name,
+        title: `🎬 ${p.name}`,
         type: 'Project',
         date: p.deadline,
         isOverdue: p.deadline < todayStr
       });
     }
   });
+
+  allTasks.filter((t) => !t.completed && t.due_date).forEach((t) => {
+    upcomingDeadlines.push({
+      id: t.id,
+      title: `✅ ${t.title}`,
+      type: 'Task',
+      date: t.due_date!,
+      isOverdue: t.due_date! < todayStr
+    });
+  });
+
+  upcomingDeadlines.sort((a, b) => a.date.localeCompare(b.date));
 
   const recentActivities = db.development_logs.slice(-5).reverse().map((l) => ({
     id: l.id,

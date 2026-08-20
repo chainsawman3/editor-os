@@ -7,6 +7,131 @@ export interface Settings {
   created_at: string;
 }
 
+export type SectionType = 'video_editing' | 'marketing' | 'freelance' | 'skills';
+export type MarketingPlatform = 'instagram' | 'tiktok' | 'youtube' | 'linkedin' | 'fiverr';
+export type ProjectPriority = 'Low' | 'Medium' | 'Hard' | 'High' | 'Easy' | 'Extreme';
+export type ProjectStatus = 'Planning' | 'In Progress' | 'Ready' | 'Posted' | 'Paused' | 'Completed';
+export type ClientStatus = 'Contacted' | 'Ignored' | 'Agreed' | 'Client' | 'Completed' | 'Lead' | 'Replied' | 'Discussion';
+
+export interface Goal {
+  id: string;
+  section: SectionType;
+  sub_section?: MarketingPlatform | string | null;
+  category_id?: string | null;
+  categoryName?: string;
+  title: string;
+  description?: string;
+  target_date?: string | null;
+  priority?: 'Low' | 'Medium' | 'High';
+  status: string;
+  next_action?: string | null;
+  notes?: string;
+  created_at: string;
+}
+
+export interface ProjectReference {
+  id: string;
+  title: string;
+  url: string;
+  type: 'video' | 'image' | 'link';
+  notes?: string;
+}
+
+export interface Project {
+  id: string;
+  goal_id?: string | null;
+  section: SectionType;
+  sub_section?: MarketingPlatform | string | null;
+  name: string;
+  description?: string;
+  priority: ProjectPriority;
+  deadline?: string | null;
+  client_name?: string;
+  status: ProjectStatus;
+  health_status?: 'On Track' | 'At Risk' | 'Blocked' | 'Overdue';
+  start_date?: string | null;
+  script_content?: string;
+  references?: ProjectReference[];
+  creative_ideas?: string[];
+  next_action?: string | null;
+  final_output_url?: string;
+  lessons_learned?: string;
+  created_at: string;
+  category_id?: string | null;
+  categoryName?: string;
+  expected_difficulty?: 'Easy' | 'Medium' | 'Hard' | 'Extreme';
+  actual_difficulty?: 'Easy' | 'Medium' | 'Hard' | 'Extreme' | null;
+  type?: string;
+  totalTasks?: number;
+  completedTasks?: number;
+  progressPercent?: number;
+  totalHours?: number;
+  isOverdue?: boolean;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  project_id?: string | null;
+  goal_id?: string | null;
+  category_id?: string | null;
+  stage?: string | null;
+  due_date?: string | null;
+  completed: boolean;
+  completed_at?: string | null;
+  order_index: number;
+  created_at: string;
+  projectName?: string;
+  goalTitle?: string;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  contact_method?: string;
+  status: ClientStatus;
+  priority?: 'Low' | 'Medium' | 'High';
+  contact_date?: string;
+  follow_up_date?: string | null;
+  deadline?: string | null;
+  linked_project_id?: string | null;
+  linkedProjectName?: string;
+  potential_project?: string;
+  revenue?: number;
+  notes?: string;
+  created_at: string;
+  isFollowUpDue?: boolean;
+}
+
+export interface QuickIdea {
+  id: string;
+  text: string;
+  captured_at: string;
+  target_section?: SectionType | string;
+  target_category?: string | null;
+  triaged: boolean;
+  converted_to_type?: 'project' | 'goal' | 'task' | null;
+  converted_entity_id?: string | null;
+  created_at: string;
+}
+
+export interface DevelopmentLog {
+  id: string;
+  date: string;
+  section?: SectionType;
+  category_id?: string | null;
+  categoryName?: string | null;
+  project_id?: string | null;
+  projectName?: string | null;
+  title: string;
+  comment: string;
+  is_strategy_change: boolean;
+  old_strategy?: string;
+  new_strategy?: string;
+  change_reason?: string;
+  created_at: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -16,63 +141,10 @@ export interface Category {
   order_index: number;
   next_action?: string | null;
   created_at: string;
-  subcategories?: Category[];
   totalTasks?: number;
   completedTasks?: number;
   progressPercent?: number;
   linkedProjectsCount?: number;
-}
-
-export interface Goal {
-  id: string;
-  title: string;
-  description?: string;
-  target_date?: string | null;
-  status: string;
-  category_id?: string | null;
-  next_action?: string | null;
-  notes?: string;
-  created_at: string;
-  categoryName?: string;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  type: 'Portfolio' | 'Client' | 'Personal' | 'Learning' | 'Content';
-  category_id?: string | null;
-  status: 'Planning' | 'In Progress' | 'Paused' | 'Completed';
-  priority: 'Low' | 'Medium' | 'High';
-  health_status: 'On Track' | 'At Risk' | 'Blocked' | 'Overdue';
-  start_date?: string | null;
-  deadline?: string | null;
-  description?: string;
-  expected_difficulty: 'Easy' | 'Medium' | 'Hard' | 'Extreme';
-  actual_difficulty?: 'Easy' | 'Medium' | 'Hard' | 'Extreme' | null;
-  next_action?: string | null;
-  final_output_url?: string;
-  lessons_learned?: string;
-  created_at: string;
-  categoryName?: string;
-  totalTasks?: number;
-  completedTasks?: number;
-  progressPercent?: number;
-  totalHours?: number;
-  activeBlockersCount?: number;
-  isOverdue?: boolean;
-}
-
-export interface Task {
-  id: string;
-  title: string;
-  project_id?: string | null;
-  category_id?: string | null;
-  stage?: string | null;
-  due_date?: string | null;
-  completed: boolean;
-  completed_at?: string | null;
-  order_index: number;
-  created_at: string;
 }
 
 export interface Blocker {
@@ -115,55 +187,13 @@ export interface ContentItem {
   content_type: string;
   main_idea?: string;
   hook?: string;
-  structure?: string;
-  required_footage?: string;
-  caption?: string;
-  hashtags?: string;
   scheduled_date?: string | null;
   project_id?: string | null;
-  draft_url?: string;
-  thumbnail_url?: string;
   hours_invested?: number;
   views?: number;
   likes?: number;
   saves?: number;
-  shares?: number;
-  comments?: number;
-  notes?: string;
   created_at: string;
-  viewsPerHour?: number;
-  savesPerHour?: number;
-}
-
-export interface Client {
-  id: string;
-  name: string;
-  contact_method?: string;
-  status: 'Lead' | 'Contacted' | 'Replied' | 'Discussion' | 'Client' | 'Completed';
-  contact_date?: string;
-  follow_up_date?: string | null;
-  potential_project?: string;
-  revenue?: number;
-  notes?: string;
-  created_at: string;
-  isFollowUpDue?: boolean;
-}
-
-export interface DevelopmentLog {
-  id: string;
-  date: string;
-  category_id?: string | null;
-  project_id?: string | null;
-  title: string;
-  comment: string;
-  attachment_url?: string;
-  is_strategy_change: boolean;
-  old_strategy?: string;
-  new_strategy?: string;
-  change_reason?: string;
-  created_at: string;
-  categoryName?: string | null;
-  projectName?: string | null;
 }
 
 export interface KnowledgeEntry {
@@ -174,8 +204,8 @@ export interface KnowledgeEntry {
   when_to_use?: string;
   notes?: string;
   linked_project_id?: string | null;
-  created_at: string;
   linkedProjectName?: string | null;
+  created_at: string;
 }
 
 export interface ReferenceItem {
@@ -186,15 +216,6 @@ export interface ReferenceItem {
   platform?: string;
   why_saved: string;
   what_to_learn: string;
-  created_at: string;
-}
-
-export interface QuickIdea {
-  id: string;
-  text: string;
-  captured_at: string;
-  target_category?: string | null;
-  triaged: boolean;
   created_at: string;
 }
 
@@ -216,11 +237,8 @@ export interface Report {
   metrics_json: Record<string, any>;
   what_worked?: string;
   what_failed?: string;
-  problems_encountered?: string;
   what_learned?: string;
   next_priorities?: string;
-  biggest_win?: string;
-  biggest_problem?: string;
   created_at: string;
 }
 
@@ -236,7 +254,7 @@ export interface DashboardSummaryResponse {
     nextUpcomingDeadline: {
       id: string;
       title: string;
-      type: 'Project' | 'Task' | 'Content';
+      type: 'Goal' | 'Project' | 'Task' | 'Content';
       date: string;
       isOverdue: boolean;
     } | null;
@@ -264,7 +282,7 @@ export interface DashboardSummaryResponse {
   upcomingDeadlines: Array<{
     id: string;
     title: string;
-    type: 'Project' | 'Task' | 'Content';
+    type: 'Goal' | 'Project' | 'Task';
     date: string;
     isOverdue: boolean;
   }>;

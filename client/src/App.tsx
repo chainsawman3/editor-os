@@ -4,37 +4,28 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { QuickCaptureModal } from './components/layout/QuickCaptureModal';
 
-import { DashboardPage } from './pages/DashboardPage';
-import { GoalsPage } from './pages/GoalsPage';
-import { CategoriesPage } from './pages/CategoriesPage';
-import { ProjectsPage } from './pages/ProjectsPage';
-import { ProjectDetailPage } from './pages/ProjectDetailPage';
+import { GoalsHubPage } from './pages/GoalsHubPage';
 import { ContentStudioPage } from './pages/ContentStudioPage';
-import { ClientsPage } from './pages/ClientsPage';
-import { CalendarPage } from './pages/CalendarPage';
-import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
-import { ReferenceLibraryPage } from './pages/ReferenceLibraryPage';
-import { DevLogPage } from './pages/DevLogPage';
-import { WinsPage } from './pages/WinsPage';
-import { ReportsPage } from './pages/ReportsPage';
+import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { InboxPage } from './pages/InboxPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { SectionType } from './types';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState<string>('dashboard');
+  const [currentTab, setCurrentTab] = useState<string>('goals');
+  const [selectedSection, setSelectedSection] = useState<SectionType>('video_editing');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(undefined);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
-  const [cycleDay, setCycleDay] = useState(18);
-  const [streakDays, setStreakDays] = useState(14);
+  const [cycleDay, setCycleDay] = useState(1);
+  const [cycleTotalDays, setCycleTotalDays] = useState(90);
 
   // Load summary on mount to get cycle day
   useEffect(() => {
     api.getSummary().then((res) => {
       if (res?.summary) {
         setCycleDay(res.summary.cycleDay);
-        setStreakDays(res.summary.streakDays);
+        setCycleTotalDays(res.summary.cycleTotalDays || 90);
       }
     }).catch(console.error);
   }, [currentTab]);
@@ -55,152 +46,90 @@ export function App() {
     if (tab === 'project_detail' && entityId) {
       setSelectedProjectId(entityId);
       setCurrentTab('project_detail');
-    } else if (tab.startsWith('cat_')) {
-      setSelectedCategoryId(tab);
-      setCurrentTab('categories');
+    } else if (tab.startsWith('goal_')) {
+      const section = tab.replace('goal_', '') as SectionType;
+      setSelectedSection(section);
+      setCurrentTab(tab);
+    } else if (tab === 'goals') {
+      setSelectedSection('video_editing');
+      setCurrentTab('goals');
     } else {
       setSelectedProjectId(null);
-      setSelectedCategoryId(undefined);
       setCurrentTab(tab);
     }
   };
 
+  const handleOpenProject = (projId: string) => {
+    setSelectedProjectId(projId);
+    setCurrentTab('project_detail');
+  };
+
   const renderContent = () => {
     switch (currentTab) {
-      case 'dashboard':
-        return <DashboardPage onNavigate={handleNavigate} onOpenQuickCapture={() => setIsQuickCaptureOpen(true)} />;
       case 'goals':
-        return <GoalsPage />;
-      case 'inbox':
-        return <InboxPage onOpenQuickCapture={() => setIsQuickCaptureOpen(true)} onNavigate={handleNavigate} />;
-      case 'categories':
-      case 'cat_video_editing':
-      case 'cat_marketing':
-      case 'cat_freelance':
-      case 'cat_skills':
-        return (
-          <CategoriesPage
-            selectedCategoryId={selectedCategoryId || (currentTab.startsWith('cat_') ? currentTab : undefined)}
-            onNavigateToProject={(id) => handleNavigate('project_detail', id)}
-          />
-        );
-      case 'projects':
-        return <ProjectsPage onSelectProject={(id) => handleNavigate('project_detail', id)} />;
+      case 'goal_video_editing':
+        return <GoalsHubPage initialSection="video_editing" onOpenProject={handleOpenProject} />;
+      case 'goal_marketing':
+        return <GoalsHubPage initialSection="marketing" onOpenProject={handleOpenProject} />;
+      case 'goal_freelance':
+        return <GoalsHubPage initialSection="freelance" onOpenProject={handleOpenProject} />;
+      case 'goal_skills':
+        return <GoalsHubPage initialSection="skills" onOpenProject={handleOpenProject} />;
+      case 'content':
+      case 'dashboard':
+        return <ContentStudioPage onOpenProject={handleOpenProject} />;
       case 'project_detail':
         return (
           <ProjectDetailPage
-            projectId={selectedProjectId || 'proj_sports_drink'}
-            onBack={() => handleNavigate('projects')}
+            projectId={selectedProjectId || 'proj_talking_head_ad'}
+            onBack={() => handleNavigate('goals')}
           />
         );
-      case 'content':
-        return <ContentStudioPage />;
-      case 'clients':
-        return <ClientsPage />;
-      case 'knowledge':
-        return <KnowledgeBasePage />;
-      case 'references':
-        return <ReferenceLibraryPage />;
-      case 'calendar':
-        return <CalendarPage />;
-      case 'reports':
-        return <ReportsPage />;
-      case 'devlog':
-        return <DevLogPage />;
-      case 'wins':
-        return <WinsPage />;
       case 'analytics':
         return <AnalyticsPage />;
+      case 'inbox':
+        return <InboxPage onOpenQuickCapture={() => setIsQuickCaptureOpen(true)} onNavigate={handleNavigate} />;
       case 'settings':
         return <SettingsPage />;
       default:
-        return <DashboardPage onNavigate={handleNavigate} onOpenQuickCapture={() => setIsQuickCaptureOpen(true)} />;
+        return <GoalsHubPage initialSection="video_editing" onOpenProject={handleOpenProject} />;
     }
   };
-
-  const getPageTitle = () => {
-    switch (currentTab) {
-      case 'dashboard':
-        return { title: 'Dashboard', subtitle: 'Where am I right now & What needs to happen next' };
-      case 'goals':
-        return { title: 'Goals System', subtitle: 'Strategic objectives & high-level target milestones' };
-      case 'inbox':
-        return { title: 'Quick Idea Inbox', subtitle: 'Holding area for sudden thoughts and frictionless captures' };
-      case 'categories':
-      case 'cat_video_editing':
-      case 'cat_marketing':
-      case 'cat_freelance':
-      case 'cat_skills':
-        return { title: 'Growth Categories', subtitle: 'Platform checklists, craft modules & learning tracks' };
-      case 'projects':
-        return { title: 'Projects Workspace', subtitle: 'Portfolio, client, and learning project production hubs' };
-      case 'project_detail':
-        return { title: 'Project Workspace', subtitle: 'Tasks, Next Action, Time Tracking, and Focus Mode' };
-      case 'content':
-        return { title: 'Content Studio', subtitle: 'Kanban production pipeline & Effort vs. Result ROI' };
-      case 'clients':
-        return { title: 'Freelance CRM', subtitle: 'Client outreach, follow-ups, and revenue pipeline' };
-      case 'knowledge':
-        return { title: 'Knowledge Base', subtitle: 'Techniques, craft mastery, and experiments learned during projects' };
-      case 'references':
-        return { title: 'Reference Library', subtitle: 'Dissection of top-tier video and sound design inspirations' };
-      case 'calendar':
-        return { title: 'Deadlines & Calendar', subtitle: 'Month schedule and overdue item tracking' };
-      case 'reports':
-        return { title: 'Reports & Reviews', subtitle: 'Weekly reviews, monthly audits, and Day 30/60/90 milestones' };
-      case 'devlog':
-        return { title: 'Development Log', subtitle: 'Daily craft observations and strategy change pivots' };
-      case 'wins':
-        return { title: 'Wins & Achievements', subtitle: 'Documenting tangible career results' };
-      case 'analytics':
-        return { title: 'Performance Analytics', subtitle: 'Stage time distribution and content leverage' };
-      case 'settings':
-        return { title: 'Settings & Data Storage', subtitle: 'Sprint configuration and JSON database backup' };
-      default:
-        return { title: 'Editor OS', subtitle: 'Personal Video Editor Growth & Business Management System' };
-    }
-  };
-
-  const pageHeader = getPageTitle();
 
   return (
     <div className="flex h-screen bg-black text-zinc-100 overflow-hidden font-sans">
-      {/* Persistent Left Sidebar */}
+      {/* 1. Left Sidebar */}
       <Sidebar
         currentTab={currentTab}
         onSelectTab={handleNavigate}
         onOpenQuickCapture={() => setIsQuickCaptureOpen(true)}
         cycleDay={cycleDay}
-        cycleTotalDays={90}
+        cycleTotalDays={cycleTotalDays}
       />
 
-      {/* Main Content Area */}
+      {/* 2. Main Workspace Layout */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header
-          title={pageHeader.title}
-          subtitle={pageHeader.subtitle}
+          title={currentTab.replace('_', ' ').toUpperCase()}
           cycleDay={cycleDay}
-          streakDays={streakDays}
+          streakDays={12}
           onOpenQuickCapture={() => setIsQuickCaptureOpen(true)}
         />
 
-        <main className="flex-1 overflow-y-auto bg-black">
+        <main className="flex-1 overflow-y-auto bg-zinc-950/60 pb-12">
           {renderContent()}
         </main>
       </div>
 
-      {/* Global Frictionless Quick Capture Modal */}
-      <QuickCaptureModal
-        isOpen={isQuickCaptureOpen}
-        onClose={() => setIsQuickCaptureOpen(false)}
-        onSuccess={() => {
-          if (currentTab === 'inbox' || currentTab === 'dashboard') {
-            setCurrentTab((t) => t);
-          }
-        }}
-      />
+      {/* 3. Global Quick Capture Modal (⌘K) */}
+      {isQuickCaptureOpen && (
+        <QuickCaptureModal
+          isOpen={isQuickCaptureOpen}
+          onClose={() => setIsQuickCaptureOpen(false)}
+          onSuccess={() => handleNavigate('inbox')}
+        />
+      )}
     </div>
   );
 }
-
 export default App;
