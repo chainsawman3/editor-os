@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb, mutateDb, QuickIdea, Project, ContentItem } from '../db.js';
+import { getDb, mutateDb, QuickIdea, Project, ContentItem } from '../db';
 
 export const inboxRouter = Router();
 

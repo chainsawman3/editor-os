@@ -1,4 +1,4 @@
-import { getDb, mutateDb, loadDatabase } from './db.js';
+import { getDb, mutateDb, loadDatabase } from './db';
 
 export function seedDb() {
   loadDatabase();

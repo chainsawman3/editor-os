@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb, mutateDb, ReferenceItem } from '../db.js';
+import { getDb, mutateDb, ReferenceItem } from '../db';
 
 export const referencesRouter = Router();
 

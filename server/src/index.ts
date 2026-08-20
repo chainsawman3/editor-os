@@ -1,22 +1,22 @@
 import express from 'express';
 import cors from 'cors';
-import { seedDb } from './seed.js';
+import { seedDb } from './seed';
 
-import { summaryRouter } from './routes/summary.js';
-import { projectsRouter } from './routes/projects.js';
-import { categoriesRouter } from './routes/categories.js';
-import { goalsRouter } from './routes/goals.js';
-import { tasksRouter } from './routes/tasks.js';
-import { contentRouter } from './routes/content.js';
-import { clientsRouter } from './routes/clients.js';
-import { logsRouter } from './routes/logs.js';
-import { knowledgeRouter } from './routes/knowledge.js';
-import { referencesRouter } from './routes/references.js';
-import { inboxRouter } from './routes/inbox.js';
-import { winsRouter } from './routes/wins.js';
-import { reportsRouter } from './routes/reports.js';
-import { analyticsRouter } from './routes/analytics.js';
-import { settingsRouter } from './routes/settings.js';
+import { summaryRouter } from './routes/summary';
+import { projectsRouter } from './routes/projects';
+import { categoriesRouter } from './routes/categories';
+import { goalsRouter } from './routes/goals';
+import { tasksRouter } from './routes/tasks';
+import { contentRouter } from './routes/content';
+import { clientsRouter } from './routes/clients';
+import { logsRouter } from './routes/logs';
+import { knowledgeRouter } from './routes/knowledge';
+import { referencesRouter } from './routes/references';
+import { inboxRouter } from './routes/inbox';
+import { winsRouter } from './routes/wins';
+import { reportsRouter } from './routes/reports';
+import { analyticsRouter } from './routes/analytics';
+import { settingsRouter } from './routes/settings';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,7 +25,11 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 // Initialize & Seed Database
-seedDb();
+try {
+  seedDb();
+} catch (e) {
+  console.error('Seed error:', e);
+}
 
 // Register API Routes
 app.use('/api/summary', summaryRouter);
@@ -48,6 +52,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '2.0.0', system: 'Editor OS' });
 });
 
-app.listen(PORT, () => {
-  console.log(`⚡ Editor OS Backend Server listening on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`⚡ Editor OS Backend Server listening on http://localhost:${PORT}`);
+  });
+}
+
+export default app;

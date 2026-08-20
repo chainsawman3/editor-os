@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb, mutateDb, Project, Task, Blocker, TimeLog, BeforeAfterEntry, Comment } from '../db.js';
+import { getDb, mutateDb, Project, Task, Blocker, TimeLog, BeforeAfterEntry, Comment } from '../db';
 
 export const projectsRouter = Router();
 

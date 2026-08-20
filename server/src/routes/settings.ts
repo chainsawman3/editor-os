@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getDb, mutateDb, saveDatabase, DatabaseSchema } from '../db.js';
-import { seedDb } from '../seed.js';
+import { getDb, mutateDb, saveDatabase, DatabaseSchema } from '../db';
+import { seedDb } from '../seed';
 
 export const settingsRouter = Router();
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb, mutateDb, DevelopmentLog } from '../db.js';
+import { getDb, mutateDb, DevelopmentLog } from '../db';
 
 export const logsRouter = Router();
 

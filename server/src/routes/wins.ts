@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb, mutateDb, Win } from '../db.js';
+import { getDb, mutateDb, Win } from '../db';
 
 export const winsRouter = Router();
 
