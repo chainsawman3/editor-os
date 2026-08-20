@@ -35,16 +35,6 @@ export const PinScreen: React.FC<PinScreenProps> = ({ onSuccess }) => {
         onSuccess();
       } else {
         setError(true);
-        // Log failed attempt
-        try {
-          const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
-          fetch(`${baseUrl}/api/auth/log-failed-pin`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin: newPin.join('') })
-          }).catch(console.error);
-        } catch (e) {}
-
         setTimeout(() => {
           setPin(['', '', '', '']);
           inputRefs[0].current?.focus();
