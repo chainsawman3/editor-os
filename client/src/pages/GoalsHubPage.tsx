@@ -135,7 +135,6 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
       setProjClientName('');
       setProjDeadline('');
       setShowProjectModal(false);
-      loadAllData();
       onOpenProject(newP.id);
     } catch (err) {
       console.error('Error creating project:', err);
@@ -147,7 +146,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
     e.preventDefault();
     if (!clientName.trim()) return;
 
-    await api.createClient({
+    const newClient = await api.createClient({
       name: clientName.trim(),
       status: clientStatus,
       priority: clientPriority,
@@ -157,34 +156,34 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
       notes: clientNotes.trim()
     });
 
+    setClients((prev) => [newClient, ...prev]);
     setClientName('');
     setClientDeadline('');
     setClientNotes('');
     setClientRevenue(0);
     setShowClientModal(false);
-    loadAllData();
   };
 
   const handleDeleteGoal = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Delete this main goal?')) {
+      setGoals((prev) => prev.filter((g) => g.id !== id));
       await api.deleteGoal(id);
-      loadAllData();
     }
   };
 
   const handleDeleteProject = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Delete this project?')) {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
       await api.deleteProject(id);
-      loadAllData();
     }
   };
 
   const handleDeleteClient = async (id: string) => {
     if (confirm('Delete this client record?')) {
+      setClients((prev) => prev.filter((c) => c.id !== id));
       await api.deleteClient(id);
-      loadAllData();
     }
   };
 

@@ -15,7 +15,8 @@ import {
   User,
   Layers,
   Check,
-  X
+  X,
+  Plus
 } from 'lucide-react';
 import { ContentStudioSkeleton } from '../components/common/SkeletonLoader';
 
@@ -32,6 +33,14 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
 
   // Confirmation Modal State for Task Checkbox
   const [confirmTask, setConfirmTask] = useState<Task | null>(null);
+
+  // Create Project Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [projName, setProjName] = useState('');
+  const [projDesc, setProjDesc] = useState('');
+  const [projSection, setProjSection] = useState<'video_editing' | 'marketing' | 'freelance' | 'skills'>('video_editing');
+  const [projPriority, setProjPriority] = useState<ProjectPriority>('Medium');
+  const [projDeadline, setProjDeadline] = useState('');
 
   const loadData = async () => {
     try {
@@ -53,9 +62,37 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
 
   const handleConfirmComplete = async () => {
     if (!confirmTask) return;
-    await api.updateTask(confirmTask.id, { completed: true });
+    const targetId = confirmTask.id;
     setConfirmTask(null);
-    loadData();
+    setTasks((prev) => prev.map((t) => (t.id === targetId ? { ...t, completed: true } : t)));
+    await api.updateTask(targetId, { completed: true });
+  };
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projName.trim()) return;
+
+    try {
+      const newProj = await api.createProject({
+        name: projName.trim(),
+        description: projDesc.trim(),
+        section: projSection,
+        priority: projPriority,
+        deadline: projDeadline || null,
+        status: 'Planning'
+      });
+
+      setProjName('');
+      setProjDesc('');
+      setProjDeadline('');
+      setShowCreateModal(false);
+      
+      // Navigate straight to the project workspace
+      onOpenProject(newProj.id);
+    } catch (err) {
+      console.error(err);
+      setShowCreateModal(false);
+    }
   };
 
   // Top 5 Nearest Uncompleted Tasks
@@ -114,6 +151,13 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
             <span className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-300 font-semibold">
               {projects.length} Total Projects
             </span>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-1.5 shadow transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ New Project</span>
+            </button>
           </div>
         </div>
       </div>
@@ -302,6 +346,115 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                   <Check className="w-3.5 h-3.5" /> Yes / დიახ
                 </button>
               </div>
+            </div>
+          </div>,
+          document.body
+        )}
+      {/* 5. CREATE NEW PROJECT MODAL */}
+      {showCreateModal &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl modal-transition">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 className="text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-blue-400" /> Create New Project
+                </h3>
+                <button onClick={() => setShowCreateModal(false)} className="text-zinc-500 hover:text-zinc-300">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateProject} className="space-y-4 text-xs font-sans">
+                <div>
+                  <label className="block text-zinc-400 font-bold mb-1 uppercase tracking-wider text-[10px]">
+                    Project Name / სათაური *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={projName}
+                    onChange={(e) => setProjName(e.target.value)}
+                    placeholder="მაგ: Show Reel 2026, YouTube VSL..."
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-zinc-400 font-bold mb-1 uppercase tracking-wider text-[10px]">
+                      Category / სექცია
+                    </label>
+                    <select
+                      value={projSection}
+                      onChange={(e) => setProjSection(e.target.value as any)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-zinc-200 focus:outline-none focus:border-blue-500 font-sans"
+                    >
+                      <option value="video_editing">🎬 Video Editing</option>
+                      <option value="marketing">🚀 Marketing & Content</option>
+                      <option value="freelance">💼 Client / Freelance</option>
+                      <option value="skills">⚡ Skills & Learning</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-400 font-bold mb-1 uppercase tracking-wider text-[10px]">
+                      Priority / პრიორიტეტი
+                    </label>
+                    <select
+                      value={projPriority}
+                      onChange={(e) => setProjPriority(e.target.value as any)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-zinc-200 focus:outline-none focus:border-blue-500 font-sans"
+                    >
+                      <option value="High">🔴 High Priority</option>
+                      <option value="Medium">🟡 Medium Priority</option>
+                      <option value="Low">🟢 Low Priority</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 font-bold mb-1 uppercase tracking-wider text-[10px]">
+                    Deadline (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={projDeadline}
+                    onChange={(e) => setProjDeadline(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-zinc-200 focus:outline-none focus:border-blue-500 font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 font-bold mb-1 uppercase tracking-wider text-[10px]">
+                    Description / აღწერა (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={projDesc}
+                    onChange={(e) => setProjDesc(e.target.value)}
+                    placeholder="პროექტის მოკლე აღწერა..."
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 rounded-xl font-bold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-md transition-all flex items-center gap-1.5"
+                  >
+                    <span>Create & Open Workspace</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </form>
             </div>
           </div>,
           document.body

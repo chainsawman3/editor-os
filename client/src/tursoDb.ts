@@ -72,7 +72,7 @@ export async function queryTurso<T = any>(sql: string, args: any[] = []): Promis
       return obj;
     });
   } catch (err) {
-    console.warn('Turso query failed (using offline fallback):', err);
+    console.warn('Turso query fallback:', err);
     return [];
   }
 }
@@ -161,7 +161,7 @@ export async function initTursoTables() {
   }
 }
 
-// 2. High Level Turso Cloud API Operations with Instant Optimistic Caching
+// 2. High Level Turso Cloud API Operations
 export const tursoApi = {
   getSummary: async (): Promise<DashboardSummaryResponse> => {
     try {
@@ -278,13 +278,11 @@ export const tursoApi = {
       created_at: new Date().toISOString()
     };
 
-    // Optimistic local save
     const db = getLocalDb();
     db.goals.unshift(newGoal);
     saveLocalDb(db);
 
-    // Background cloud sync
-    queryTurso(
+    await queryTurso(
       `INSERT INTO goals (id, section, sub_section, title, description, target_date, priority, status, next_action, notes, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
@@ -300,7 +298,7 @@ export const tursoApi = {
         newGoal.notes || '',
         newGoal.created_at
       ]
-    ).catch(console.error);
+    );
 
     return newGoal;
   },
@@ -313,7 +311,7 @@ export const tursoApi = {
     db.goals = db.goals.map((g) => (g.id === id ? updated : g));
     saveLocalDb(db);
 
-    queryTurso(
+    await queryTurso(
       `UPDATE goals SET section = ?, sub_section = ?, title = ?, description = ?, target_date = ?, priority = ?, status = ?, next_action = ?, notes = ?
        WHERE id = ?;`,
       [
@@ -328,7 +326,7 @@ export const tursoApi = {
         updated.notes || '',
         id
       ]
-    ).catch(console.error);
+    );
 
     return updated;
   },
@@ -338,7 +336,7 @@ export const tursoApi = {
     db.goals = db.goals.filter((g) => g.id !== id);
     saveLocalDb(db);
 
-    queryTurso('DELETE FROM goals WHERE id = ?;', [id]).catch(console.error);
+    await queryTurso('DELETE FROM goals WHERE id = ?;', [id]);
   },
 
   getProjects: async (section?: string): Promise<Project[]> => {
@@ -362,15 +360,19 @@ export const tursoApi = {
   },
 
   getProject: async (id: string): Promise<{ project: Project; tasks: Task[] }> => {
-    const [projRows, tasksRows] = await Promise.all([
-      queryTurso('SELECT * FROM projects WHERE id = ?;', [id]),
-      queryTurso('SELECT * FROM tasks WHERE project_id = ? ORDER BY order_index ASC, created_at ASC;', [id])
-    ]);
+    try {
+      const [projRows, tasksRows] = await Promise.all([
+        queryTurso('SELECT * FROM projects WHERE id = ?;', [id]),
+        queryTurso('SELECT * FROM tasks WHERE project_id = ? ORDER BY order_index ASC, created_at ASC;', [id])
+      ]);
 
-    if (projRows.length > 0) {
-      const project = mapProjectRow(projRows[0]);
-      const tasks = tasksRows.map(mapTaskRow);
-      return { project, tasks };
+      if (projRows && projRows.length > 0) {
+        const project = mapProjectRow(projRows[0]);
+        const tasks = tasksRows ? tasksRows.map(mapTaskRow) : [];
+        return { project, tasks };
+      }
+    } catch (err) {
+      console.warn('getProject fallback:', err);
     }
 
     const localDb = getLocalDb();
@@ -404,8 +406,8 @@ export const tursoApi = {
     db.projects.unshift(newProj);
     saveLocalDb(db);
 
-    // 2. Cloud Turso Sync
-    queryTurso(
+    // 2. Await Cloud Turso Sync
+    await queryTurso(
       `INSERT INTO projects (id, goal_id, name, description, status, priority, deadline, section, sub_section, client_name, script_content, creative_ideas, references_json, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
@@ -424,7 +426,7 @@ export const tursoApi = {
         JSON.stringify(newProj.references || []),
         newProj.created_at
       ]
-    ).catch(console.error);
+    );
 
     return newProj;
   },
@@ -437,7 +439,7 @@ export const tursoApi = {
     db.projects = db.projects.map((p) => (p.id === id ? updated : p));
     saveLocalDb(db);
 
-    queryTurso(
+    await queryTurso(
       `UPDATE projects SET goal_id = ?, name = ?, description = ?, status = ?, priority = ?, deadline = ?, section = ?, sub_section = ?, client_name = ?, script_content = ?, creative_ideas = ?, references_json = ?
        WHERE id = ?;`,
       [
@@ -455,7 +457,7 @@ export const tursoApi = {
         JSON.stringify(updated.references || []),
         id
       ]
-    ).catch(console.error);
+    );
 
     return updated;
   },
@@ -466,8 +468,10 @@ export const tursoApi = {
     db.tasks = db.tasks.filter((t) => t.project_id !== id);
     saveLocalDb(db);
 
-    queryTurso('DELETE FROM projects WHERE id = ?;', [id]).catch(console.error);
-    queryTurso('DELETE FROM tasks WHERE project_id = ?;', [id]).catch(console.error);
+    await Promise.all([
+      queryTurso('DELETE FROM projects WHERE id = ?;', [id]),
+      queryTurso('DELETE FROM tasks WHERE project_id = ?;', [id])
+    ]);
   },
 
   getTasks: async (projectId?: string): Promise<Task[]> => {
@@ -507,7 +511,7 @@ export const tursoApi = {
     db.tasks.unshift(newTask);
     saveLocalDb(db);
 
-    queryTurso(
+    await queryTurso(
       `INSERT INTO tasks (id, project_id, title, due_date, completed, stage, order_index, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
       [
@@ -520,7 +524,7 @@ export const tursoApi = {
         newTask.order_index || 0,
         newTask.created_at
       ]
-    ).catch(console.error);
+    );
 
     return newTask;
   },
@@ -533,7 +537,7 @@ export const tursoApi = {
     db.tasks = db.tasks.map((t) => (t.id === id ? updated : t));
     saveLocalDb(db);
 
-    queryTurso(
+    await queryTurso(
       `UPDATE tasks SET project_id = ?, title = ?, due_date = ?, completed = ?, stage = ?, order_index = ?
        WHERE id = ?;`,
       [
@@ -545,7 +549,7 @@ export const tursoApi = {
         updated.order_index || 0,
         id
       ]
-    ).catch(console.error);
+    );
 
     return updated;
   },
@@ -555,7 +559,7 @@ export const tursoApi = {
     db.tasks = db.tasks.filter((t) => t.id !== id);
     saveLocalDb(db);
 
-    queryTurso('DELETE FROM tasks WHERE id = ?;', [id]).catch(console.error);
+    await queryTurso('DELETE FROM tasks WHERE id = ?;', [id]);
   },
 
   getClients: async (): Promise<Client[]> => {
@@ -593,7 +597,7 @@ export const tursoApi = {
     db.clients.unshift(newClient);
     saveLocalDb(db);
 
-    queryTurso(
+    await queryTurso(
       `INSERT INTO clients (id, name, status, priority, deadline, revenue, linked_project_id, notes, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
@@ -607,7 +611,7 @@ export const tursoApi = {
         newClient.notes || '',
         newClient.created_at
       ]
-    ).catch(console.error);
+    );
 
     return newClient;
   },
@@ -620,7 +624,7 @@ export const tursoApi = {
     db.clients = db.clients.map((c) => (c.id === id ? updated : c));
     saveLocalDb(db);
 
-    queryTurso(
+    await queryTurso(
       `UPDATE clients SET name = ?, status = ?, priority = ?, deadline = ?, revenue = ?, linked_project_id = ?, notes = ?
        WHERE id = ?;`,
       [
@@ -633,7 +637,7 @@ export const tursoApi = {
         updated.notes || '',
         id
       ]
-    ).catch(console.error);
+    );
 
     return updated;
   },
@@ -643,7 +647,7 @@ export const tursoApi = {
     db.clients = db.clients.filter((c) => c.id !== id);
     saveLocalDb(db);
 
-    queryTurso('DELETE FROM clients WHERE id = ?;', [id]).catch(console.error);
+    await queryTurso('DELETE FROM clients WHERE id = ?;', [id]);
   },
 
   getQuickIdeas: async (): Promise<QuickIdea[]> => {
@@ -674,10 +678,10 @@ export const tursoApi = {
     db.quick_ideas.unshift(newIdea);
     saveLocalDb(db);
 
-    queryTurso(
+    await queryTurso(
       `INSERT INTO quick_ideas (id, text, target_category, triaged, created_at) VALUES (?, ?, ?, ?, ?);`,
       [newIdea.id, newIdea.text, newIdea.target_category || 'General', 0, newIdea.created_at]
-    ).catch(console.error);
+    );
 
     return newIdea;
   },
@@ -687,7 +691,7 @@ export const tursoApi = {
     db.quick_ideas = db.quick_ideas.filter((i) => i.id !== id);
     saveLocalDb(db);
 
-    queryTurso('DELETE FROM quick_ideas WHERE id = ?;', [id]).catch(console.error);
+    await queryTurso('DELETE FROM quick_ideas WHERE id = ?;', [id]);
   },
 
   getAnalytics: async () => {

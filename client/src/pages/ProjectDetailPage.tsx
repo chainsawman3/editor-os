@@ -100,29 +100,35 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
   };
 
   const handleToggleTask = async (task: Task) => {
-    await api.updateTask(task.id, { completed: !task.completed });
-    loadProjectData();
+    const nextCompleted = !task.completed;
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: nextCompleted } : t)));
+    await api.updateTask(task.id, { completed: nextCompleted });
   };
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
-    await api.createTask({
-      project_id: projectId,
-      title: newTaskTitle.trim(),
-      stage: newTaskStage,
-      due_date: newTaskDue || project?.deadline || null
-    });
+    const title = newTaskTitle.trim();
+    const stage = newTaskStage;
+    const due = newTaskDue || project?.deadline || null;
 
     setNewTaskTitle('');
     setNewTaskDue('');
-    loadProjectData();
+
+    const created = await api.createTask({
+      project_id: projectId,
+      title,
+      stage,
+      due_date: due
+    });
+
+    setTasks((prev) => [created, ...prev.filter(t => t.id !== created.id)]);
   };
 
   const handleDeleteTask = async (id: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
     await api.deleteTask(id);
-    loadProjectData();
   };
 
   const handleAddReference = async (e: React.FormEvent) => {
