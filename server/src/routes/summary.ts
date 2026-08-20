@@ -9,9 +9,12 @@ summaryRouter.get('/', (req, res) => {
   const todayStr = today.toISOString().split('T')[0];
 
   const settings = db.settings[0] || {
+    id: 1,
     cycle_start_date: todayStr,
     cycle_duration_days: 90,
-    user_name: 'Video Editor'
+    streak_days: 0,
+    user_name: 'Video Editor',
+    created_at: new Date().toISOString()
   };
 
   const startDate = new Date(settings.cycle_start_date);
