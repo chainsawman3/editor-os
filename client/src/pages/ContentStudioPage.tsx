@@ -190,7 +190,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                       onOpenProject(t.project_id);
                     }
                   }}
-                  className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-emerald-500/60 ring-1 ring-white/[0.06] hover:ring-emerald-500/30 rounded-xl p-4 sm:p-5 cursor-pointer group transition-all duration-200 flex flex-col justify-between space-y-3.5 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/40 hover:-translate-y-0.5"
+                  className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-emerald-500/60 ring-1 ring-white/[0.06] hover:ring-emerald-500/30 rounded-xl p-4 sm:p-5 cursor-pointer group transition-all duration-200 flex flex-col justify-between space-y-3.5 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/40"
                   title="Click to open this project's workspace"
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -264,7 +264,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                         <div
                           key={p.id}
                           onClick={() => onOpenProject(p.id)}
-                          className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-emerald-500/60 ring-1 ring-white/[0.06] hover:ring-emerald-500/30 rounded-xl p-5 cursor-pointer group transition-all duration-200 space-y-3.5 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/40 hover:-translate-y-0.5"
+                          className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-emerald-500/60 ring-1 ring-white/[0.06] hover:ring-emerald-500/30 rounded-xl p-5 cursor-pointer group transition-all duration-200 space-y-3.5 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/40"
                         >
                           <div className="flex items-center justify-between">
                             <span className={`px-2.5 py-1 text-[10px] rounded border ${getPriorityColor(p.priority)}`}>

@@ -404,7 +404,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                   return (
                     <div
                       key={g.id}
-                      className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-emerald-500/50 ring-1 ring-purple-500/[0.08] hover:ring-emerald-500/30 rounded-xl p-5 sm:p-6 transition-all duration-200 space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/30 hover:-translate-y-0.5"
+                      className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-emerald-500/50 ring-1 ring-purple-500/[0.08] hover:ring-emerald-500/30 rounded-xl p-5 sm:p-6 transition-all duration-200 space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/30"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-2">
@@ -501,7 +501,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                     <div
                       key={p.id}
                       onClick={() => onOpenProject(p.id)}
-                      className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-emerald-500/60 ring-1 ring-white/[0.06] hover:ring-emerald-500/30 rounded-xl p-5 sm:p-6 cursor-pointer group transition-all duration-200 flex flex-col justify-between space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/40 hover:-translate-y-0.5"
+                      className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-emerald-500/60 ring-1 ring-white/[0.06] hover:ring-emerald-500/30 rounded-xl p-5 sm:p-6 cursor-pointer group transition-all duration-200 flex flex-col justify-between space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/40"
                     >
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
