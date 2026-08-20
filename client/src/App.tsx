@@ -14,7 +14,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { SectionType } from './types';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState<string>('goals');
+  const [currentTab, setCurrentTab] = useState<string>('content');
   const [selectedSection, setSelectedSection] = useState<SectionType>('video_editing');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);

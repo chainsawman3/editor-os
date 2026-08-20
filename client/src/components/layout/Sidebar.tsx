@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Target,
   Clapperboard,
+  Target,
   Calendar,
   BarChart3,
   Inbox,
@@ -13,7 +13,8 @@ import {
   GraduationCap,
   ChevronDown,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Home
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   cycleDay,
   cycleTotalDays
 }) => {
-  const [isGoalsExpanded, setIsGoalsExpanded] = useState(true);
+  const [isGoalsExpanded, setIsGoalsExpanded] = useState(false);
 
   const goalSubSections = [
     { id: 'video_editing', label: '1. Video Editing', icon: Clapperboard },
@@ -39,6 +40,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'freelance', label: '3. Freelance / Clients', icon: Briefcase },
     { id: 'skills', label: '4. Skills / Learning', icon: GraduationCap }
   ];
+
+  const isContentActive = currentTab === 'content' || currentTab === 'dashboard';
 
   return (
     <aside className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col justify-between shrink-0 select-none h-screen font-sans">
@@ -97,13 +100,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* NAVIGATION LINKS */}
-        <nav className="p-2 space-y-1.5 overflow-y-auto max-h-[calc(100vh-280px)]">
-          {/* 1. PRIMARY GOAL HUB */}
-          <div className="space-y-0.5">
+        <nav className="p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]">
+          {/* 1. PRIMARY #1: CONTENT STUDIO (MAIN LANDING PAGE) */}
+          <div>
+            <button
+              onClick={() => onSelectTab('content')}
+              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all border ${
+                isContentActive
+                  ? 'bg-blue-950/70 border-blue-500 text-white font-bold shadow-lg ring-1 ring-blue-500/30'
+                  : 'bg-zinc-900/90 hover:bg-zinc-850 border-blue-900/40 text-blue-200 hover:text-white hover:border-blue-500/80 shadow-sm'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-900/70 border border-blue-600/80 text-blue-200">
+                  <Clapperboard className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-bold tracking-tight">CONTENT STUDIO</div>
+                  <div className="text-[10px] text-blue-300 font-medium">Main Dashboard • Landing</div>
+                </div>
+              </div>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-900/80 border border-blue-700 text-blue-200 font-bold uppercase tracking-wider">
+                MAIN
+              </span>
+            </button>
+          </div>
+
+          {/* 2. GOAL HUB */}
+          <div className="space-y-0.5 pt-0.5">
             <div
               onClick={() => {
                 onSelectTab('goals');
-                setIsGoalsExpanded(true);
+                setIsGoalsExpanded(!isGoalsExpanded);
               }}
               className={`w-full flex items-center justify-between px-3 py-2.5 text-xs rounded-xl transition-colors cursor-pointer font-bold ${
                 currentTab.startsWith('goal')
@@ -152,40 +180,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* 2. CONTENT STUDIO (Kanban + Top 5 Tasks) */}
-          <button
-            onClick={() => onSelectTab('content')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-xs rounded-xl transition-colors font-bold ${
-              currentTab === 'content'
-                ? 'bg-zinc-900 text-zinc-100 border-l-2 border-blue-500 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
-            }`}
-          >
-            <Clapperboard className="w-4 h-4 text-blue-400" />
-            <span>CONTENT STUDIO</span>
-          </button>
-
-          {/* 3. PROMINENT & ENLARGED CALENDAR BUTTON */}
-          <div className="pt-1 pb-1">
+          {/* 3. CALENDAR */}
+          <div className="pt-0.5">
             <button
               onClick={() => onSelectTab('calendar')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all border ${
+              className={`w-full flex items-center justify-between p-2.5 px-3 rounded-xl transition-all border ${
                 currentTab === 'calendar'
                   ? 'bg-purple-950/60 border-purple-600 text-white font-bold shadow-md ring-1 ring-purple-500/30'
-                  : 'bg-zinc-900/90 hover:bg-zinc-850 border-purple-900/40 text-purple-200 hover:text-white hover:border-purple-600/70 shadow-sm'
+                  : 'bg-zinc-900/70 hover:bg-zinc-850 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 shadow-sm'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-900/60 border border-purple-700/80 text-purple-200">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div className="text-left">
-                  <div className="text-xs font-bold tracking-tight">📅 CALENDAR</div>
-                  <div className="text-[10px] text-purple-300 font-medium">All Deadlines Schedule</div>
-                </div>
+              <div className="flex items-center gap-2.5">
+                <Calendar className="w-4 h-4 text-purple-400" />
+                <span className="text-xs font-bold">📅 CALENDAR</span>
               </div>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-900/80 border border-purple-700 text-purple-200 font-bold uppercase">
-                EXPANDED
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-bold uppercase">
+                Schedule
               </span>
             </button>
           </div>
