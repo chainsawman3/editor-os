@@ -404,7 +404,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                   return (
                     <div
                       key={g.id}
-                      className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-purple-700/60 ring-1 ring-purple-500/[0.08] rounded-xl p-5 sm:p-6 transition-all space-y-4 shadow-md shadow-black/40 hover:shadow-xl"
+                      className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-emerald-500/50 ring-1 ring-purple-500/[0.08] hover:ring-emerald-500/30 rounded-xl p-5 sm:p-6 transition-all duration-200 space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/30 hover:-translate-y-0.5"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-2">
@@ -445,17 +445,17 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                               <div
                                 key={lp.id}
                                 onClick={() => onOpenProject(lp.id)}
-                                className="p-3 bg-[#1b1728]/80 hover:bg-[#231e34] border border-purple-900/35 rounded-lg flex items-center justify-between cursor-pointer group transition-all"
+                                className="p-3 bg-[#1b1728]/80 hover:bg-[#231e34] border border-purple-900/35 hover:border-emerald-500/40 rounded-lg flex items-center justify-between cursor-pointer group transition-all duration-150"
                               >
                                 <div className="flex items-center gap-2.5">
-                                  <Video className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-300" />
+                                  <Video className="w-3.5 h-3.5 text-purple-400 group-hover:text-emerald-300 transition-colors" />
                                   <span className="text-xs font-semibold text-zinc-200 group-hover:text-white">{lp.name}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className={`px-2 py-0.5 text-[9px] font-mono rounded border ${getPriorityColor(lp.priority)}`}>
                                     {lp.priority}
                                   </span>
-                                  <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-100 transition-transform group-hover:translate-x-0.5" />
+                                  <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-emerald-300 transition-transform group-hover:translate-x-0.5" />
                                 </div>
                               </div>
                             ))}
@@ -501,7 +501,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                     <div
                       key={p.id}
                       onClick={() => onOpenProject(p.id)}
-                      className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-5 sm:p-6 cursor-pointer group transition-all flex flex-col justify-between space-y-4 shadow-md shadow-black/40 hover:shadow-xl"
+                      className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-emerald-500/60 ring-1 ring-white/[0.06] hover:ring-emerald-500/30 rounded-xl p-5 sm:p-6 cursor-pointer group transition-all duration-200 flex flex-col justify-between space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/40 hover:-translate-y-0.5"
                     >
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
