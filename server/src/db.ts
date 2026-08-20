@@ -268,9 +268,37 @@ const defaultDatabase: DatabaseSchema = {
 };
 
 import { MongoClient } from 'mongodb';
+import pg from 'pg';
+const { Pool } = pg;
 
 const mongoUri = process.env.MONGODB_URI;
 let mongoClient: MongoClient | null = null;
+
+const postgresUri = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
+let pgPool: pg.Pool | null = null;
+
+async function getPgPool() {
+  if (!postgresUri) return null;
+  try {
+    if (!pgPool) {
+      pgPool = new Pool({
+        connectionString: postgresUri,
+        ssl: { rejectUnauthorized: false }
+      });
+      await pgPool.query(`
+        CREATE TABLE IF NOT EXISTS editor_os_state (
+          id VARCHAR(50) PRIMARY KEY,
+          data JSONB NOT NULL,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+      `);
+    }
+    return pgPool;
+  } catch (err) {
+    console.error('⚠️ PostgreSQL connection error, falling back to local file/memory:', err);
+    return null;
+  }
+}
 
 async function getMongoCollection() {
   if (!mongoUri) return null;
@@ -288,37 +316,80 @@ async function getMongoCollection() {
 }
 
 export async function syncFromCloud(): Promise<DatabaseSchema | null> {
-  const collection = await getMongoCollection();
-  if (!collection) return null;
-  try {
-    const doc = await collection.findOne({ _id: 'active_db' as any });
-    if (doc && doc.data) {
-      memoryDb = doc.data as DatabaseSchema;
-      return memoryDb;
-    } else if (memoryDb && memoryDb.settings && memoryDb.settings.length > 0) {
-      await collection.updateOne(
-        { _id: 'active_db' as any },
-        { $set: { data: memoryDb, updated_at: new Date().toISOString() } },
-        { upsert: true }
-      );
+  // 1. PostgreSQL (Supabase / Neon / Vercel Postgres)
+  if (postgresUri) {
+    const pool = await getPgPool();
+    if (pool) {
+      try {
+        const res = await pool.query('SELECT data FROM editor_os_state WHERE id = $1', ['active_db']);
+        if (res.rows.length > 0 && res.rows[0].data) {
+          memoryDb = res.rows[0].data as DatabaseSchema;
+          return memoryDb;
+        } else if (memoryDb && memoryDb.settings && memoryDb.settings.length > 0) {
+          await pool.query(
+            'INSERT INTO editor_os_state (id, data, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = NOW()',
+            ['active_db', JSON.stringify(memoryDb)]
+          );
+        }
+      } catch (e) {
+        console.error('Error syncing from PostgreSQL:', e);
+      }
     }
-  } catch (e) {
-    console.error('Error syncing from cloud:', e);
   }
+
+  // 2. MongoDB Atlas
+  if (mongoUri) {
+    const collection = await getMongoCollection();
+    if (collection) {
+      try {
+        const doc = await collection.findOne({ _id: 'active_db' as any });
+        if (doc && doc.data) {
+          memoryDb = doc.data as DatabaseSchema;
+          return memoryDb;
+        } else if (memoryDb && memoryDb.settings && memoryDb.settings.length > 0) {
+          await collection.updateOne(
+            { _id: 'active_db' as any },
+            { $set: { data: memoryDb, updated_at: new Date().toISOString() } },
+            { upsert: true }
+          );
+        }
+      } catch (e) {
+        console.error('Error syncing from MongoDB:', e);
+      }
+    }
+  }
+
   return null;
 }
 
 export async function syncToCloud(data: DatabaseSchema) {
-  const collection = await getMongoCollection();
-  if (!collection) return;
-  try {
-    await collection.updateOne(
-      { _id: 'active_db' as any },
-      { $set: { data, updated_at: new Date().toISOString() } },
-      { upsert: true }
-    );
-  } catch (e) {
-    console.error('Error syncing to cloud:', e);
+  if (postgresUri) {
+    const pool = await getPgPool();
+    if (pool) {
+      try {
+        await pool.query(
+          'INSERT INTO editor_os_state (id, data, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = NOW()',
+          ['active_db', JSON.stringify(data)]
+        );
+      } catch (e) {
+        console.error('Error syncing to PostgreSQL:', e);
+      }
+    }
+  }
+
+  if (mongoUri) {
+    const collection = await getMongoCollection();
+    if (collection) {
+      try {
+        await collection.updateOne(
+          { _id: 'active_db' as any },
+          { $set: { data, updated_at: new Date().toISOString() } },
+          { upsert: true }
+        );
+      } catch (e) {
+        console.error('Error syncing to MongoDB:', e);
+      }
+    }
   }
 }
 
@@ -334,7 +405,7 @@ export function loadDatabase(): DatabaseSchema {
     saveDatabase(defaultDatabase);
   }
 
-  if (mongoUri) {
+  if (postgresUri || mongoUri) {
     syncFromCloud().catch(() => {});
   }
 
@@ -351,7 +422,7 @@ export function saveDatabase(data: DatabaseSchema) {
     // In serverless/read-only environment, memoryDb persists during execution
   }
 
-  if (mongoUri) {
+  if (postgresUri || mongoUri) {
     syncToCloud(data).catch(() => {});
   }
 }
