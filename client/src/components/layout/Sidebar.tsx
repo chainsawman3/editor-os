@@ -6,15 +6,14 @@ import {
   BarChart3,
   Inbox,
   Settings,
-  PlusCircle,
+  Flame,
+  Sparkles,
   Video,
   Megaphone,
   Briefcase,
   GraduationCap,
   ChevronDown,
-  ChevronRight,
-  Sparkles,
-  Home
+  ChevronRight
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,116 +31,113 @@ export const Sidebar: React.FC<SidebarProps> = ({
   cycleDay,
   cycleTotalDays
 }) => {
-  const [isGoalsExpanded, setIsGoalsExpanded] = useState(false);
+  const [isGoalsExpanded, setIsGoalsExpanded] = useState(true);
 
   const goalSubSections = [
-    { id: 'video_editing', label: '1. Video Editing', icon: Clapperboard },
-    { id: 'marketing', label: '2. Marketing', icon: Megaphone },
-    { id: 'freelance', label: '3. Freelance / Clients', icon: Briefcase },
-    { id: 'skills', label: '4. Skills / Learning', icon: GraduationCap }
+    { id: 'video_editing', label: 'Video Editing', icon: Video },
+    { id: 'marketing', label: 'Marketing', icon: Megaphone },
+    { id: 'freelance', label: 'Freelance & Clients', icon: Briefcase },
+    { id: 'skills', label: 'Skills & Learning', icon: GraduationCap }
   ];
 
   const isContentActive = currentTab === 'content' || currentTab === 'dashboard';
 
   return (
     <aside className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col justify-between shrink-0 select-none h-screen font-sans">
-      {/* Brand Header & Logo (Clicking navigates to Content Studio) */}
+      {/* 1. Header & Navigation Top Section */}
       <div className="flex flex-col">
+        {/* Brand Header */}
         <div
           onClick={() => onSelectTab('content')}
           title="Go to Content Studio"
-          className="p-4 border-b border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-zinc-900/60 transition-colors group"
+          className="p-4 border-b border-zinc-850 flex items-center justify-between cursor-pointer hover:bg-zinc-900/50 transition-colors group"
         >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-zinc-100 group-hover:bg-white text-zinc-950 flex items-center justify-center font-bold text-xs rounded-lg shadow-sm transition-transform group-hover:scale-105">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700/80 flex items-center justify-center font-bold text-xs text-white shadow-sm group-hover:border-zinc-500 transition-colors">
               OS
             </div>
             <div>
               <h1 className="font-bold text-sm text-zinc-100 tracking-tight group-hover:text-white transition-colors">
-                EDITOR OS
+                Editor OS
               </h1>
-              <p className="text-[10px] text-zinc-400 font-medium group-hover:text-blue-400 transition-colors">
+              <p className="text-[11px] text-zinc-400 font-medium group-hover:text-blue-400 transition-colors">
                 Content Studio Dashboard ↗
               </p>
             </div>
           </div>
         </div>
 
-        {/* 90-Day Cycle Status Badge */}
-        <div className="mx-3 my-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-xl text-xs space-y-2 shadow-inner">
+        {/* 90-Day Sprint Progress Card */}
+        <div className="mx-3.5 my-3 p-3 bg-zinc-900/70 border border-zinc-800/90 rounded-xl text-xs space-y-2.5 shadow-sm">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-zinc-400 font-semibold">90-DAY SPRINT CYCLE</span>
-            <span className="font-bold text-zinc-100">
-              DAY {cycleDay} / {cycleTotalDays}
+            <span className="text-zinc-400 font-medium flex items-center gap-1.5">
+              <Flame className="w-3.5 h-3.5 text-blue-400" />
+              90-Day Sprint
+            </span>
+            <span className="font-mono font-bold text-zinc-200">
+              Day {cycleDay} <span className="text-zinc-500 font-normal">/ {cycleTotalDays}</span>
             </span>
           </div>
-          <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden">
+          <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden border border-zinc-800/60">
             <div
-              className="bg-zinc-100 h-full transition-all duration-300"
+              className="bg-blue-500 h-full rounded-full transition-all duration-300"
               style={{ width: `${Math.min(100, Math.round((cycleDay / cycleTotalDays) * 100))}%` }}
             />
           </div>
         </div>
 
         {/* Quick Capture Button (⌘K) */}
-        <div className="px-3 pb-2">
+        <div className="px-3.5 pb-2">
           <button
             onClick={onOpenQuickCapture}
-            className="w-full py-2.5 px-3 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-700/80 hover:border-zinc-500 rounded-xl text-xs flex items-center justify-between transition-all group shadow-sm font-semibold"
+            className="w-full py-2 px-3 bg-zinc-900/80 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-xl text-xs flex items-center justify-between transition-all group font-medium shadow-sm"
           >
-            <span className="flex items-center gap-2">
-              <PlusCircle className="w-4 h-4 text-zinc-400 group-hover:text-zinc-100" />
+            <span className="flex items-center gap-2 text-zinc-400 group-hover:text-zinc-200">
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
               Quick Capture
             </span>
-            <kbd className="px-1.5 py-0.5 text-[9px] bg-zinc-950 text-zinc-400 border border-zinc-800 rounded font-sans font-bold">
+            <kbd className="px-1.5 py-0.5 text-[10px] bg-zinc-950 text-zinc-400 border border-zinc-800 rounded font-mono font-semibold">
               ⌘K
             </kbd>
           </button>
         </div>
 
-        {/* NAVIGATION LINKS */}
-        <nav className="p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]">
-          {/* 1. PRIMARY #1: CONTENT STUDIO (MAIN LANDING PAGE) */}
-          <div>
-            <button
-              onClick={() => onSelectTab('content')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all border ${
-                isContentActive
-                  ? 'bg-blue-950/70 border-blue-500 text-white font-bold shadow-lg ring-1 ring-blue-500/30'
-                  : 'bg-zinc-900/90 hover:bg-zinc-850 border-blue-900/40 text-blue-200 hover:text-white hover:border-blue-500/80 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-900/70 border border-blue-600/80 text-blue-200">
-                  <Clapperboard className="w-4 h-4" />
-                </div>
-                <div className="text-left">
-                  <div className="text-xs font-bold tracking-tight">CONTENT STUDIO</div>
-                  <div className="text-[10px] text-blue-300 font-medium">Main Dashboard • Landing</div>
-                </div>
-              </div>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-900/80 border border-blue-700 text-blue-200 font-bold uppercase tracking-wider">
-                MAIN
-              </span>
-            </button>
-          </div>
+        {/* Navigation Menu */}
+        <nav className="px-2.5 py-1.5 space-y-1 overflow-y-auto max-h-[calc(100vh-270px)]">
+          {/* Main Landing: Content Studio */}
+          <button
+            onClick={() => onSelectTab('content')}
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              isContentActive
+                ? 'bg-blue-600/15 border border-blue-500/40 text-blue-300 shadow-sm'
+                : 'text-zinc-300 hover:text-white hover:bg-zinc-900 border border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Clapperboard className={`w-4 h-4 ${isContentActive ? 'text-blue-400' : 'text-zinc-400'}`} />
+              <span>Content Studio</span>
+            </div>
+            <span className="text-[9px] px-1.5 py-0.5 rounded font-mono bg-blue-950/80 border border-blue-800 text-blue-300 font-bold uppercase tracking-wider">
+              Main
+            </span>
+          </button>
 
-          {/* 2. GOAL HUB */}
-          <div className="space-y-0.5 pt-0.5">
+          {/* Goals Hub (Expandable) */}
+          <div className="space-y-0.5 pt-1">
             <div
               onClick={() => {
                 onSelectTab('goals');
                 setIsGoalsExpanded(!isGoalsExpanded);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 text-xs rounded-xl transition-colors cursor-pointer font-bold ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer font-medium ${
                 currentTab.startsWith('goal')
-                  ? 'bg-zinc-900 text-zinc-100 border-l-2 border-purple-500 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+                  ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <Target className="w-4 h-4 text-purple-400" />
-                <span>🎯 GOAL HUB</span>
+                <Target className={`w-4 h-4 ${currentTab.startsWith('goal') ? 'text-purple-400' : 'text-zinc-400'}`} />
+                <span>Goals Hub</span>
               </div>
               <button
                 type="button"
@@ -149,17 +145,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   e.stopPropagation();
                   setIsGoalsExpanded(!isGoalsExpanded);
                 }}
-                className="p-1 text-zinc-400 hover:text-zinc-200"
+                className="p-1 text-zinc-500 hover:text-zinc-300"
               >
                 {isGoalsExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
               </button>
             </div>
 
-            {/* Sub-sections inside GOAL */}
+            {/* Sub-sections inside Goals */}
             {isGoalsExpanded && (
-              <div className="pl-6 pr-1 py-1 space-y-0.5 border-l border-zinc-850 ml-4">
+              <div className="pl-4 pr-1 py-1 space-y-0.5 border-l border-zinc-850 ml-4.5">
                 {goalSubSections.map((sub) => {
-                  const isSubActive = currentTab === `goal_${sub.id}` || (currentTab === 'goals' && sub.id === 'video_editing');
+                  const isSubActive =
+                    currentTab === `goal_${sub.id}` || (currentTab === 'goals' && sub.id === 'video_editing');
                   const Icon = sub.icon;
                   return (
                     <button
@@ -167,11 +164,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       onClick={() => onSelectTab(`goal_${sub.id}`, sub.id)}
                       className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left font-medium ${
                         isSubActive
-                          ? 'bg-zinc-850 text-zinc-100 font-semibold'
-                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'
+                          ? 'bg-zinc-800/90 text-zinc-100 font-semibold'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
                       }`}
                     >
-                      <Icon className="w-3.5 h-3.5 text-zinc-400" />
+                      <Icon className={`w-3.5 h-3.5 ${isSubActive ? 'text-purple-400' : 'text-zinc-500'}`} />
                       <span>{sub.label}</span>
                     </button>
                   );
@@ -180,74 +177,69 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* 3. CALENDAR */}
-          <div className="pt-0.5">
-            <button
-              onClick={() => onSelectTab('calendar')}
-              className={`w-full flex items-center justify-between p-2.5 px-3 rounded-xl transition-all border ${
-                currentTab === 'calendar'
-                  ? 'bg-purple-950/60 border-purple-600 text-white font-bold shadow-md ring-1 ring-purple-500/30'
-                  : 'bg-zinc-900/70 hover:bg-zinc-850 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Calendar className="w-4 h-4 text-purple-400" />
-                <span className="text-xs font-bold">📅 CALENDAR</span>
-              </div>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-bold uppercase">
-                Schedule
-              </span>
-            </button>
-          </div>
+          {/* Calendar */}
+          <button
+            onClick={() => onSelectTab('calendar')}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
+              currentTab === 'calendar'
+                ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Calendar className={`w-4 h-4 ${currentTab === 'calendar' ? 'text-purple-400' : 'text-zinc-400'}`} />
+            <span>Calendar</span>
+          </button>
 
-          {/* 4. ANALYTICS */}
+          {/* Analytics */}
           <button
             onClick={() => onSelectTab('analytics')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-xl transition-colors font-bold ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
               currentTab === 'analytics'
-                ? 'bg-zinc-900 text-zinc-100 border-l-2 border-cyan-500 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+                ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <BarChart3 className="w-4 h-4 text-cyan-400" />
-            <span>ANALYTICS</span>
+            <BarChart3 className={`w-4 h-4 ${currentTab === 'analytics' ? 'text-cyan-400' : 'text-zinc-400'}`} />
+            <span>Analytics</span>
           </button>
 
-          {/* 5. IDEA INBOX */}
+          {/* Idea Inbox */}
           <button
             onClick={() => onSelectTab('inbox')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-xl transition-colors font-bold ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
               currentTab === 'inbox'
-                ? 'bg-zinc-900 text-zinc-100 border-l-2 border-amber-500 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+                ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <Inbox className="w-4 h-4 text-amber-400" />
-            <span>IDEA INBOX</span>
+            <Inbox className={`w-4 h-4 ${currentTab === 'inbox' ? 'text-amber-400' : 'text-zinc-400'}`} />
+            <span>Idea Inbox</span>
           </button>
 
-          {/* 6. SETTINGS */}
+          {/* Settings */}
           <button
             onClick={() => onSelectTab('settings')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-xl transition-colors font-bold ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
               currentTab === 'settings'
-                ? 'bg-zinc-900 text-zinc-100 border-l-2 border-zinc-400 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+                ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <Settings className="w-4 h-4 text-zinc-400" />
-            <span>SETTINGS</span>
+            <Settings className={`w-4 h-4 ${currentTab === 'settings' ? 'text-zinc-200' : 'text-zinc-400'}`} />
+            <span>Settings</span>
           </button>
         </nav>
       </div>
 
-      {/* Footer / User Profile */}
-      <div className="p-3 border-t border-zinc-800/80 bg-zinc-950 text-xs text-zinc-400 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-zinc-200 font-semibold truncate max-w-[140px]">Alex (Editor)</span>
+      {/* 2. Footer / Cloud Sync Status */}
+      <div className="p-3.5 border-t border-zinc-850 bg-zinc-950 text-xs text-zinc-400 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+          <span className="text-zinc-200 font-medium truncate max-w-[130px]">Editor Workspace</span>
         </div>
-        <span className="text-zinc-500 text-[10px] uppercase font-bold">Cloud Synced</span>
+        <span className="text-zinc-500 text-[10px] font-mono uppercase font-bold tracking-wider">
+          Turso Cloud
+        </span>
       </div>
     </aside>
   );
