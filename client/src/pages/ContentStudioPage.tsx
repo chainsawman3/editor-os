@@ -17,6 +17,7 @@ import {
   Check,
   X
 } from 'lucide-react';
+import { ContentStudioSkeleton } from '../components/common/SkeletonLoader';
 
 interface ContentStudioPageProps {
   onOpenProject: (projectId: string) => void;
@@ -89,7 +90,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-xs text-zinc-500 font-medium">Loading Content Studio...</div>;
+    return <ContentStudioSkeleton />;
   }
 
   return (

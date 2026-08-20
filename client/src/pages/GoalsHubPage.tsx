@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../api';
 import { Goal, Project, Client, SectionType, MarketingPlatform, ProjectPriority, ClientStatus } from '../types';
+import { GoalsHubSkeleton } from '../components/common/SkeletonLoader';
 import {
   Target,
   Plus,
@@ -230,6 +232,10 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
     }
     return true;
   });
+
+  if (loading) {
+    return <GoalsHubSkeleton />;
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
@@ -656,318 +662,324 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
       </div>
 
       {/* MODAL: CREATE MAIN GOAL */}
-      {showGoalModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-mono font-bold text-sm text-zinc-100 flex items-center gap-2">
-                <Target className="w-4 h-4 text-purple-400" /> Define New Main Goal
-              </h3>
-              <button onClick={() => setShowGoalModal(false)} className="text-zinc-400 hover:text-white text-xs font-mono">
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateGoal} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">Goal Title (მაგ: PORTFOLIO UPDATE)</label>
-                <input
-                  type="text"
-                  required
-                  value={goalTitle}
-                  onChange={(e) => setGoalTitle(e.target.value)}
-                  placeholder="e.g. PORTFOLIO UPDATE (2026)"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                />
+      {showGoalModal &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl modal-transition">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 className="font-bold text-sm text-zinc-100 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-purple-400" /> Define New Main Goal
+                </h3>
+                <button onClick={() => setShowGoalModal(false)} className="text-zinc-400 hover:text-white text-xs">
+                  ✕
+                </button>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">Description & Outcome</label>
-                <textarea
-                  rows={3}
-                  value={goalDesc}
-                  onChange={(e) => setGoalDesc(e.target.value)}
-                  placeholder="What is the objective of this main goal?"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <form onSubmit={handleCreateGoal} className="space-y-4 font-sans">
                 <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Target Deadline</label>
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">Goal Title (მაგ: PORTFOLIO UPDATE)</label>
                   <input
-                    type="date"
-                    value={goalDate}
-                    onChange={(e) => setGoalDate(e.target.value)}
+                    type="text"
+                    required
+                    value={goalTitle}
+                    onChange={(e) => setGoalTitle(e.target.value)}
+                    placeholder="e.g. PORTFOLIO UPDATE (2026)"
                     className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
                   />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Priority</label>
-                  <select
-                    value={goalPriority}
-                    onChange={(e) => setGoalPriority(e.target.value as any)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                  >
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
-                </div>
-              </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => setShowGoalModal(false)}
-                  className="px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs rounded-lg shadow"
-                >
-                  Save Main Goal
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                <div>
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">Description & Outcome</label>
+                  <textarea
+                    rows={3}
+                    value={goalDesc}
+                    onChange={(e) => setGoalDesc(e.target.value)}
+                    placeholder="What is the objective of this main goal?"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Target Deadline</label>
+                    <input
+                      type="date"
+                      value={goalDate}
+                      onChange={(e) => setGoalDate(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Priority</label>
+                    <select
+                      value={goalPriority}
+                      onChange={(e) => setGoalPriority(e.target.value as any)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    >
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setShowGoalModal(false)}
+                    className="px-3 py-2 text-xs text-zinc-400 hover:text-white font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-bold text-xs rounded-lg shadow"
+                  >
+                    Save Main Goal
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* MODAL: CREATE PROJECT */}
-      {showProjectModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-mono font-bold text-sm text-zinc-100 flex items-center gap-2">
-                <Video className="w-4 h-4 text-cyan-400" /> Create Production Project
-              </h3>
-              <button onClick={() => setShowProjectModal(false)} className="text-zinc-400 hover:text-white text-xs font-mono">
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateProject} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">Project Name (მაგ: Talking Head - AD)</label>
-                <input
-                  type="text"
-                  required
-                  value={projName}
-                  onChange={(e) => setProjName(e.target.value)}
-                  placeholder="e.g. Talking Head - AD"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                />
+      {showProjectModal &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl modal-transition">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 className="font-bold text-sm text-zinc-100 flex items-center gap-2">
+                  <Video className="w-4 h-4 text-cyan-400" /> Create Production Project
+                </h3>
+                <button onClick={() => setShowProjectModal(false)} className="text-zinc-400 hover:text-white text-xs">
+                  ✕
+                </button>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">Short Description</label>
-                <input
-                  type="text"
-                  value={projDesc}
-                  onChange={(e) => setProjDesc(e.target.value)}
-                  placeholder="e.g. Fast-paced commercial edit with sound hits"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <form onSubmit={handleCreateProject} className="space-y-4 font-sans">
                 <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Link to Main Goal (Optional)</label>
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">Project Name (მაგ: Talking Head - AD)</label>
+                  <input
+                    type="text"
+                    required
+                    value={projName}
+                    onChange={(e) => setProjName(e.target.value)}
+                    placeholder="e.g. Talking Head - AD"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">Short Description</label>
+                  <input
+                    type="text"
+                    value={projDesc}
+                    onChange={(e) => setProjDesc(e.target.value)}
+                    placeholder="e.g. Fast-paced commercial edit with sound hits"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Link to Main Goal (Optional)</label>
+                    <select
+                      value={projGoalId}
+                      onChange={(e) => setProjGoalId(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    >
+                      <option value="">-- Standalone Project --</option>
+                      {sectionGoals.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Priority</label>
+                    <select
+                      value={projPriority}
+                      onChange={(e) => setProjPriority(e.target.value as any)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard / High</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Deadline</label>
+                    <input
+                      type="date"
+                      value={projDeadline}
+                      onChange={(e) => setProjDeadline(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Client / User Name (Optional)</label>
+                    <input
+                      type="text"
+                      value={projClientName}
+                      onChange={(e) => setProjClientName(e.target.value)}
+                      placeholder="e.g. Apex Gym (David Miller)"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setShowProjectModal(false)}
+                    className="px-3 py-2 text-xs text-zinc-400 hover:text-white font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-bold text-xs rounded-lg shadow"
+                  >
+                    Create & Open Workspace
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* MODAL: CREATE CLIENT */}
+      {showClientModal &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl modal-transition">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 className="font-bold text-sm text-zinc-100 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-emerald-400" /> Add Client / Lead Record
+                </h3>
+                <button onClick={() => setShowClientModal(false)} className="text-zinc-400 hover:text-white text-xs">
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateClient} className="space-y-4 font-sans">
+                <div>
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">First & Last Name / Brand Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="e.g. David Miller (Apex Fitness)"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Outreach Status</label>
+                    <select
+                      value={clientStatus}
+                      onChange={(e) => setClientStatus(e.target.value as any)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    >
+                      <option value="Contacted">Contacted</option>
+                      <option value="Ignored">Ignored / Ghosted</option>
+                      <option value="Agreed">Agreed / In Discussion</option>
+                      <option value="Client">Active Client</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Priority</label>
+                    <select
+                      value={clientPriority}
+                      onChange={(e) => setClientPriority(e.target.value as any)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    >
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Deadline / Follow-Up</label>
+                    <input
+                      type="date"
+                      value={clientDeadline}
+                      onChange={(e) => setClientDeadline(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Project Revenue ($)</label>
+                    <input
+                      type="number"
+                      value={clientRevenue || ''}
+                      onChange={(e) => setClientRevenue(Number(e.target.value))}
+                      placeholder="800"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">Link to Existing Project</label>
                   <select
-                    value={projGoalId}
-                    onChange={(e) => setProjGoalId(e.target.value)}
+                    value={clientLinkedProj}
+                    onChange={(e) => setClientLinkedProj(e.target.value)}
                     className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
                   >
-                    <option value="">-- Standalone Project --</option>
-                    {sectionGoals.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.title}
+                    <option value="">-- No Linked Project --</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.section})
                       </option>
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Priority</label>
-                  <select
-                    value={projPriority}
-                    onChange={(e) => setProjPriority(e.target.value as any)}
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">Notes & Scope</label>
+                  <textarea
+                    rows={2}
+                    value={clientNotes}
+                    onChange={(e) => setClientNotes(e.target.value)}
+                    placeholder="Key deliverables, contract details, etc."
                     className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setShowClientModal(false)}
+                    className="px-3 py-2 text-xs text-zinc-400 hover:text-white font-medium"
                   >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard / High</option>
-                  </select>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-bold text-xs rounded-lg shadow"
+                  >
+                    Save Client
+                  </button>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Deadline</label>
-                  <input
-                    type="date"
-                    value={projDeadline}
-                    onChange={(e) => setProjDeadline(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Client / User Name (Optional)</label>
-                  <input
-                    type="text"
-                    value={projClientName}
-                    onChange={(e) => setProjClientName(e.target.value)}
-                    placeholder="e.g. Apex Gym (David Miller)"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => setShowProjectModal(false)}
-                  className="px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs rounded-lg shadow"
-                >
-                  Create & Open Workspace
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: CREATE CLIENT */}
-      {showClientModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-mono font-bold text-sm text-zinc-100 flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-emerald-400" /> Add Client / Lead Record
-              </h3>
-              <button onClick={() => setShowClientModal(false)} className="text-zinc-400 hover:text-white text-xs font-mono">
-                ✕
-              </button>
+              </form>
             </div>
-
-            <form onSubmit={handleCreateClient} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">First & Last Name / Brand Name</label>
-                <input
-                  type="text"
-                  required
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  placeholder="e.g. David Miller (Apex Fitness)"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Outreach Status</label>
-                  <select
-                    value={clientStatus}
-                    onChange={(e) => setClientStatus(e.target.value as any)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                  >
-                    <option value="Contacted">Contacted</option>
-                    <option value="Ignored">Ignored / Ghosted</option>
-                    <option value="Agreed">Agreed / In Discussion</option>
-                    <option value="Client">Active Client</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Priority</label>
-                  <select
-                    value={clientPriority}
-                    onChange={(e) => setClientPriority(e.target.value as any)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                  >
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Deadline / Follow-Up</label>
-                  <input
-                    type="date"
-                    value={clientDeadline}
-                    onChange={(e) => setClientDeadline(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Project Revenue ($)</label>
-                  <input
-                    type="number"
-                    value={clientRevenue || ''}
-                    onChange={(e) => setClientRevenue(Number(e.target.value))}
-                    placeholder="800"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">Link to Existing Project</label>
-                <select
-                  value={clientLinkedProj}
-                  onChange={(e) => setClientLinkedProj(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                >
-                  <option value="">-- No Linked Project --</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.section})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">Notes & Scope</label>
-                <textarea
-                  rows={2}
-                  value={clientNotes}
-                  onChange={(e) => setClientNotes(e.target.value)}
-                  placeholder="Key deliverables, contract details, etc."
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => setShowClientModal(false)}
-                  className="px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs rounded-lg shadow"
-                >
-                  Save Client
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

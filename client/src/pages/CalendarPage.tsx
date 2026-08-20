@@ -16,6 +16,7 @@ import {
   Sparkles,
   ExternalLink
 } from 'lucide-react';
+import { CalendarSkeleton } from '../components/common/SkeletonLoader';
 
 interface CalendarPageProps {
   onOpenProject: (projectId: string) => void;
@@ -145,7 +146,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
   allDeadlines.sort((a, b) => a.date.localeCompare(b.date));
 
   if (loading) {
-    return <div className="p-8 text-center text-xs text-zinc-500 font-medium">Loading Deadlines Calendar...</div>;
+    return <CalendarSkeleton />;
   }
 
   return (

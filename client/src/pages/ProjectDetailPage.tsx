@@ -22,6 +22,7 @@ import {
   User,
   AlertCircle
 } from 'lucide-react';
+import { ProjectDetailSkeleton } from '../components/common/SkeletonLoader';
 
 interface ProjectDetailPageProps {
   projectId: string;
@@ -174,7 +175,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
   };
 
   if (loading) {
-    return <div className="p-8 text-center font-mono text-xs text-zinc-500">LOADING PROJECT WORKSPACE...</div>;
+    return <ProjectDetailSkeleton />;
   }
 
   if (!project) {

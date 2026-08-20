@@ -23,6 +23,7 @@ import {
   Zap,
   Layers
 } from 'lucide-react';
+import { AnalyticsSkeleton } from '../components/common/SkeletonLoader';
 
 export const AnalyticsPage: React.FC = () => {
   const [data, setData] = useState<any>(null);
@@ -45,7 +46,7 @@ export const AnalyticsPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-center font-mono text-xs text-zinc-500">COMPUTING PRODUCTION ANALYTICS...</div>;
+    return <AnalyticsSkeleton />;
   }
 
   if (!data) return null;
