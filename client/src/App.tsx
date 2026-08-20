@@ -6,6 +6,7 @@ import { QuickCaptureModal } from './components/layout/QuickCaptureModal';
 
 import { GoalsHubPage } from './pages/GoalsHubPage';
 import { ContentStudioPage } from './pages/ContentStudioPage';
+import { CalendarPage } from './pages/CalendarPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { InboxPage } from './pages/InboxPage';
@@ -78,6 +79,8 @@ export function App() {
       case 'content':
       case 'dashboard':
         return <ContentStudioPage onOpenProject={handleOpenProject} />;
+      case 'calendar':
+        return <CalendarPage onOpenProject={handleOpenProject} />;
       case 'project_detail':
         return (
           <ProjectDetailPage

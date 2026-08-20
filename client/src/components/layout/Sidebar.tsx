@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Target,
   Clapperboard,
+  Calendar,
   BarChart3,
   Inbox,
   Settings,
@@ -39,30 +40,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col justify-between shrink-0 select-none h-screen">
+    <aside className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col justify-between shrink-0 select-none h-screen font-sans">
       {/* Brand Header */}
       <div className="flex flex-col">
         <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-zinc-100 text-zinc-950 flex items-center justify-center font-mono font-bold text-xs rounded-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-zinc-100 text-zinc-950 flex items-center justify-center font-bold text-xs rounded-md shadow-sm">
               OS
             </div>
             <div>
-              <h1 className="font-mono font-bold text-sm text-zinc-100 tracking-tight">EDITOR OS</h1>
-              <p className="text-[10px] text-zinc-400 font-mono leading-none">v2.0 GOAL SYSTEM</p>
+              <h1 className="font-bold text-sm text-zinc-100 tracking-tight">EDITOR OS</h1>
+              <p className="text-[10px] text-zinc-400 font-medium">Video Editor Growth System</p>
             </div>
           </div>
         </div>
 
         {/* 90-Day Cycle Status Badge */}
-        <div className="mx-3 my-3 p-2.5 bg-zinc-900/80 border border-zinc-800 rounded font-mono text-xs space-y-1.5">
+        <div className="mx-3 my-3 p-3 bg-zinc-900/80 border border-zinc-800 rounded-lg text-xs space-y-2">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-zinc-400">90-DAY CYCLE</span>
+            <span className="text-zinc-400 font-medium">90-DAY SPRINT CYCLE</span>
             <span className="font-bold text-zinc-100">
               DAY {cycleDay} / {cycleTotalDays}
             </span>
           </div>
-          <div className="w-full bg-zinc-950 h-1 rounded-full overflow-hidden">
+          <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden">
             <div
               className="bg-zinc-100 h-full transition-all duration-300"
               style={{ width: `${Math.min(100, Math.round((cycleDay / cycleTotalDays) * 100))}%` }}
@@ -74,10 +75,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="px-3 pb-2">
           <button
             onClick={onOpenQuickCapture}
-            className="w-full py-2 px-3 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-700/80 hover:border-zinc-500 rounded text-xs font-mono flex items-center justify-between transition-all group"
+            className="w-full py-2 px-3 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-700/80 hover:border-zinc-500 rounded-lg text-xs flex items-center justify-between transition-all group shadow-sm font-medium"
           >
-            <span className="flex items-center gap-2 font-medium">
-              <PlusCircle className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-100" />
+            <span className="flex items-center gap-2">
+              <PlusCircle className="w-4 h-4 text-zinc-400 group-hover:text-zinc-100" />
               Quick Capture
             </span>
             <kbd className="px-1.5 py-0.5 text-[9px] bg-zinc-950 text-zinc-400 border border-zinc-800 rounded font-sans">
@@ -95,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onSelectTab('goals');
                 setIsGoalsExpanded(true);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-mono rounded-md transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer font-semibold ${
                 currentTab.startsWith('goal')
                   ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-purple-500'
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
@@ -127,7 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       key={sub.id}
                       onClick={() => onSelectTab(`goal_${sub.id}`, sub.id)}
-                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs font-mono rounded transition-colors text-left ${
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md transition-colors text-left font-medium ${
                         isSubActive
                           ? 'bg-zinc-850 text-zinc-100 font-semibold'
                           : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'
@@ -142,11 +143,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* 2. CONTENT STUDIO (Merged with Dashboard & Calendar) */}
+          {/* 2. CONTENT STUDIO (Kanban + Top 5 Tasks) */}
           <button
             onClick={() => onSelectTab('content')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono rounded-md transition-colors ${
-              currentTab === 'content' || currentTab === 'dashboard'
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors font-medium ${
+              currentTab === 'content'
                 ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-blue-500'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
             }`}
@@ -155,10 +156,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>CONTENT STUDIO</span>
           </button>
 
-          {/* 3. ANALYTICS */}
+          {/* 3. EXPANDED CALENDAR (Dedicated Page) */}
+          <button
+            onClick={() => onSelectTab('calendar')}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors font-medium ${
+              currentTab === 'calendar'
+                ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-purple-500'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-purple-400" />
+            <span>📅 CALENDAR</span>
+          </button>
+
+          {/* 4. ANALYTICS */}
           <button
             onClick={() => onSelectTab('analytics')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono rounded-md transition-colors ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors font-medium ${
               currentTab === 'analytics'
                 ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-cyan-500'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
@@ -168,10 +182,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>ANALYTICS</span>
           </button>
 
-          {/* 4. IDEA INBOX */}
+          {/* 5. IDEA INBOX */}
           <button
             onClick={() => onSelectTab('inbox')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono rounded-md transition-colors ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors font-medium ${
               currentTab === 'inbox'
                 ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-amber-500'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
@@ -181,10 +195,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>IDEA INBOX</span>
           </button>
 
-          {/* 5. SETTINGS */}
+          {/* 6. SETTINGS */}
           <button
             onClick={() => onSelectTab('settings')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono rounded-md transition-colors ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg transition-colors font-medium ${
               currentTab === 'settings'
                 ? 'bg-zinc-900 text-zinc-100 font-bold border-l-2 border-zinc-400'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
@@ -197,12 +211,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer / User Profile */}
-      <div className="p-3 border-t border-zinc-800/80 bg-zinc-950 font-mono text-[11px] text-zinc-400 flex items-center justify-between">
+      <div className="p-3 border-t border-zinc-800/80 bg-zinc-950 text-xs text-zinc-400 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-zinc-300 font-medium truncate max-w-[140px]">Alex (Editor)</span>
+          <span className="text-zinc-200 font-medium truncate max-w-[140px]">Alex (Editor)</span>
         </div>
-        <span className="text-zinc-400 text-[10px]">SYNCED</span>
+        <span className="text-zinc-500 text-[10px] uppercase font-bold">Cloud Synced</span>
       </div>
     </aside>
   );
