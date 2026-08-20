@@ -12,11 +12,9 @@
 @keyframes smoothFadeIn {
   0% {
     opacity: 0;
-    transform: translateY(6px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -32,7 +30,7 @@
 @keyframes scaleFadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.97);
+    transform: scale(0.96);
   }
   100% {
     opacity: 1;
@@ -41,8 +39,7 @@
 }
 
 .page-transition {
-  animation: smoothFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: opacity, transform;
+  animation: smoothFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .fade-in {
@@ -50,7 +47,7 @@
 }
 
 .modal-transition {
-  animation: scaleFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: scaleFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Custom Monochrome Scrollbar */

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../api';
 import { Project, Task, Goal, ProjectStatus, ProjectPriority } from '../types';
 import {
@@ -267,41 +268,43 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
         </div>
       </div>
 
-      {/* 4. TASK COMPLETION CONFIRMATION DIALOG MODAL */}
-      {confirmTask && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-full bg-emerald-950/80 border border-emerald-700 text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
-              <Check className="w-6 h-6" />
-            </div>
+      {/* 4. TASK COMPLETION CONFIRMATION DIALOG MODAL (MOUNTED TO BODY FOR TRUE CENTER) */}
+      {confirmTask &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl modal-transition">
+              <div className="w-12 h-12 rounded-full bg-emerald-950/80 border border-emerald-700 text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
+                <Check className="w-6 h-6" />
+              </div>
 
-            <div className="space-y-1.5">
-              <h3 className="text-base font-bold text-zinc-100 font-sans">შეასრულეთ ეს თასქი?</h3>
-              <p className="text-xs text-zinc-300 font-medium px-2 py-1.5 bg-zinc-900 rounded-lg border border-zinc-800 line-clamp-2">
-                "{confirmTask.title}"
-              </p>
-            </div>
+              <div className="space-y-1.5">
+                <h3 className="text-base font-bold text-zinc-100 font-sans">შეასრულეთ ეს თასქი?</h3>
+                <p className="text-xs text-zinc-300 font-medium px-2.5 py-1.5 bg-zinc-900 rounded-lg border border-zinc-800 line-clamp-2">
+                  "{confirmTask.title}"
+                </p>
+              </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => setConfirmTask(null)}
-                className="py-2.5 px-4 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-              >
-                <X className="w-3.5 h-3.5" /> No / არა
-              </button>
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setConfirmTask(null)}
+                  className="py-2.5 px-4 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" /> No / არა
+                </button>
 
-              <button
-                type="button"
-                onClick={handleConfirmComplete}
-                className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
-              >
-                <Check className="w-3.5 h-3.5" /> Yes / დიახ
-              </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmComplete}
+                  className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-3.5 h-3.5" /> Yes / დიახ
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../api';
 import { Project, Task, ProjectReference, ProjectPriority, ProjectStatus } from '../types';
 import { exportScriptToWord } from '../utils/exportDocx';
@@ -596,87 +597,89 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
       </div>
 
       {/* MODAL: ADD REFERENCE */}
-      {showRefModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-mono font-bold text-sm text-zinc-100 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-cyan-400" /> Add Video / Asset Reference
-              </h3>
-              <button onClick={() => setShowRefModal(false)} className="text-zinc-400 hover:text-white text-xs font-mono">
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleAddReference} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">Title</label>
-                <input
-                  type="text"
-                  required
-                  value={refTitle}
-                  onChange={(e) => setRefTitle(e.target.value)}
-                  placeholder="e.g. Nike Kinetic Cut Reference"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                />
+      {showRefModal &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl modal-transition">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <h3 className="font-bold text-sm text-zinc-100 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-cyan-400" /> Add Video / Asset Reference
+                </h3>
+                <button onClick={() => setShowRefModal(false)} className="text-zinc-400 hover:text-white text-xs">
+                  ✕
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <form onSubmit={handleAddReference} className="space-y-4 font-sans">
                 <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">URL / Link</label>
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">Title</label>
                   <input
-                    type="url"
+                    type="text"
                     required
-                    value={refUrl}
-                    onChange={(e) => setRefUrl(e.target.value)}
-                    placeholder="https://youtube.com/..."
+                    value={refTitle}
+                    onChange={(e) => setRefTitle(e.target.value)}
+                    placeholder="e.g. Nike Kinetic Cut Reference"
                     className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
                   />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-mono text-zinc-400 mb-1">Type</label>
-                  <select
-                    value={refType}
-                    onChange={(e) => setRefType(e.target.value as any)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                  >
-                    <option value="video">Video Link</option>
-                    <option value="image">Image Moodboard</option>
-                    <option value="link">Other Asset Link</option>
-                  </select>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">URL / Link</label>
+                    <input
+                      type="url"
+                      required
+                      value={refUrl}
+                      onChange={(e) => setRefUrl(e.target.value)}
+                      placeholder="https://youtube.com/..."
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Type</label>
+                    <select
+                      value={refType}
+                      onChange={(e) => setRefType(e.target.value as any)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                    >
+                      <option value="video">Video Link</option>
+                      <option value="image">Image Moodboard</option>
+                      <option value="link">Other Asset Link</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[11px] font-mono text-zinc-400 mb-1">Notes / Why Saved</label>
-                <textarea
-                  rows={2}
-                  value={refNotes}
-                  onChange={(e) => setRefNotes(e.target.value)}
-                  placeholder="What specific technique to copy or study?"
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
-                />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1">Notes / Why Saved</label>
+                  <textarea
+                    rows={2}
+                    value={refNotes}
+                    onChange={(e) => setRefNotes(e.target.value)}
+                    placeholder="What specific technique to copy or study?"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-400"
+                  />
+                </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => setShowRefModal(false)}
-                  className="px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs rounded-lg shadow"
-                >
-                  Save Reference
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setShowRefModal(false)}
+                    className="px-3 py-2 text-xs text-zinc-400 hover:text-white font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-bold text-xs rounded-lg shadow"
+                  >
+                    Save Reference
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
