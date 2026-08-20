@@ -130,12 +130,6 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
         status: 'Planning'
       });
 
-      // Create initial 4 tasks for this project
-      api.createTask({ project_id: newP.id, title: 'Script & Concept outline', stage: 'Planning', due_date: projDeadline || '' }).catch(console.error);
-      api.createTask({ project_id: newP.id, title: 'Select footage & references', stage: 'Editing', due_date: projDeadline || '' }).catch(console.error);
-      api.createTask({ project_id: newP.id, title: 'Assemble rough cut & pacing', stage: 'Editing', due_date: projDeadline || '' }).catch(console.error);
-      api.createTask({ project_id: newP.id, title: 'Sound Design & Final Polish', stage: 'Sound Design', due_date: projDeadline || '' }).catch(console.error);
-
       setProjName('');
       setProjDesc('');
       setProjClientName('');

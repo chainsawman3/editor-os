@@ -58,15 +58,8 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onSelectProject }) =
         priority,
         deadline: deadline || null,
         description,
-        next_action: nextAction || 'Define project tasks and references'
+        next_action: nextAction || ''
       });
-
-      await Promise.all([
-        api.createTask({ project_id: newProj.id, title: 'Define visual concept & gather references', stage: 'Research' }),
-        api.createTask({ project_id: newProj.id, title: 'Import footage & rough assembly cut', stage: 'Editing' }),
-        api.createTask({ project_id: newProj.id, title: 'Detailed sound design pass', stage: 'Sound Design' }),
-        api.createTask({ project_id: newProj.id, title: 'Color grading & final master export', stage: 'Color Grading' })
-      ]);
 
       setShowCreateModal(false);
       setName('');
