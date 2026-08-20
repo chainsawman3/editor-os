@@ -497,12 +497,12 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                     <div
                       key={p.id}
                       onClick={() => onOpenProject(p.id)}
-                      className="bg-white hover:bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl p-4.5 cursor-pointer group transition-all flex flex-col justify-between space-y-4 shadow-md hover:shadow-lg"
+                      className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-4.5 cursor-pointer group transition-all flex flex-col justify-between space-y-4 shadow-md shadow-black/40 hover:shadow-xl"
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 text-[9px] font-mono rounded bg-cyan-50 border border-cyan-200 text-cyan-800 font-bold uppercase">
+                            <span className="px-2 py-0.5 text-[9px] font-mono rounded bg-cyan-950/80 border border-cyan-800/80 text-cyan-300 font-bold uppercase">
                               {p.status}
                             </span>
                             <span className={`px-2 py-0.5 text-[9px] font-mono rounded border ${getPriorityColor(p.priority)}`}>
@@ -511,38 +511,38 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
                           </div>
                           <button
                             onClick={(e) => handleDeleteProject(p.id, e)}
-                            className="p-1 text-zinc-400 hover:text-rose-600 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="p-1 text-zinc-400 hover:text-rose-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
-                        <h3 className="text-base font-bold text-zinc-950 group-hover:text-black font-sans transition-colors">
+                        <h3 className="text-base font-bold text-zinc-100 group-hover:text-white font-sans transition-colors">
                           {p.name}
                         </h3>
 
                         {p.description && (
-                          <p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed">{p.description}</p>
+                          <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">{p.description}</p>
                         )}
                       </div>
 
-                      <div className="space-y-2 pt-2 border-t border-zinc-200">
+                      <div className="space-y-2 pt-2 border-t border-zinc-800">
                         {goal && (
-                          <div className="text-[11px] font-mono text-purple-700 font-semibold truncate">
+                          <div className="text-[11px] font-mono text-purple-300 font-semibold truncate">
                             🎯 Goal: {goal.title}
                           </div>
                         )}
                         {p.client_name && (
-                          <div className="text-[11px] font-mono text-zinc-600 truncate">
-                            👤 Client: <span className="text-zinc-900 font-semibold">{p.client_name}</span>
+                          <div className="text-[11px] font-mono text-zinc-400 truncate">
+                            👤 Client: <span className="text-zinc-200 font-semibold">{p.client_name}</span>
                           </div>
                         )}
-                        <div className="flex items-center justify-between text-[11px] font-mono text-zinc-600 pt-1">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 pt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3 text-zinc-500" />
                             {p.deadline || 'No deadline'}
                           </span>
-                          <span className="flex items-center gap-1 text-zinc-950 font-bold group-hover:text-blue-600">
+                          <span className="flex items-center gap-1 text-zinc-200 font-bold group-hover:text-blue-400 transition-colors">
                             Open Workspace <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                           </span>
                         </div>

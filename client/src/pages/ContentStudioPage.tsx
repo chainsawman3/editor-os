@@ -80,12 +80,12 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
     switch (p) {
       case 'Hard':
       case 'High':
-        return 'text-rose-700 bg-rose-50 border-rose-200 font-bold';
+        return 'text-rose-300 bg-rose-950/60 border-rose-800/80 font-bold';
       case 'Medium':
-        return 'text-amber-800 bg-amber-50 border-amber-200 font-bold';
+        return 'text-amber-300 bg-amber-950/60 border-amber-800/80 font-bold';
       case 'Low':
       default:
-        return 'text-emerald-800 bg-emerald-50 border-emerald-200 font-bold';
+        return 'text-emerald-300 bg-emerald-950/60 border-emerald-800/80 font-bold';
     }
   };
 
@@ -146,15 +146,15 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                       onOpenProject(t.project_id);
                     }
                   }}
-                  className="bg-white hover:bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl p-3.5 cursor-pointer group transition-all flex flex-col justify-between space-y-3 shadow-md hover:shadow-lg"
+                  className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-3.5 cursor-pointer group transition-all flex flex-col justify-between space-y-3 shadow-md shadow-black/40 hover:shadow-xl"
                   title="Click to open this project's workspace"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
-                      <span className="text-xs font-black text-blue-600">
+                      <span className="text-[11px] font-mono font-bold text-blue-400 bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-800/60">
                         #{idx + 1}
                       </span>
-                      <span className="text-xs font-bold text-zinc-950 group-hover:text-black line-clamp-2 leading-snug transition-colors">
+                      <span className="text-xs font-bold text-zinc-100 group-hover:text-white line-clamp-2 leading-snug transition-colors">
                         {t.title}
                       </span>
                     </div>
@@ -166,16 +166,16 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                         e.stopPropagation();
                         setConfirmTask(t);
                       }}
-                      className="text-zinc-400 hover:text-emerald-600 shrink-0 p-1 hover:bg-emerald-50 rounded-full transition-colors"
+                      className="text-zinc-500 hover:text-emerald-400 shrink-0 p-1 hover:bg-emerald-950/50 rounded-full transition-colors"
                       title="Mark as completed"
                     >
                       <Circle className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="pt-2 border-t border-zinc-200 text-[11px] flex items-center justify-between">
-                    <span className="truncate max-w-[100px] text-zinc-700 font-semibold">{p?.name || 'Project'}</span>
-                    <span className="text-purple-700 font-extrabold">{t.due_date || 'Today'}</span>
+                  <div className="pt-2 border-t border-zinc-800 text-[11px] flex items-center justify-between text-zinc-400">
+                    <span className="truncate max-w-[100px] text-zinc-300 font-medium">{p?.name || 'Project'}</span>
+                    <span className="text-purple-400 font-bold">{t.due_date || 'Today'}</span>
                   </div>
                 </div>
               );
@@ -220,40 +220,40 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({ onOpenProj
                         <div
                           key={p.id}
                           onClick={() => onOpenProject(p.id)}
-                          className="bg-white hover:bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-xl p-4 cursor-pointer group transition-all space-y-2.5 shadow-md hover:shadow-lg"
+                          className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 ring-1 ring-white/[0.06] rounded-xl p-4 cursor-pointer group transition-all space-y-2.5 shadow-md shadow-black/40 hover:shadow-xl"
                         >
                           <div className="flex items-center justify-between">
                             <span className={`px-2 py-0.5 text-[10px] rounded border ${getPriorityColor(p.priority)}`}>
                               {p.priority}
                             </span>
-                            <span className="text-[11px] text-zinc-500 font-bold uppercase tracking-wider">{p.section.replace('_', ' ')}</span>
+                            <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider">{p.section.replace('_', ' ')}</span>
                           </div>
 
-                          <h4 className="text-sm font-bold text-zinc-950 group-hover:text-black line-clamp-1">
+                          <h4 className="text-sm font-bold text-zinc-100 group-hover:text-white line-clamp-1">
                             {p.name}
                           </h4>
 
                           {p.description && (
-                            <p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed font-normal">{p.description}</p>
+                            <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed font-normal">{p.description}</p>
                           )}
 
-                          <div className="pt-2 border-t border-zinc-200 space-y-1.5 text-xs">
+                          <div className="pt-2 border-t border-zinc-800 space-y-1.5 text-xs">
                             {goal && (
-                              <div className="text-purple-700 font-semibold truncate text-[11px]">
+                              <div className="text-purple-300 font-medium truncate text-[11px]">
                                 🎯 {goal.title}
                               </div>
                             )}
                             {p.client_name && (
-                              <div className="text-blue-700 font-semibold truncate text-[11px]">
+                              <div className="text-cyan-300 font-medium truncate text-[11px]">
                                 👤 {p.client_name}
                               </div>
                             )}
-                            <div className="flex items-center justify-between text-zinc-600 pt-1 text-[11px]">
+                            <div className="flex items-center justify-between text-zinc-400 pt-1 text-[11px]">
                               <span className="flex items-center gap-1 font-medium">
                                 <CalendarIcon className="w-3 h-3 text-zinc-500" />
                                 {p.deadline || 'No Date'}
                               </span>
-                              <span className="text-zinc-950 group-hover:text-blue-600 flex items-center gap-1 font-extrabold transition-colors">
+                              <span className="text-zinc-200 group-hover:text-blue-400 flex items-center gap-1 font-bold transition-colors">
                                 Workspace <ArrowRight className="w-3 h-3" />
                               </span>
                             </div>
