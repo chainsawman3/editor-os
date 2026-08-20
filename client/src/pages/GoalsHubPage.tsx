@@ -117,33 +117,36 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
     e.preventDefault();
     if (!projName.trim()) return;
 
-    const newP = await api.createProject({
-      name: projName.trim(),
-      description: projDesc.trim(),
-      section: activeSection,
-      sub_section: activeSection === 'marketing' ? (marketingPlatform !== 'all' ? marketingPlatform : projPlatform || 'instagram') : null,
-      goal_id: projGoalId || null,
-      priority: projPriority,
-      deadline: projDeadline || null,
-      client_name: projClientName.trim() || undefined,
-      status: 'Planning'
-    });
+    try {
+      const newP = await api.createProject({
+        name: projName.trim(),
+        description: projDesc.trim(),
+        section: activeSection,
+        sub_section: activeSection === 'marketing' ? (marketingPlatform !== 'all' ? marketingPlatform : projPlatform || 'instagram') : null,
+        goal_id: projGoalId || null,
+        priority: projPriority,
+        deadline: projDeadline || null,
+        client_name: projClientName.trim() || undefined,
+        status: 'Planning'
+      });
 
-    // Create initial 4 tasks for this project
-    await Promise.all([
-      api.createTask({ project_id: newP.id, title: 'Script & Concept outline', stage: 'Planning', due_date: projDeadline || '' }),
-      api.createTask({ project_id: newP.id, title: 'Select footage & references', stage: 'Editing', due_date: projDeadline || '' }),
-      api.createTask({ project_id: newP.id, title: 'Assemble rough cut & pacing', stage: 'Editing', due_date: projDeadline || '' }),
-      api.createTask({ project_id: newP.id, title: 'Sound Design & Final Polish', stage: 'Sound Design', due_date: projDeadline || '' })
-    ]);
+      // Create initial 4 tasks for this project
+      api.createTask({ project_id: newP.id, title: 'Script & Concept outline', stage: 'Planning', due_date: projDeadline || '' }).catch(console.error);
+      api.createTask({ project_id: newP.id, title: 'Select footage & references', stage: 'Editing', due_date: projDeadline || '' }).catch(console.error);
+      api.createTask({ project_id: newP.id, title: 'Assemble rough cut & pacing', stage: 'Editing', due_date: projDeadline || '' }).catch(console.error);
+      api.createTask({ project_id: newP.id, title: 'Sound Design & Final Polish', stage: 'Sound Design', due_date: projDeadline || '' }).catch(console.error);
 
-    setProjName('');
-    setProjDesc('');
-    setProjClientName('');
-    setProjDeadline('');
-    setShowProjectModal(false);
-    loadAllData();
-    onOpenProject(newP.id);
+      setProjName('');
+      setProjDesc('');
+      setProjClientName('');
+      setProjDeadline('');
+      setShowProjectModal(false);
+      loadAllData();
+      onOpenProject(newP.id);
+    } catch (err) {
+      console.error('Error creating project:', err);
+      setShowProjectModal(false);
+    }
   };
 
   const handleCreateClient = async (e: React.FormEvent) => {
