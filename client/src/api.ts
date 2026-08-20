@@ -18,7 +18,11 @@ import {
   Settings
 } from './types';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '5173'
+    ? 'http://localhost:3001/api'
+    : '/api');
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${url}`, {

@@ -5,9 +5,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dataDir = path.resolve(__dirname, '../data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+const dataDir = process.env.VERCEL ? '/tmp' : path.resolve(__dirname, '../data');
+try {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+} catch (e) {
+  // Ignored in serverless env
 }
 
 const dbFilePath = path.join(dataDir, 'editor_os.json');
@@ -285,9 +289,13 @@ export function loadDatabase(): DatabaseSchema {
 
 export function saveDatabase(data: DatabaseSchema) {
   memoryDb = data;
-  const tempPath = `${dbFilePath}.tmp`;
-  fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
-  fs.renameSync(tempPath, dbFilePath);
+  try {
+    const tempPath = `${dbFilePath}.tmp`;
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tempPath, dbFilePath);
+  } catch (err) {
+    // In serverless/read-only environment, memoryDb persists during execution
+  }
 }
 
 export function getDb(): DatabaseSchema {
