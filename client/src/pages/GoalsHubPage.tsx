@@ -238,122 +238,133 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({ initialSection = 'vi
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
       {/* 1. TOP HEADER & SUB-SECTION TABS */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 sm:p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-lg bg-zinc-900 border border-zinc-700/80 text-zinc-100">
-                <Target className="w-5 h-5" />
-              </span>
-              <div>
-                <h1 className="text-xl font-bold font-mono text-zinc-100 tracking-tight">GOAL MANAGEMENT HUB</h1>
-                <p className="text-xs text-zinc-400 font-mono">Define high-level objectives, link production projects, and manage client pipeline</p>
-              </div>
+      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5 font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-850 pb-5">
+          <div className="flex items-center gap-3.5">
+            <span className="p-2.5 rounded-xl bg-purple-950/50 border border-purple-800/60 text-purple-400 shadow-inner">
+              <Target className="w-5 h-5" />
+            </span>
+            <div>
+              <h1 className="text-xl font-bold text-zinc-100 tracking-tight">Goals & Objectives Hub</h1>
+              <p className="text-xs text-zinc-400 font-medium mt-0.5">
+                Define high-level objectives, link production projects, and manage client pipeline
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {activeSection !== 'freelance' && (
               <>
                 <button
                   onClick={() => setShowGoalModal(true)}
-                  className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg text-xs font-mono flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
                 >
-                  <Plus className="w-3.5 h-3.5" /> New Main Goal
+                  <Plus className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>+ New Goal</span>
                 </button>
                 <button
                   onClick={() => setShowProjectModal(true)}
-                  className="px-3 py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shadow"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-900/20"
                 >
-                  <Plus className="w-3.5 h-3.5" /> New Project
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ New Project</span>
                 </button>
               </>
             )}
             {activeSection === 'freelance' && (
               <button
                 onClick={() => setShowClientModal(true)}
-                className="px-3.5 py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-colors shadow"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-900/20"
               >
-                <Plus className="w-3.5 h-3.5" /> Add Client / Lead
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Client / Lead</span>
               </button>
             )}
           </div>
         </div>
 
         {/* 4 PRIMARY SUB-SECTION SWITCHER */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             onClick={() => setActiveSection('video_editing')}
-            className={`p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${
+            className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
               activeSection === 'video_editing'
-                ? 'bg-zinc-900 border-zinc-400 text-zinc-100 shadow-sm ring-1 ring-zinc-400/20'
-                : 'bg-zinc-950/60 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'
+                ? 'bg-zinc-900 border-blue-500/50 text-white shadow-md ring-1 ring-blue-500/20'
+                : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Clapperboard className="w-4 h-4 text-zinc-300" />
+            <div className={`p-2 rounded-lg border ${activeSection === 'video_editing' ? 'bg-blue-950/80 border-blue-800 text-blue-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+              <Clapperboard className="w-4 h-4" />
+            </div>
             <div>
-              <div className="font-mono text-xs font-bold">1. Video Editing</div>
-              <div className="text-[10px] text-zinc-400">Portfolio & Client Edits</div>
+              <div className="text-xs font-bold text-zinc-100">Video Editing</div>
+              <div className="text-[11px] text-zinc-400 font-normal">Portfolio & Client Edits</div>
             </div>
           </button>
 
           <button
             onClick={() => setActiveSection('marketing')}
-            className={`p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${
+            className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
               activeSection === 'marketing'
-                ? 'bg-zinc-900 border-zinc-400 text-zinc-100 shadow-sm ring-1 ring-zinc-400/20'
-                : 'bg-zinc-950/60 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'
+                ? 'bg-zinc-900 border-emerald-500/50 text-white shadow-md ring-1 ring-emerald-500/20'
+                : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Megaphone className="w-4 h-4 text-zinc-300" />
+            <div className={`p-2 rounded-lg border ${activeSection === 'marketing' ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+              <Megaphone className="w-4 h-4" />
+            </div>
             <div>
-              <div className="font-mono text-xs font-bold">2. Marketing</div>
-              <div className="text-[10px] text-zinc-400">Instagram, TikTok, YouTube</div>
+              <div className="text-xs font-bold text-zinc-100">Marketing & Content</div>
+              <div className="text-[11px] text-zinc-400 font-normal">Instagram, TikTok, YouTube</div>
             </div>
           </button>
 
           <button
             onClick={() => setActiveSection('freelance')}
-            className={`p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${
+            className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
               activeSection === 'freelance'
-                ? 'bg-zinc-900 border-zinc-400 text-zinc-100 shadow-sm ring-1 ring-zinc-400/20'
-                : 'bg-zinc-950/60 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'
+                ? 'bg-zinc-900 border-purple-500/50 text-white shadow-md ring-1 ring-purple-500/20'
+                : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Briefcase className="w-4 h-4 text-zinc-300" />
+            <div className={`p-2 rounded-lg border ${activeSection === 'freelance' ? 'bg-purple-950/80 border-purple-800 text-purple-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+              <Briefcase className="w-4 h-4" />
+            </div>
             <div>
-              <div className="font-mono text-xs font-bold">3. Freelance / Clients</div>
-              <div className="text-[10px] text-zinc-400">Outreach CRM & Pipeline</div>
+              <div className="text-xs font-bold text-zinc-100">Client CRM & Leads</div>
+              <div className="text-[11px] text-zinc-400 font-normal">Outreach & Pipeline</div>
             </div>
           </button>
 
           <button
             onClick={() => setActiveSection('skills')}
-            className={`p-3 rounded-lg border text-left transition-all flex items-center gap-3 ${
+            className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
               activeSection === 'skills'
-                ? 'bg-zinc-900 border-zinc-400 text-zinc-100 shadow-sm ring-1 ring-zinc-400/20'
-                : 'bg-zinc-950/60 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'
+                ? 'bg-zinc-900 border-amber-500/50 text-white shadow-md ring-1 ring-amber-500/20'
+                : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <GraduationCap className="w-4 h-4 text-zinc-300" />
+            <div className={`p-2 rounded-lg border ${activeSection === 'skills' ? 'bg-amber-950/80 border-amber-800 text-amber-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+              <GraduationCap className="w-4 h-4" />
+            </div>
             <div>
-              <div className="font-mono text-xs font-bold">4. Skills / Learning</div>
-              <div className="text-[10px] text-zinc-400">Techniques & VFX Mastery</div>
+              <div className="text-xs font-bold text-zinc-100">Skills & VFX Mastery</div>
+              <div className="text-[11px] text-zinc-400 font-normal">Techniques & Learning</div>
             </div>
           </button>
         </div>
 
         {/* MARKETING PLATFORMS SUB-PILLS */}
         {activeSection === 'marketing' && (
-          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800/60 overflow-x-auto">
-            <span className="text-[11px] font-mono text-zinc-400 mr-2">PLATFORMS:</span>
+          <div className="flex items-center gap-2 pt-3 border-t border-zinc-850 overflow-x-auto">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mr-1">Platforms:</span>
             {(['all', 'instagram', 'tiktok', 'youtube', 'linkedin', 'fiverr'] as const).map((plat) => (
               <button
                 key={plat}
                 onClick={() => setMarketingPlatform(plat)}
-                className={`px-2.5 py-1 rounded text-xs font-mono uppercase transition-all ${
+                className={`px-3 py-1 text-xs rounded-lg uppercase font-semibold transition-all ${
                   marketingPlatform === plat
-                    ? 'bg-zinc-100 text-zinc-950 font-bold'
+                    ? 'bg-emerald-950/80 border border-emerald-700 text-emerald-300 shadow-sm'
                     : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
                 }`}
               >
