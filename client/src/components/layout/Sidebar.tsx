@@ -48,20 +48,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex flex-col">
         {/* Brand Header */}
         <div
-          onClick={() => onSelectTab('content')}
-          title="Go to Content Studio"
+          onClick={() => onSelectTab('goals')}
+          title="Go to Goals & Projects Hub"
           className="p-4 border-b border-zinc-850 flex items-center justify-between cursor-pointer hover:bg-zinc-900/50 transition-colors group"
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700/80 flex items-center justify-center font-bold text-xs text-white shadow-sm group-hover:border-zinc-500 transition-colors">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700/80 flex items-center justify-center font-bold text-xs text-white shadow-sm group-hover:border-purple-500/50 transition-colors">
               OS
             </div>
             <div>
               <h1 className="font-bold text-sm text-zinc-100 tracking-tight group-hover:text-white transition-colors">
                 Editor OS
               </h1>
-              <p className="text-[11px] text-zinc-400 font-medium group-hover:text-blue-400 transition-colors">
-                Content Studio Dashboard ↗
+              <p className="text-[11px] text-zinc-400 font-medium group-hover:text-purple-400 transition-colors">
+                Goals & Projects Hub ↗
               </p>
             </div>
           </div>

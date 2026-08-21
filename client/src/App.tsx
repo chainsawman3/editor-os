@@ -22,6 +22,7 @@ export function App() {
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [cycleDay, setCycleDay] = useState(1);
   const [cycleTotalDays, setCycleTotalDays] = useState(90);
+  const [previousTab, setPreviousTab] = useState<string>('goals');
   const [navFilterOptions, setNavFilterOptions] = useState<{
     status?: string;
     viewType?: 'all' | 'goals_only' | 'projects_only';
@@ -84,6 +85,9 @@ export function App() {
     let options: any = {};
     if (typeof entityIdOrOptions === 'string') {
       if (tab === 'project_detail') {
+        if (currentTab !== 'project_detail') {
+          setPreviousTab(currentTab);
+        }
         setSelectedProjectId(entityIdOrOptions);
         setCurrentTab('project_detail');
         return;
@@ -94,8 +98,13 @@ export function App() {
 
     setNavFilterOptions(options);
 
-    if (tab === 'project_detail' && options.projectId) {
-      setSelectedProjectId(options.projectId);
+    if (tab === 'project_detail') {
+      if (currentTab !== 'project_detail') {
+        setPreviousTab(currentTab);
+      }
+      if (options.projectId) {
+        setSelectedProjectId(options.projectId);
+      }
       setCurrentTab('project_detail');
     } else if (tab.startsWith('goal_')) {
       const section = tab.replace('goal_', '') as SectionType;
@@ -115,6 +124,9 @@ export function App() {
   };
 
   const handleOpenProject = (projId: string) => {
+    if (currentTab !== 'project_detail') {
+      setPreviousTab(currentTab);
+    }
     setSelectedProjectId(projId);
     setCurrentTab('project_detail');
   };
@@ -173,7 +185,7 @@ export function App() {
         return (
           <ProjectDetailPage
             projectId={selectedProjectId || 'proj_talking_head_ad'}
-            onBack={() => handleNavigate('goals')}
+            onBack={() => handleNavigate(previousTab || 'goals')}
           />
         );
       case 'analytics':

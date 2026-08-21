@@ -188,8 +188,8 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
     return (
       <div className="p-8 text-center">
         <p className="text-zinc-400 font-mono text-xs mb-3">Project not found.</p>
-        <button onClick={onBack} className="px-3 py-1.5 bg-zinc-800 text-zinc-200 rounded text-xs font-mono">
-          Back to Projects
+        <button onClick={onBack} className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-semibold">
+          Back
         </button>
       </div>
     );
@@ -214,13 +214,15 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
       {/* 1. PROJECT TOP HEADER & METADATA BAR */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
+      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <button
             onClick={onBack}
-            className="text-xs font-mono text-zinc-400 hover:text-zinc-100 flex items-center gap-1 transition-colors"
+            className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 transition-all shadow-sm group"
+            title="Go back to previous page"
           >
-            <ChevronLeft className="w-4 h-4" /> Back to Goals & Projects
+            <ChevronLeft className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+            <span>Back</span>
           </button>
 
           <div className="flex items-center gap-2">
