@@ -26,10 +26,10 @@ import {
   Film,
   Megaphone,
   AlignLeft,
-  Share2,
-  Bookmark
+  Share2
 } from 'lucide-react';
 import { ProjectDetailSkeleton } from '../components/common/SkeletonLoader';
+import { RichScriptEditor } from '../components/script/RichScriptEditor';
 
 interface ProjectDetailPageProps {
   projectId: string;
@@ -46,7 +46,6 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
   const [scriptContent, setScriptContent] = useState('');
   const [isSavingScript, setIsSavingScript] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // New Reference Modal / Form
   const [showRefModal, setShowRefModal] = useState(false);
@@ -95,23 +94,6 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
     navigator.clipboard.writeText(scriptContent);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  const insertSnippet = (snippet: string) => {
-    if (!textareaRef.current) {
-      setScriptContent((prev) => (prev ? `${prev}\n\n${snippet}` : snippet));
-      return;
-    }
-    const el = textareaRef.current;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const text = el.value;
-    const newText = text.substring(0, start) + snippet + text.substring(end);
-    setScriptContent(newText);
-    setTimeout(() => {
-      el.focus();
-      el.setSelectionRange(start + snippet.length, start + snippet.length);
-    }, 0);
   };
 
   const handleExportWord = () => {
@@ -421,115 +403,16 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
       <div key={activeTab} className="page-transition">
         {/* TAB 1: SCRIPT EDITOR & PRODUCTION BREAKDOWN */}
         {activeTab === 'script' && (
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-4 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-850 pb-4">
-              <div>
-                <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-400" /> Script & Production Breakdown
-                </h2>
-                <p className="text-xs text-zinc-400 mt-0.5 font-medium">
-                  Write hooks, visual notes, voiceover scripts, audio cues, and export directly as a Word document
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <button
-                  onClick={handleCopyScript}
-                  className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-800 hover:border-zinc-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
-                  title="Copy full script to clipboard"
-                >
-                  {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
-                  <span>{isCopied ? 'Copied!' : 'Copy Script'}</span>
-                </button>
-
-                <button
-                  onClick={handleSaveScript}
-                  disabled={isSavingScript}
-                  className="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-zinc-100 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                  <span>{isSavingScript ? 'Saving...' : 'Save Script'}</span>
-                </button>
-
-                <button
-                  onClick={handleExportWord}
-                  className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-950/50"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Export to Word (.docx)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* QUICK TEMPLATE / SNIPPET BUTTONS */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-              <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
-                <Zap className="w-3 h-3 text-amber-400" /> Snippets:
-              </span>
-              <button
-                type="button"
-                onClick={() => insertSnippet('[HOOK - 0:00 - 0:03]\n(Visual: Aggressive crash zoom onto speaker)\n(Audio: Sub bass drop + camera shutter hit)\nVOICEOVER: "..."\n\n')}
-                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1"
-              >
-                <Film className="w-3 h-3 text-blue-400" /> + Hook Intro
-              </button>
-              <button
-                type="button"
-                onClick={() => insertSnippet('[SCENE - B-ROLL & EXPLANATION]\n(Visual: Screen capture overlay with 3D text tracker)\n(Audio: Subtle ambient synth riser)\nVOICEOVER: "..."\n\n')}
-                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1"
-              >
-                <Video className="w-3 h-3 text-cyan-400" /> + B-Roll Scene
-              </button>
-              <button
-                type="button"
-                onClick={() => insertSnippet('(Audio: Heavy impact whoosh + glitch hit)\n')}
-                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1"
-              >
-                <Volume2 className="w-3 h-3 text-purple-400" /> + Sound Cue
-              </button>
-              <button
-                type="button"
-                onClick={() => insertSnippet('[CTA - OUTRO]\n(Visual: Clean lower third popup with handle)\nVOICEOVER: "Follow for more daily editing breakdown breakdowns."\n\n')}
-                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1"
-              >
-                <Megaphone className="w-3 h-3 text-emerald-400" /> + Call-to-Action
-              </button>
-            </div>
-
-            {/* Custom Monospace Script Editor Area */}
-            <div className="space-y-2">
-              <div className="relative rounded-2xl bg-zinc-900/80 border border-zinc-800/90 shadow-inner overflow-hidden focus-within:border-blue-500/80 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-                <textarea
-                  ref={textareaRef}
-                  rows={17}
-                  value={scriptContent}
-                  onChange={(e) => setScriptContent(e.target.value)}
-                  onBlur={handleSaveScript}
-                  placeholder="[HOOK - 0:00 - 0:03]&#10;(Visual: Aggressive crash zoom onto speaker)&#10;(Audio: Sub bass drop + camera shutter hit)&#10;VOICEOVER: Stop wasting 2 hours in the gym...&#10;&#10;[SCENE 1 - PROBLEM]&#10;(Visual: B-roll montage of bad form)&#10;VOICEOVER: Here is the exact breakdown...&#10;&#10;[CTA - OUTRO]&#10;VOICEOVER: Full episode on Spotify link."
-                  className="w-full bg-transparent p-5 text-xs sm:text-sm font-mono text-zinc-100 leading-relaxed outline-none resize-y placeholder:text-zinc-600"
-                />
-              </div>
-
-              {/* Bottom Script Status Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-zinc-400 px-1 pt-1">
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1.5 text-emerald-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span>Auto-saved locally • Word ready</span>
-                  </span>
-                  <span>•</span>
-                  <span>Estimated Speaking Time: <strong className="text-zinc-200">{formattedDuration} min</strong></span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span><strong className="text-zinc-200">{wordCount}</strong> words</span>
-                  <span>•</span>
-                  <span><strong className="text-zinc-200">{scriptContent.length}</strong> characters</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <RichScriptEditor
+            projectName={project.name}
+            scriptContent={scriptContent}
+            onChange={setScriptContent}
+            onSave={handleSaveScript}
+            onCopy={handleCopyScript}
+            onExportWord={handleExportWord}
+            isSaving={isSavingScript}
+            isCopied={isCopied}
+          />
         )}
 
         {/* TAB 2: REFERENCES & ASSETS */}
