@@ -25,7 +25,8 @@ import {
   Video,
   Volume2,
   Megaphone,
-  RemoveFormatting
+  RemoveFormatting,
+  Ban
 } from 'lucide-react';
 
 interface RichScriptEditorProps {
@@ -41,13 +42,11 @@ interface RichScriptEditorProps {
 
 // Convert plain text / markdown into initial rich HTML
 function convertToInitialHtml(content: string): string {
-  if (!content) return '';
-  // If it already contains HTML tags, return as is
+  if (!content) return '<p><br/></p>';
   if (/<[a-z][\s\S]*>/i.test(content)) {
     return content;
   }
 
-  // Convert plaintext/markdown newlines and marks to rich HTML
   const lines = content.split('\n');
   return lines
     .map((line) => {
@@ -83,11 +82,25 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
 
   const editorRef = useRef<HTMLDivElement>(null);
   const focusEditorRef = useRef<HTMLDivElement>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
 
   const getActiveEditor = useCallback(() => {
     return isFocusMode ? focusEditorRef.current : editorRef.current;
   }, [isFocusMode]);
+
+  // Close color picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+        setShowColorPicker(false);
+      }
+    };
+    if (showColorPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showColorPicker]);
 
   // Update statistics (word count, speaking time) from editor text
   const updateStatsFromElement = useCallback((el: HTMLDivElement | null) => {
@@ -192,11 +205,81 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
     handleInput();
   };
 
-  // Apply visual Highlighter color to selected text (or insert sample highlighted badge)
-  const applyHighlighter = (colorKey: 'yellow' | 'cyan' | 'purple' | 'green' | 'pink') => {
+  // Helper to remove highlighting from selected text (Un-highlight / No Color)
+  const removeHighlight = () => {
+    const el = getActiveEditor();
+    if (el) el.focus();
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    // Check if cursor is inside a mark tag
+    let node: Node | null = selection.anchorNode;
+    let markRemoved = false;
+    while (node && node !== el) {
+      if (node.nodeName === 'MARK') {
+        const markNode = node as HTMLElement;
+        const parent = markNode.parentNode;
+        if (parent) {
+          while (markNode.firstChild) {
+            parent.insertBefore(markNode.firstChild, markNode);
+          }
+          parent.removeChild(markNode);
+          markRemoved = true;
+        }
+        break;
+      }
+      node = node.parentNode;
+    }
+
+    if (!markRemoved && !selection.isCollapsed) {
+      const range = selection.getRangeAt(0);
+      const cloned = range.cloneContents();
+      const temp = document.createElement('div');
+      temp.appendChild(cloned);
+      const marks = temp.querySelectorAll('mark');
+      if (marks.length > 0) {
+        marks.forEach((m) => {
+          const parent = m.parentNode;
+          if (parent) {
+            while (m.firstChild) {
+              parent.insertBefore(m.firstChild, m);
+            }
+            parent.removeChild(m);
+          }
+        });
+        range.deleteContents();
+        range.insertNode(temp);
+        markRemoved = true;
+      }
+    }
+
+    handleInput();
+  };
+
+  // Smart Toggle Highlighter (Applies color or removes if already highlighted)
+  const applyHighlighter = (colorKey: 'yellow' | 'cyan' | 'purple' | 'green' | 'pink' | 'none') => {
     setShowColorPicker(false);
     const el = getActiveEditor();
     if (el) el.focus();
+
+    if (colorKey === 'none') {
+      removeHighlight();
+      return;
+    }
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    // Check if selected node is already inside a MARK (Toggle off logic like Word)
+    let currentNode: Node | null = selection.anchorNode;
+    while (currentNode && currentNode !== el) {
+      if (currentNode.nodeName === 'MARK') {
+        removeHighlight();
+        return;
+      }
+      currentNode = currentNode.parentNode;
+    }
 
     const colorMap = {
       yellow: { bg: 'rgba(251, 191, 36, 0.28)', text: '#fef08a', border: 'rgba(251, 191, 36, 0.4)' },
@@ -207,9 +290,8 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
     };
 
     const c = colorMap[colorKey];
-    const selection = window.getSelection();
 
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    if (selection.isCollapsed) {
       insertVisualHtml(
         `<mark style="background-color: ${c.bg}; color: ${c.text}; border: 1px solid ${c.border}; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Highlighted Text</mark>&nbsp;`
       );
@@ -232,9 +314,9 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
 
   // Reusable Word-Style WYSIWYG Toolbar
   const renderToolbar = () => (
-    <div className="flex items-center justify-between gap-2 p-2 bg-zinc-900/95 border border-zinc-800 rounded-xl overflow-x-auto select-none">
+    <div className="flex items-center justify-between gap-2 p-2 bg-zinc-900/95 border border-zinc-800 rounded-xl relative z-30 select-none flex-wrap">
       {/* Left Tools */}
-      <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+      <div className="flex items-center gap-1.5 flex-wrap">
         {/* Headings */}
         <div className="flex items-center bg-zinc-950/80 rounded-lg p-0.5 border border-zinc-800/80">
           <button
@@ -301,57 +383,71 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
           </button>
         </div>
 
-        {/* Visual Highlighter with Color Picker */}
-        <div className="relative flex items-center bg-zinc-950/80 rounded-lg p-0.5 border border-zinc-800/80">
+        {/* Visual Highlighter with Un-clipping Popover & Remove Highlight (❌) */}
+        <div ref={colorPickerRef} className="relative flex items-center bg-zinc-950/80 rounded-lg p-0.5 border border-zinc-800/80">
           <button
             type="button"
             onMouseDown={(e) => { e.preventDefault(); applyHighlighter('yellow'); }}
             className="p-1.5 hover:bg-amber-400/20 text-amber-400 hover:text-amber-300 rounded-md transition-colors flex items-center gap-1"
-            title="Highlight Selection (Yellow)"
+            title="Highlight Selection / Toggle Off"
           >
             <Highlighter className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
-            onMouseDown={(e) => { e.preventDefault(); setShowColorPicker(!showColorPicker); }}
-            className="px-1 py-1 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-md transition-colors text-[10px]"
-            title="Pick Highlighter Color"
+            onMouseDown={(e) => { e.preventDefault(); setShowColorPicker((prev) => !prev); }}
+            className={`px-1.5 py-1 text-zinc-400 hover:text-zinc-200 rounded-md transition-colors text-[10px] ${
+              showColorPicker ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-850'
+            }`}
+            title="Pick Highlighter Color or Remove"
           >
             <Palette className="w-3 h-3 text-zinc-400" />
           </button>
 
+          {/* Color Picker Dropdown Floating cleanly above/below without clipping */}
           {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1.5 p-2 bg-zinc-900 border border-zinc-750 rounded-xl shadow-xl z-30 flex items-center gap-2">
+            <div className="absolute top-full left-0 mt-2 p-2.5 bg-zinc-900 border border-zinc-700/90 rounded-2xl shadow-2xl z-50 flex items-center gap-2.5 backdrop-blur-xl ring-1 ring-white/10">
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); applyHighlighter('yellow'); }}
-                className="w-5 h-5 rounded-full bg-amber-400 hover:scale-110 border border-amber-300 transition-transform shadow-sm"
+                className="w-5 h-5 rounded-full bg-amber-400 hover:scale-125 border border-amber-300 transition-transform shadow-md"
                 title="Yellow Highlighter"
               />
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); applyHighlighter('cyan'); }}
-                className="w-5 h-5 rounded-full bg-cyan-400 hover:scale-110 border border-cyan-300 transition-transform shadow-sm"
+                className="w-5 h-5 rounded-full bg-cyan-400 hover:scale-125 border border-cyan-300 transition-transform shadow-md"
                 title="Cyan Highlighter"
               />
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); applyHighlighter('purple'); }}
-                className="w-5 h-5 rounded-full bg-purple-400 hover:scale-110 border border-purple-300 transition-transform shadow-sm"
+                className="w-5 h-5 rounded-full bg-purple-400 hover:scale-125 border border-purple-300 transition-transform shadow-md"
                 title="Purple Highlighter"
               />
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); applyHighlighter('green'); }}
-                className="w-5 h-5 rounded-full bg-emerald-400 hover:scale-110 border border-emerald-300 transition-transform shadow-sm"
+                className="w-5 h-5 rounded-full bg-emerald-400 hover:scale-125 border border-emerald-300 transition-transform shadow-md"
                 title="Green Highlighter"
               />
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); applyHighlighter('pink'); }}
-                className="w-5 h-5 rounded-full bg-pink-400 hover:scale-110 border border-pink-300 transition-transform shadow-sm"
+                className="w-5 h-5 rounded-full bg-pink-400 hover:scale-125 border border-pink-300 transition-transform shadow-md"
                 title="Pink Highlighter"
               />
+              <div className="h-4 w-px bg-zinc-750 mx-0.5" />
+              {/* Clear Highlight Button */}
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); applyHighlighter('none'); }}
+                className="px-2 py-1 bg-zinc-800 hover:bg-rose-950/60 text-zinc-300 hover:text-rose-400 border border-zinc-700 hover:border-rose-700/60 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
+                title="Remove Highlight (Clear)"
+              >
+                <Ban className="w-3 h-3 text-rose-400" />
+                <span>Clear</span>
+              </button>
             </div>
           )}
         </div>
@@ -387,7 +483,7 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
             onMouseDown={(e) => {
               e.preventDefault();
               insertVisualHtml(
-                '<blockquote style="border-left: 3px solid #f59e0b; background: rgba(245, 158, 11, 0.08); padding: 8px 14px; border-radius: 0 8px 8px 0; color: #fde68a; font-style: italic; margin: 8px 0;">Director\'s Note / Visual Guideline</blockquote><p><br/></p>'
+                '<blockquote style="border-left: 3px solid #f59e0b; background: rgba(245, 158, 11, 0.08); padding: 8px 14px; border-radius: 0 8px 8px 0; color: #fde68a; font-style: italic; margin: 8px 0;">Director\'s Note: </blockquote><p><br/></p>'
               );
             }}
             className="p-1.5 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md transition-colors"
@@ -415,18 +511,18 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
 
         <div className="h-4 w-px bg-zinc-800 mx-0.5" />
 
-        {/* Visual Video Production Badges */}
+        {/* Clean Video Production Badges (Without long dummy text) */}
         <div className="flex items-center gap-1">
           <button
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
               insertVisualHtml(
-                '<div style="margin: 10px 0; padding: 8px 12px; background: rgba(245, 158, 11, 0.12); border-left: 3px solid #f59e0b; border-radius: 0 8px 8px 0;"><strong style="color: #fbbf24; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">🎬 HOOK (0:00 - 0:03)</strong><div style="color: #e2e8f0; font-size: 13px;">(Visual: Aggressive crash zoom onto speaker)</div><div style="color: #cbd5e1; font-size: 13px; margin-top: 2px;">VOICEOVER: "Stop wasting 2 hours in the gym..."</div></div><p><br/></p>'
+                '<p><strong style="color: #fbbf24; background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.4); padding: 3px 8px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">🎬 [HOOK - 0:00]</strong></p><p><br/></p>'
               );
             }}
             className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/40 text-amber-300 rounded-md text-[11px] font-semibold transition-colors shrink-0 flex items-center gap-1"
-            title="Insert Visual Hook Block"
+            title="Insert [🎬 HOOK - 0:00]"
           >
             <Film className="w-3 h-3 text-amber-400" /> Hook
           </button>
@@ -436,11 +532,11 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
             onMouseDown={(e) => {
               e.preventDefault();
               insertVisualHtml(
-                '<div style="margin: 10px 0; padding: 8px 12px; background: rgba(59, 130, 246, 0.12); border-left: 3px solid #3b82f6; border-radius: 0 8px 8px 0;"><strong style="color: #60a5fa; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">🎥 SCENE / B-ROLL</strong><div style="color: #e2e8f0; font-size: 13px;">(Visual: Screen capture overlay with motion graphics)</div><div style="color: #cbd5e1; font-size: 13px; margin-top: 2px;">VOICEOVER: "Here is the exact solution..."</div></div><p><br/></p>'
+                '<p><strong style="color: #60a5fa; background: rgba(59, 130, 246, 0.18); border: 1px solid rgba(59, 130, 246, 0.4); padding: 3px 8px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">🎥 [SCENE]</strong></p><p><br/></p>'
               );
             }}
             className="px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 hover:border-blue-500/40 text-blue-300 rounded-md text-[11px] font-semibold transition-colors shrink-0 flex items-center gap-1"
-            title="Insert Visual Scene Block"
+            title="Insert [🎥 SCENE]"
           >
             <Video className="w-3 h-3 text-blue-400" /> Scene
           </button>
@@ -450,11 +546,11 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
             onMouseDown={(e) => {
               e.preventDefault();
               insertVisualHtml(
-                '<div style="margin: 8px 0; padding: 6px 12px; background: rgba(168, 85, 247, 0.12); border-left: 3px solid #a855f7; border-radius: 0 8px 8px 0;"><strong style="color: #c084fc; font-size: 11px; text-transform: uppercase; margin-right: 6px;">🔊 AUDIO:</strong><span style="color: #e2e8f0; font-size: 13px; font-style: italic;">Heavy impact whoosh + glitch hit</span></div><p><br/></p>'
+                '<p><strong style="color: #c084fc; background: rgba(168, 85, 247, 0.18); border: 1px solid rgba(168, 85, 247, 0.4); padding: 3px 8px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">🔊 [AUDIO]</strong></p><p><br/></p>'
               );
             }}
             className="px-2 py-1 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40 text-purple-300 rounded-md text-[11px] font-semibold transition-colors shrink-0 flex items-center gap-1"
-            title="Insert Audio Cue"
+            title="Insert [🔊 AUDIO]"
           >
             <Volume2 className="w-3 h-3 text-purple-400" /> Audio
           </button>
@@ -464,11 +560,11 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
             onMouseDown={(e) => {
               e.preventDefault();
               insertVisualHtml(
-                '<div style="margin: 10px 0; padding: 8px 12px; background: rgba(16, 185, 129, 0.12); border-left: 3px solid #10b981; border-radius: 0 8px 8px 0;"><strong style="color: #34d399; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">🎯 CALL TO ACTION</strong><div style="color: #cbd5e1; font-size: 13px;">VOICEOVER: "Follow for more daily editing breakdowns."</div></div><p><br/></p>'
+                '<p><strong style="color: #34d399; background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.4); padding: 3px 8px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">🎯 [CTA]</strong></p><p><br/></p>'
               );
             }}
             className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-300 rounded-md text-[11px] font-semibold transition-colors shrink-0 flex items-center gap-1"
-            title="Insert CTA Block"
+            title="Insert [🎯 CTA]"
           >
             <Megaphone className="w-3 h-3 text-emerald-400" /> CTA
           </button>
@@ -587,6 +683,7 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
               onClick={onSave}
               disabled={isSaving}
               className="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-zinc-100 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+              title="Save directly to Turso Cloud & local storage"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
               <span>{isSaving ? 'Saving...' : 'Save Script'}</span>
@@ -664,7 +761,7 @@ export const RichScriptEditor: React.FC<RichScriptEditorProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={onCopy}
-                  className="px-3 py-1.5 bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                  className="px-3 py-1.5 bg-zinc-855 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
                   title="Copy script"
                 >
                   {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
