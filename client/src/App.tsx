@@ -22,6 +22,12 @@ export function App() {
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [cycleDay, setCycleDay] = useState(1);
   const [cycleTotalDays, setCycleTotalDays] = useState(90);
+  const [navFilterOptions, setNavFilterOptions] = useState<{
+    status?: string;
+    viewType?: 'all' | 'goals_only' | 'projects_only';
+    clientStatus?: string;
+    platform?: string;
+  }>({});
 
   // Load summary on mount to get cycle day
   useEffect(() => {
@@ -46,31 +52,33 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const authCookie = localStorage.getItem('editor_os_auth');
-    if (authCookie) {
-      const timestamp = parseInt(authCookie, 10);
-      // 1 day = 24 * 60 * 60 * 1000
-      if (Date.now() - timestamp < 86400000) {
-        setIsAuthenticated(true);
+    try {
+      const authCookie = localStorage.getItem('editor_os_auth');
+      if (authCookie) {
+        const timestamp = parseInt(authCookie, 10);
+        // 1 day = 24 * 60 * 60 * 1000
+        if (Date.now() - timestamp < 86400000) {
+          setIsAuthenticated(true);
+        }
       }
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+      setIsAuthenticated(true);
     }
   }, []);
 
   const handleAuthSuccess = () => {
-    localStorage.setItem('editor_os_auth', Date.now().toString());
+    try {
+      localStorage.setItem('editor_os_auth', Date.now().toString());
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
     setIsAuthenticated(true);
   };
 
   if (!isAuthenticated) {
     return <PinScreen onSuccess={handleAuthSuccess} />;
   }
-
-  const [navFilterOptions, setNavFilterOptions] = useState<{
-    status?: string;
-    viewType?: 'all' | 'goals_only' | 'projects_only';
-    clientStatus?: string;
-    platform?: string;
-  }>({});
 
   const handleNavigate = (tab: string, entityIdOrOptions?: string | any) => {
     let options: any = {};
