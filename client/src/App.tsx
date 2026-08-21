@@ -10,6 +10,7 @@ import { PinScreen } from './components/PinScreen';
 const GoalsHubPage = lazy(() => import('./pages/GoalsHubPage').then((m) => ({ default: m.GoalsHubPage })));
 const ContentStudioPage = lazy(() => import('./pages/ContentStudioPage').then((m) => ({ default: m.ContentStudioPage })));
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })));
+const DeadlinesPage = lazy(() => import('./pages/DeadlinesPage').then((m) => ({ default: m.DeadlinesPage })));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })));
 const GoalDetailPage = lazy(() => import('./pages/GoalDetailPage').then((m) => ({ default: m.GoalDetailPage })));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
@@ -211,6 +212,8 @@ export function App() {
             onOpenProject={handleOpenProject}
           />
         );
+      case 'deadlines':
+        return <DeadlinesPage onOpenProject={handleOpenProject} />;
       case 'calendar':
         return <CalendarPage onOpenProject={handleOpenProject} onOpenGoal={handleOpenGoal} />;
       case 'project_detail':

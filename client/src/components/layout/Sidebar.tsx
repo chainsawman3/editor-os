@@ -13,7 +13,8 @@ import {
   Briefcase,
   GraduationCap,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -176,6 +177,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
           </div>
+
+          {/* Deadlines */}
+          <button
+            onClick={() => onSelectTab('deadlines')}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
+              currentTab === 'deadlines'
+                ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            }`}
+          >
+            <Clock className={`w-4 h-4 ${currentTab === 'deadlines' ? 'text-rose-400' : 'text-zinc-400'}`} />
+            <span>Deadlines</span>
+          </button>
 
           {/* Calendar */}
           <button
