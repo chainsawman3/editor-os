@@ -871,6 +871,116 @@ export const tursoApi = {
     } catch {
       return getLocalDb();
     }
+  },
+
+  exportDatabase: async () => {
+    try {
+      await initTursoTables();
+      const [goalsRows, projectsRows, tasksRows, clientsRows, ideasRows] = await Promise.all([
+        queryTurso('SELECT * FROM goals;'),
+        queryTurso('SELECT * FROM projects;'),
+        queryTurso('SELECT * FROM tasks;'),
+        queryTurso('SELECT * FROM clients;'),
+        queryTurso('SELECT * FROM quick_ideas;')
+      ]);
+
+      const projects = projectsRows && projectsRows.length > 0 ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
+      const goals = goalsRows && goalsRows.length > 0 ? goalsRows.map(mapGoalRow) : getLocalDb().goals;
+      const tasks = tasksRows && tasksRows.length > 0 ? tasksRows.map(mapTaskRow) : getLocalDb().tasks;
+      const clients = clientsRows && clientsRows.length > 0 ? clientsRows.map(mapClientRow) : getLocalDb().clients;
+      const quick_ideas = ideasRows && ideasRows.length > 0 ? ideasRows.map(mapQuickIdeaRow) : getLocalDb().quick_ideas;
+      const settings = getLocalDb().settings;
+
+      return {
+        version: '2.0.0',
+        exported_at: new Date().toISOString(),
+        system: 'Editor OS',
+        goals,
+        projects,
+        tasks,
+        clients,
+        quick_ideas,
+        settings
+      };
+    } catch {
+      return getLocalDb();
+    }
+  },
+
+  importDatabase: async (backupData: any) => {
+    try {
+      await initTursoTables();
+      const db = getLocalDb();
+
+      if (backupData.goals && Array.isArray(backupData.goals)) {
+        db.goals = backupData.goals;
+        await queryTurso('DELETE FROM goals;');
+        for (const g of backupData.goals) {
+          await queryTurso(
+            `INSERT INTO goals (id, section, sub_section, title, description, target_date, priority, status, next_action, notes, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+            [g.id, g.section || '', g.sub_section || null, g.title, g.description || '', g.target_date || '', g.priority || 'Medium', g.status || 'Not Started', g.next_action || '', g.notes || '', g.created_at || new Date().toISOString()]
+          );
+        }
+      }
+
+      if (backupData.projects && Array.isArray(backupData.projects)) {
+        db.projects = backupData.projects;
+        await queryTurso('DELETE FROM projects;');
+        for (const p of backupData.projects) {
+          await queryTurso(
+            `INSERT INTO projects (id, goal_id, name, description, status, priority, deadline, section, sub_section, client_name, script_content, creative_ideas, references_json, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+            [p.id, p.goal_id || null, p.name, p.description || '', p.status || 'Planning', p.priority || 'Medium', p.deadline || '', p.section || 'video_editing', p.sub_section || null, p.client_name || '', p.script_content || '', JSON.stringify(p.creative_ideas || []), JSON.stringify(p.references || []), p.created_at || new Date().toISOString()]
+          );
+        }
+      }
+
+      if (backupData.tasks && Array.isArray(backupData.tasks)) {
+        db.tasks = backupData.tasks;
+        await queryTurso('DELETE FROM tasks;');
+        for (const t of backupData.tasks) {
+          await queryTurso(
+            `INSERT INTO tasks (id, project_id, title, due_date, completed, stage, order_index, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+            [t.id, t.project_id || null, t.title, t.due_date || '', t.completed ? 1 : 0, t.stage || 'Editing', t.order_index || 0, t.created_at || new Date().toISOString()]
+          );
+        }
+      }
+
+      if (backupData.clients && Array.isArray(backupData.clients)) {
+        db.clients = backupData.clients;
+        await queryTurso('DELETE FROM clients;');
+        for (const c of backupData.clients) {
+          await queryTurso(
+            `INSERT INTO clients (id, name, status, priority, deadline, revenue, linked_project_id, notes, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+            [c.id, c.name, c.status || 'Contacted', c.priority || 'Medium', c.deadline || '', c.revenue || 0, c.linked_project_id || null, c.notes || '', c.created_at || new Date().toISOString()]
+          );
+        }
+      }
+
+      if (backupData.quick_ideas && Array.isArray(backupData.quick_ideas)) {
+        db.quick_ideas = backupData.quick_ideas;
+        await queryTurso('DELETE FROM quick_ideas;');
+        for (const i of backupData.quick_ideas) {
+          await queryTurso(
+            `INSERT INTO quick_ideas (id, text, target_category, triaged, created_at) VALUES (?, ?, ?, ?, ?);`,
+            [i.id, i.text, i.target_category || 'General', i.triaged ? 1 : 0, i.created_at || new Date().toISOString()]
+          );
+        }
+      }
+
+      if (backupData.settings && Array.isArray(backupData.settings) && backupData.settings[0]) {
+        db.settings = backupData.settings;
+      }
+
+      saveLocalDb(db);
+      return { success: true, message: 'Database fully imported and synced to Turso Cloud!' };
+    } catch (err: any) {
+      saveLocalDb(backupData);
+      return { success: true, message: 'Database saved to local storage', warning: err?.message };
+    }
   }
 };
 

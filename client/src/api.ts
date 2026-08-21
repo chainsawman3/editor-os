@@ -139,10 +139,8 @@ export const api = {
     return { success: true, message: 'Reset cycle and streak', settings: db.settings[0] };
   },
 
-  importDatabase: async (databaseData: any) => {
-    saveLocalDb(databaseData);
-    return { success: true, message: 'Database imported successfully' };
-  },
+  exportDatabase: tursoApi.exportDatabase,
+  importDatabase: tursoApi.importDatabase,
 
   resetDatabase: async () => {
     saveLocalDb(initialDefaultDatabase);
