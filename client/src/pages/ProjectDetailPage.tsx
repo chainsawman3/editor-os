@@ -227,12 +227,12 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
     switch (p) {
       case 'Hard':
       case 'High':
-        return 'text-rose-300 bg-rose-950/60 border-rose-800/80 shadow-rose-950/40';
+        return 'text-rose-300 bg-rose-500/10 border-rose-500/30';
       case 'Medium':
-        return 'text-amber-300 bg-amber-950/60 border-amber-800/80 shadow-amber-950/40';
+        return 'text-amber-300 bg-amber-500/10 border-amber-500/30';
       case 'Low':
       default:
-        return 'text-emerald-300 bg-emerald-950/60 border-emerald-800/80 shadow-emerald-950/40';
+        return 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30';
     }
   };
 
@@ -241,104 +241,108 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
       case 'Ready':
       case 'Posted':
       case 'Completed':
-        return { dot: 'bg-emerald-400', style: 'bg-emerald-950/80 border-emerald-700 text-emerald-300' };
+        return { dot: 'bg-emerald-400', style: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' };
       case 'In Progress':
-        return { dot: 'bg-amber-400 animate-pulse', style: 'bg-amber-950/80 border-amber-700 text-amber-300' };
+        return { dot: 'bg-amber-400 animate-pulse', style: 'bg-amber-500/10 border-amber-500/30 text-amber-300' };
       case 'Paused':
         return { dot: 'bg-zinc-500', style: 'bg-zinc-900 border-zinc-800 text-zinc-400' };
       case 'Planning':
       default:
-        return { dot: 'bg-blue-400', style: 'bg-blue-950/80 border-blue-700 text-blue-300' };
+        return { dot: 'bg-blue-400', style: 'bg-blue-500/10 border-blue-500/30 text-blue-300' };
     }
   };
 
   const statusBadge = getStatusBadge(project.status);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
-      {/* 1. PROJECT TOP HERO & METADATA CARD */}
-      <div className="bg-zinc-950/90 border border-zinc-800/90 rounded-2xl p-5 sm:p-6 shadow-xl relative overflow-hidden backdrop-blur-md space-y-5">
-        {/* Subtle Ambient Glow in background */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/[0.04] rounded-full blur-3xl pointer-events-none" />
-
-        {/* Navigation & Status Control Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+    <div className="p-4 sm:p-6 space-y-5 max-w-7xl mx-auto font-sans">
+      {/* 1. TOP BREADCRUMB & CONTROLS ROW */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+        {/* Left: Back button + Section + Client */}
+        <div className="flex items-center gap-2.5 flex-wrap">
           <button
             onClick={onBack}
-            className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 transition-all shadow-sm group w-fit"
+            className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 transition-all shadow-sm group"
             title="Go back to previous page"
           >
             <ChevronLeft className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
             <span>Back</span>
           </button>
 
-          {/* Interactive Status Selector with Live Indicator */}
-          <div className="flex items-center gap-2.5">
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Status:</span>
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${statusBadge.style} shadow-sm`}>
-              <span className={`w-2 h-2 rounded-full ${statusBadge.dot}`} />
-              <select
-                value={project.status}
-                onChange={(e) => handleStatusChange(e.target.value as ProjectStatus)}
-                className="bg-transparent text-xs font-bold font-sans outline-none cursor-pointer pr-1"
-              >
-                <option value="Planning" className="bg-zinc-950 text-blue-300">Planning</option>
-                <option value="In Progress" className="bg-zinc-950 text-amber-300">In Progress</option>
-                <option value="Ready" className="bg-zinc-950 text-emerald-300">Ready for Review</option>
-                <option value="Posted" className="bg-zinc-950 text-purple-300">Posted / Published</option>
-              </select>
-            </div>
+          <span className="text-zinc-700 text-sm hidden sm:inline">•</span>
+
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-lg bg-zinc-900/90 border border-zinc-800 text-zinc-300 uppercase shadow-sm">
+              {project.section.replace('_', ' ')}
+            </span>
+            {project.client_name && (
+              <span className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-lg bg-cyan-950/40 border border-cyan-800/50 text-cyan-300 flex items-center gap-1.5 shadow-sm">
+                <User className="w-3 h-3 text-cyan-400" /> {project.client_name}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Project Title & Key Badges */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10 pt-1">
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`px-2.5 py-0.5 text-[11px] font-mono font-bold rounded-lg border shadow-sm ${getPriorityColor(project.priority)}`}>
-                PRIORITY: {project.priority}
-              </span>
-              <span className="px-2.5 py-0.5 text-[11px] font-mono font-bold rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 uppercase shadow-sm">
-                {project.section.replace('_', ' ')}
-              </span>
-              {project.client_name && (
-                <span className="px-2.5 py-0.5 text-[11px] font-mono font-bold rounded-lg bg-cyan-950/90 border border-cyan-700/80 text-cyan-300 flex items-center gap-1.5 shadow-sm">
-                  <User className="w-3.5 h-3.5 text-cyan-400" /> {project.client_name}
-                </span>
-              )}
-            </div>
+        {/* Right: Priority & Interactive Status Selector */}
+        <div className="flex items-center gap-2">
+          <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-lg border shadow-sm ${getPriorityColor(project.priority)}`}>
+            {project.priority} Priority
+          </span>
 
-            <h1 className="text-2xl sm:text-3xl font-bold font-sans text-zinc-100 tracking-tight">
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-xl border ${statusBadge.style} shadow-sm transition-all`}>
+            <span className={`w-2 h-2 rounded-full ${statusBadge.dot}`} />
+            <select
+              value={project.status}
+              onChange={(e) => handleStatusChange(e.target.value as ProjectStatus)}
+              className="bg-transparent text-xs font-bold font-sans outline-none cursor-pointer"
+            >
+              <option value="Planning" className="bg-zinc-950 text-blue-300">Planning</option>
+              <option value="In Progress" className="bg-zinc-950 text-amber-300">In Progress</option>
+              <option value="Ready" className="bg-zinc-950 text-emerald-300">Ready for Review</option>
+              <option value="Posted" className="bg-zinc-950 text-purple-300">Posted / Published</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. PROJECT HERO & TABS CONTAINER */}
+      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 shadow-xl relative overflow-hidden backdrop-blur-xl space-y-5">
+        {/* Subtle Ambient Glow in background */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/[0.03] rounded-full blur-3xl pointer-events-none" />
+
+        {/* Hero Title & Telemetry Metrics */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold font-sans text-zinc-100 tracking-tight leading-snug">
               {project.name}
             </h1>
-
             {project.description && (
-              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-3xl">
                 {project.description}
               </p>
             )}
           </div>
 
-          {/* Telemetry Pill (Deadline & Progress) */}
-          <div className="flex items-center gap-4 bg-zinc-900/80 border border-zinc-800/90 p-3.5 rounded-2xl shadow-inner shrink-0 font-sans">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-purple-950/80 border border-purple-800/80 text-purple-400">
-                <Calendar className="w-4 h-4" />
+          {/* Clean Proportional Metrics Box */}
+          <div className="flex items-center gap-3 bg-zinc-900/90 border border-zinc-800/90 p-2.5 sm:p-3 rounded-xl shrink-0 self-start lg:self-center shadow-inner font-sans">
+            <div className="flex items-center gap-2.5 px-2">
+              <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <Calendar className="w-3.5 h-3.5" />
               </div>
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider block">Deadline</span>
-                <span className="text-xs font-bold font-mono text-zinc-100">{project.deadline || 'No Deadline'}</span>
+                <span className="text-[10px] text-zinc-500 font-semibold block uppercase tracking-wider">Deadline</span>
+                <span className="text-xs font-bold font-mono text-zinc-200">{project.deadline || 'No Deadline'}</span>
               </div>
             </div>
 
-            <div className="h-8 w-px bg-zinc-800" />
+            <div className="h-7 w-px bg-zinc-800" />
 
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-emerald-950/80 border border-emerald-800/80 text-emerald-400">
-                <CheckCircle2 className="w-4 h-4" />
+            <div className="flex items-center gap-2.5 px-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <CheckCircle2 className="w-3.5 h-3.5" />
               </div>
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider block">Progress</span>
+                <span className="text-[10px] text-zinc-500 font-semibold block uppercase tracking-wider">Progress</span>
                 <span className="text-xs font-bold font-mono text-emerald-400">
                   {completedTasksCount}/{tasks.length} Tasks ({progressPercent}%)
                 </span>
@@ -347,14 +351,14 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
           </div>
         </div>
 
-        {/* 2. REFINED WORKSPACE SEGMENTED TABS */}
-        <div className="flex items-center gap-1.5 p-1 bg-zinc-900/90 border border-zinc-800/90 rounded-2xl overflow-x-auto relative z-10">
+        {/* Workspace Segmented Tabs */}
+        <div className="pt-3 border-t border-zinc-850 flex items-center gap-1.5 overflow-x-auto relative z-10">
           <button
             onClick={() => setActiveTab('script')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 ${
               activeTab === 'script'
-                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80 ring-1 ring-white/10'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850/50'
+                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
             <FileText className={`w-3.5 h-3.5 ${activeTab === 'script' ? 'text-blue-400' : 'text-zinc-500'}`} />
@@ -363,38 +367,47 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
 
           <button
             onClick={() => setActiveTab('references')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 ${
               activeTab === 'references'
-                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80 ring-1 ring-white/10'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850/50'
+                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
             <Layers className={`w-3.5 h-3.5 ${activeTab === 'references' ? 'text-cyan-400' : 'text-zinc-500'}`} />
-            <span>References & Assets ({project.references?.length || 0})</span>
+            <span>References & Assets</span>
+            <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-zinc-900 text-zinc-400 border border-zinc-800 font-mono">
+              {project.references?.length || 0}
+            </span>
           </button>
 
           <button
             onClick={() => setActiveTab('ideas')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 ${
               activeTab === 'ideas'
-                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80 ring-1 ring-white/10'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850/50'
+                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
             <Sparkles className={`w-3.5 h-3.5 ${activeTab === 'ideas' ? 'text-amber-400' : 'text-zinc-500'}`} />
-            <span>Creative Ideas ({project.creative_ideas?.length || 0})</span>
+            <span>Creative Ideas</span>
+            <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-zinc-900 text-zinc-400 border border-zinc-800 font-mono">
+              {project.creative_ideas?.length || 0}
+            </span>
           </button>
 
           <button
             onClick={() => setActiveTab('tasks')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 ${
               activeTab === 'tasks'
-                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80 ring-1 ring-white/10'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850/50'
+                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
             <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'tasks' ? 'text-emerald-400' : 'text-zinc-500'}`} />
-            <span>Action Checklist ({tasks.length})</span>
+            <span>Action Checklist</span>
+            <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-zinc-900 text-zinc-400 border border-zinc-800 font-mono">
+              {tasks.length}
+            </span>
           </button>
         </div>
       </div>
