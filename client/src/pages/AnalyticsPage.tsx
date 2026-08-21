@@ -480,11 +480,15 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
             {/* Custom SVG Activity Ring Gauge (5 cols on sm+) */}
             <div className="sm:col-span-6 flex justify-center items-center relative">
               {(() => {
-                const totalClients = crm?.totalClients || 1;
-                const positive = crm?.positiveClients || 0;
-                const inDiscussion = crm?.discussionClients || Math.max(0, (crm?.pendingClients || 0) - 1);
-                const pending = Math.max(0, (crm?.pendingClients || 0) - inDiscussion);
-                const negative = crm?.negativeClients || 0;
+                const totalClients = crm?.totalClients ?? 0;
+                const wonCount = crm?.wonClients ?? crm?.positiveClients ?? 0;
+                const wonRev = crm?.wonRevenue ?? crm?.totalRevenue ?? 0;
+                const discussionCount = crm?.discussionClients ?? 0;
+                const discussionRev = crm?.discussionRevenue ?? 0;
+                const pendingCount = crm?.outreachPendingClients ?? crm?.pendingClients ?? 0;
+                const pendingRev = crm?.outreachPendingRevenue ?? 0;
+                const lostCount = crm?.lostClients ?? crm?.negativeClients ?? 0;
+                const lostRev = crm?.lostRevenue ?? 0;
 
                 // Segments matching the 4 colors from reference:
                 // 1. Sky Blue (#38bdf8) -> Pending / Outreach
@@ -492,12 +496,13 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
                 // 3. Mint / Teal (#10b981) -> Deals Won / Retainers
                 // 4. Vibrant Pink (#ec4899) -> Returned / Ghosted
                 const ringSegments = [
-                  { key: 'positive', label: 'Deals Won', count: positive > 0 ? positive : 1, color: '#10b981', bg: 'bg-[#10b981]' },
-                  { key: 'discussion', label: 'In Discussion', count: inDiscussion > 0 ? inDiscussion : 1, color: '#fbbf24', bg: 'bg-[#fbbf24]' },
-                  { key: 'pending', label: 'Pending Reply', count: pending > 0 ? pending : 1, color: '#38bdf8', bg: 'bg-[#38bdf8]' },
-                  { key: 'negative', label: 'Lost / Ghosted', count: negative > 0 ? negative : 1, color: '#ec4899', bg: 'bg-[#ec4899]' }
+                  { key: 'positive', label: 'Delivery Done (Won)', count: wonCount, revenue: wonRev, color: '#10b981', bg: 'bg-[#10b981]' },
+                  { key: 'discussion', label: 'Process Discussion', count: discussionCount, revenue: discussionRev, color: '#fbbf24', bg: 'bg-[#fbbf24]' },
+                  { key: 'pending', label: 'Outreach Pending', count: pendingCount, revenue: pendingRev, color: '#38bdf8', bg: 'bg-[#38bdf8]' },
+                  { key: 'negative', label: 'Lost / Ghosted', count: lostCount, revenue: lostRev, color: '#ec4899', bg: 'bg-[#ec4899]' }
                 ];
 
+                const activeSegments = ringSegments.filter((s) => s.count > 0);
                 const totalValues = ringSegments.reduce((acc, s) => acc + s.count, 0);
 
                 // Helper to describe SVG arc
@@ -517,7 +522,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
                 };
 
                 let accumulatedAngle = 0;
-                const gap = 8; // degrees gap between segments for clean separation
+                const gap = activeSegments.length > 1 ? 8 : 0; // degrees gap between segments for clean separation
 
                 return (
                   <svg width="220" height="220" viewBox="0 0 240 240" className="overflow-visible select-none">
@@ -543,42 +548,46 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
                       );
                     })}
 
-                    {/* Outer Segmented Arcs with Rounded Caps */}
-                    {ringSegments.map((seg) => {
-                      const fraction = seg.count / totalValues;
-                      const sweepAngle = Math.max(12, fraction * 360 - gap);
-                      const startAngle = accumulatedAngle + gap / 2;
-                      const endAngle = startAngle + sweepAngle;
-                      accumulatedAngle += fraction * 360;
+                    {/* Outer Segmented Arcs with Rounded Caps from REAL database counts */}
+                    {totalValues > 0 ? (
+                      activeSegments.map((seg) => {
+                        const fraction = seg.count / totalValues;
+                        const sweepAngle = Math.max(12, fraction * 360 - gap);
+                        const startAngle = accumulatedAngle + gap / 2;
+                        const endAngle = startAngle + sweepAngle;
+                        accumulatedAngle += fraction * 360;
 
-                      return (
-                        <path
-                          key={seg.key}
-                          d={getArc(120, 120, 88, startAngle, endAngle)}
-                          fill="none"
-                          stroke={seg.color}
-                          strokeWidth="13"
-                          strokeLinecap="round"
-                          className="cursor-pointer transition-all duration-300 hover:opacity-90 hover:stroke-[15]"
-                          onClick={() => handleCrmCategoryClick(seg.key as any)}
-                        >
-                          <title>{`${seg.label}: ${seg.count}`}</title>
-                        </path>
-                      );
-                    })}
+                        return (
+                          <path
+                            key={seg.key}
+                            d={getArc(120, 120, 88, startAngle, endAngle)}
+                            fill="none"
+                            stroke={seg.color}
+                            strokeWidth="13"
+                            strokeLinecap="round"
+                            className="cursor-pointer transition-all duration-300 hover:opacity-90 hover:stroke-[15]"
+                            onClick={() => handleCrmCategoryClick(seg.key as any)}
+                          >
+                            <title>{`${seg.label}: ${seg.count} (${seg.revenue > 0 ? `$${seg.revenue.toLocaleString()}` : '$0'})`}</title>
+                          </path>
+                        );
+                      })
+                    ) : (
+                      <circle cx="120" cy="120" r="88" fill="none" stroke="#27272a" strokeWidth="6" strokeDasharray="4 4" />
+                    )}
 
-                    {/* Center Numbers matching reference */}
+                    {/* Center Numbers: EXACT LIVE TOTAL COUNT FROM DATABASE */}
                     <text
                       x="120"
                       y="116"
                       textAnchor="middle"
                       fill="#ffffff"
-                      fontSize="26"
+                      fontSize="28"
                       fontWeight="800"
                       fontFamily="system-ui, -apple-system, sans-serif"
                       letterSpacing="-0.5"
                     >
-                      {crm?.totalClients ? `${crm.totalClients}.000` : '24.000'}
+                      {totalClients}
                     </text>
                     <text
                       x="120"
@@ -597,71 +606,106 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
               })()}
             </div>
 
-            {/* Right-Side Item List matching reference */}
+            {/* Right-Side Item List matching real database values */}
             <div className="sm:col-span-6 space-y-3 text-xs">
-              {/* 1. Sky Blue -> To Be Contacted / Outreach */}
-              <div
-                onClick={() => handleCrmCategoryClick('pending')}
-                className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-3.5 h-3.5 rounded-md bg-[#38bdf8] shadow-sm shadow-sky-500/20 group-hover:scale-110 transition-transform" />
-                  <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
-                    Outreach Pending
-                  </span>
-                </div>
-                <span className="font-mono font-bold text-zinc-100 group-hover:text-sky-300">
-                  {crm?.pendingClients ? `${crm.pendingClients * 10},000` : '110,000'}
-                </span>
-              </div>
+              {(() => {
+                const wonCount = crm?.wonClients ?? crm?.positiveClients ?? 0;
+                const wonRev = crm?.wonRevenue ?? crm?.totalRevenue ?? 0;
+                const discussionCount = crm?.discussionClients ?? 0;
+                const discussionRev = crm?.discussionRevenue ?? 0;
+                const pendingCount = crm?.outreachPendingClients ?? crm?.pendingClients ?? 0;
+                const pendingRev = crm?.outreachPendingRevenue ?? 0;
+                const lostCount = crm?.lostClients ?? crm?.negativeClients ?? 0;
+                const lostRev = crm?.lostRevenue ?? 0;
 
-              {/* 2. Amber / Gold -> In Discussion */}
-              <div
-                onClick={() => handleCrmCategoryClick('pending')}
-                className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-3.5 h-3.5 rounded-md bg-[#fbbf24] shadow-sm shadow-amber-500/20 group-hover:scale-110 transition-transform" />
-                  <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
-                    Process Discussion
-                  </span>
-                </div>
-                <span className="font-mono font-bold text-zinc-100 group-hover:text-amber-300">
-                  {crm?.pendingClients ? `${Math.max(1, crm.pendingClients) * 8},000` : '98,000'}
-                </span>
-              </div>
+                return (
+                  <>
+                    {/* 1. Sky Blue -> Outreach Pending */}
+                    <div
+                      onClick={() => handleCrmCategoryClick('pending')}
+                      className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-3.5 h-3.5 rounded-md bg-[#38bdf8] shadow-sm shadow-sky-500/20 group-hover:scale-110 transition-transform" />
+                        <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
+                          Outreach Pending
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-zinc-100 group-hover:text-sky-300">
+                          {pendingCount} {pendingCount === 1 ? 'Lead' : 'Leads'}
+                        </span>
+                        {pendingRev > 0 && (
+                          <span className="text-[10px] text-zinc-500 font-mono block">${pendingRev.toLocaleString()}</span>
+                        )}
+                      </div>
+                    </div>
 
-              {/* 3. Mint / Teal -> Delivery Done / Deals Won */}
-              <div
-                onClick={() => handleCrmCategoryClick('positive')}
-                className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-3.5 h-3.5 rounded-md bg-[#10b981] shadow-sm shadow-emerald-500/20 group-hover:scale-110 transition-transform" />
-                  <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
-                    Delivery Done (Won)
-                  </span>
-                </div>
-                <span className="font-mono font-bold text-zinc-100 group-hover:text-emerald-300">
-                  {crm?.positiveClients ? `${crm.positiveClients * 20},000` : '140,000'}
-                </span>
-              </div>
+                    {/* 2. Amber / Gold -> Process Discussion */}
+                    <div
+                      onClick={() => handleCrmCategoryClick('pending')}
+                      className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-3.5 h-3.5 rounded-md bg-[#fbbf24] shadow-sm shadow-amber-500/20 group-hover:scale-110 transition-transform" />
+                        <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
+                          Process Discussion
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-zinc-100 group-hover:text-amber-300">
+                          {discussionCount} {discussionCount === 1 ? 'Lead' : 'Leads'}
+                        </span>
+                        {discussionRev > 0 && (
+                          <span className="text-[10px] text-zinc-500 font-mono block">${discussionRev.toLocaleString()}</span>
+                        )}
+                      </div>
+                    </div>
 
-              {/* 4. Vibrant Pink -> Returned / Ghosted */}
-              <div
-                onClick={() => handleCrmCategoryClick('negative')}
-                className="flex items-center justify-between pb-1 cursor-pointer group transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-3.5 h-3.5 rounded-md bg-[#ec4899] shadow-sm shadow-pink-500/20 group-hover:scale-110 transition-transform" />
-                  <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
-                    Lost / Ghosted
-                  </span>
-                </div>
-                <span className="font-mono font-bold text-zinc-100 group-hover:text-pink-300">
-                  {crm?.negativeClients ? `${crm.negativeClients * 12},236` : '67,236'}
-                </span>
-              </div>
+                    {/* 3. Mint / Teal -> Delivery Done / Deals Won */}
+                    <div
+                      onClick={() => handleCrmCategoryClick('positive')}
+                      className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-3.5 h-3.5 rounded-md bg-[#10b981] shadow-sm shadow-emerald-500/20 group-hover:scale-110 transition-transform" />
+                        <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
+                          Delivery Done (Won)
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-zinc-100 group-hover:text-emerald-300">
+                          {wonCount} {wonCount === 1 ? 'Lead' : 'Leads'}
+                        </span>
+                        {wonRev > 0 && (
+                          <span className="text-[10px] text-emerald-400/80 font-mono block font-semibold">${wonRev.toLocaleString()}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 4. Vibrant Pink -> Lost / Ghosted */}
+                    <div
+                      onClick={() => handleCrmCategoryClick('negative')}
+                      className="flex items-center justify-between pb-1 cursor-pointer group transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-3.5 h-3.5 rounded-md bg-[#ec4899] shadow-sm shadow-pink-500/20 group-hover:scale-110 transition-transform" />
+                        <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
+                          Lost / Ghosted
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-zinc-100 group-hover:text-pink-300">
+                          {lostCount} {lostCount === 1 ? 'Lead' : 'Leads'}
+                        </span>
+                        {lostRev > 0 && (
+                          <span className="text-[10px] text-zinc-500 font-mono block">${lostRev.toLocaleString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

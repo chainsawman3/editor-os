@@ -748,22 +748,37 @@ export const tursoApi = {
         { platform: 'Other', projects: marketingProjects.filter((p) => !['instagram', 'tiktok', 'youtube'].includes(p.sub_section || '')).length, fill: '#a855f7' }
       ];
 
-      // Client CRM Funnel & Responses
+      // Client CRM Funnel & Responses directly from database
       const totalClients = clients.length;
-      const positiveClients = clients.filter((c) => c.status === 'Agreed' || c.status === 'Client' || c.status === 'Completed').length;
-      const negativeClients = clients.filter((c) => c.status === 'Ignored').length;
-      const pendingClients = clients.filter((c) => c.status === 'Contacted' || c.status === 'Lead' || c.status === 'Discussion' || c.status === 'Replied').length;
+      const wonClients = clients.filter((c) => c.status === 'Agreed' || c.status === 'Client' || c.status === 'Completed').length;
+      const discussionClients = clients.filter((c) => c.status === 'Discussion').length;
+      const outreachPendingClients = clients.filter((c) => c.status === 'Contacted' || c.status === 'Lead' || c.status === 'Replied').length;
+      const lostClients = clients.filter((c) => c.status === 'Ignored').length;
 
-      const totalRevenue = clients
+      const wonRevenue = clients
         .filter((c) => c.status === 'Agreed' || c.status === 'Client' || c.status === 'Completed')
         .reduce((acc, c) => acc + (Number(c.revenue) || 0), 0);
 
-      const conversionRate = totalClients > 0 ? Math.round((positiveClients / totalClients) * 100) : 0;
+      const discussionRevenue = clients
+        .filter((c) => c.status === 'Discussion')
+        .reduce((acc, c) => acc + (Number(c.revenue) || 0), 0);
+
+      const outreachPendingRevenue = clients
+        .filter((c) => c.status === 'Contacted' || c.status === 'Lead' || c.status === 'Replied')
+        .reduce((acc, c) => acc + (Number(c.revenue) || 0), 0);
+
+      const lostRevenue = clients
+        .filter((c) => c.status === 'Ignored')
+        .reduce((acc, c) => acc + (Number(c.revenue) || 0), 0);
+
+      const totalRevenue = clients.reduce((acc, c) => acc + (Number(c.revenue) || 0), 0);
+      const conversionRate = totalClients > 0 ? Math.round((wonClients / totalClients) * 100) : 0;
 
       const responseDiagram = [
-        { name: 'Positive (Agreed / Active)', count: positiveClients, color: '#10b981', percentage: totalClients > 0 ? Math.round((positiveClients / totalClients) * 100) : 0 },
-        { name: 'Negative (Rejected / Ghosted)', count: negativeClients, color: '#f43f5e', percentage: totalClients > 0 ? Math.round((negativeClients / totalClients) * 100) : 0 },
-        { name: 'Pending (Awaiting Reply)', count: pendingClients, color: '#3b82f6', percentage: totalClients > 0 ? Math.round((pendingClients / totalClients) * 100) : 0 }
+        { name: 'Deals Won / Retainers', count: wonClients, revenue: wonRevenue, color: '#10b981', percentage: totalClients > 0 ? Math.round((wonClients / totalClients) * 100) : 0, key: 'positive' },
+        { name: 'In Discussion', count: discussionClients, revenue: discussionRevenue, color: '#fbbf24', percentage: totalClients > 0 ? Math.round((discussionClients / totalClients) * 100) : 0, key: 'discussion' },
+        { name: 'Outreach Pending', count: outreachPendingClients, revenue: outreachPendingRevenue, color: '#38bdf8', percentage: totalClients > 0 ? Math.round((outreachPendingClients / totalClients) * 100) : 0, key: 'pending' },
+        { name: 'Lost / Ghosted', count: lostClients, revenue: lostRevenue, color: '#ec4899', percentage: totalClients > 0 ? Math.round((lostClients / totalClients) * 100) : 0, key: 'negative' }
       ];
 
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -789,9 +804,9 @@ export const tursoApi = {
           planningProjects,
           projectCompletionRate,
           totalClients,
-          positiveClients,
-          negativeClients,
-          pendingClients,
+          positiveClients: wonClients,
+          negativeClients: lostClients,
+          pendingClients: outreachPendingClients + discussionClients,
           totalRevenue,
           conversionRate
         },
@@ -816,9 +831,17 @@ export const tursoApi = {
         },
         crm: {
           totalClients,
-          positiveClients,
-          negativeClients,
-          pendingClients,
+          wonClients,
+          discussionClients,
+          outreachPendingClients,
+          lostClients,
+          wonRevenue,
+          discussionRevenue,
+          outreachPendingRevenue,
+          lostRevenue,
+          positiveClients: wonClients,
+          negativeClients: lostClients,
+          pendingClients: outreachPendingClients + discussionClients,
           totalRevenue,
           conversionRate,
           responseDiagram,
@@ -828,9 +851,9 @@ export const tursoApi = {
         // Backwards compatibility for existing structure
         crmFunnel: {
           totalOutreach: totalClients,
-          contacted: pendingClients,
-          ignored: negativeClients,
-          agreed: positiveClients,
+          contacted: outreachPendingClients + discussionClients,
+          ignored: lostClients,
+          agreed: wonClients,
           activeClients: clients.filter((c) => c.status === 'Client' || c.status === 'Completed').length,
           conversionRate,
           totalRevenue
