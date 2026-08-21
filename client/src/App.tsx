@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { api } from './api';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { QuickCaptureModal } from './components/layout/QuickCaptureModal';
-
-import { GoalsHubPage } from './pages/GoalsHubPage';
-import { ContentStudioPage } from './pages/ContentStudioPage';
-import { CalendarPage } from './pages/CalendarPage';
-import { ProjectDetailPage } from './pages/ProjectDetailPage';
-import { GoalDetailPage } from './pages/GoalDetailPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { InboxPage } from './pages/InboxPage';
-import { SettingsPage } from './pages/SettingsPage';
 import { SectionType } from './types';
 import { PinScreen } from './components/PinScreen';
+
+// Dynamic code-split page imports for minimal bandwidth usage
+const GoalsHubPage = lazy(() => import('./pages/GoalsHubPage').then((m) => ({ default: m.GoalsHubPage })));
+const ContentStudioPage = lazy(() => import('./pages/ContentStudioPage').then((m) => ({ default: m.ContentStudioPage })));
+const CalendarPage = lazy(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })));
+const GoalDetailPage = lazy(() => import('./pages/GoalDetailPage').then((m) => ({ default: m.GoalDetailPage })));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
+const InboxPage = lazy(() => import('./pages/InboxPage').then((m) => ({ default: m.InboxPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -268,7 +269,15 @@ export function App() {
 
         <main className="flex-1 overflow-y-auto bg-zinc-950/60 pb-12">
           <div key={currentTab + (selectedProjectId || '')} className="page-transition min-h-full">
-            {renderContent()}
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-[50vh]">
+                  <div className="w-7 h-7 border-2 border-amber-500/20 border-t-amber-400 rounded-full animate-spin" />
+                </div>
+              }
+            >
+              {renderContent()}
+            </Suspense>
           </div>
         </main>
       </div>
