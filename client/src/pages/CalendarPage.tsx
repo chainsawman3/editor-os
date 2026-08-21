@@ -22,7 +22,10 @@ import {
   CalendarRange,
   Zap,
   Tag,
-  Check
+  Check,
+  Megaphone,
+  Briefcase,
+  GraduationCap
 } from 'lucide-react';
 import { CalendarSkeleton } from '../components/common/SkeletonLoader';
 
@@ -92,6 +95,69 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today.toISOString().split('T')[0]);
+  };
+
+  // Helper to determine project badge style & icon based on category/section
+  const getProjectBadge = (p: Project) => {
+    const sec = p.section || 'video_editing';
+    const sub = (p.sub_section || '').toLowerCase();
+    const desc = (p.description || '').toLowerCase();
+    const name = p.name.toLowerCase();
+
+    if (sec === 'video_editing') {
+      return {
+        icon: Video,
+        label: 'Video Editing',
+        style: 'bg-blue-950/90 border-blue-600/80 text-blue-300 hover:bg-blue-900 shadow-blue-950/40'
+      };
+    }
+    if (sec === 'marketing') {
+      if (sub === 'instagram' || name.includes('insta') || desc.includes('reel')) {
+        return {
+          icon: Megaphone,
+          label: 'Instagram Reel',
+          style: 'bg-pink-950/90 border-pink-600/80 text-pink-300 hover:bg-pink-900 shadow-pink-950/40'
+        };
+      }
+      if (sub === 'tiktok' || name.includes('tiktok') || desc.includes('tiktok')) {
+        return {
+          icon: Megaphone,
+          label: 'TikTok Content',
+          style: 'bg-cyan-950/90 border-cyan-600/80 text-cyan-300 hover:bg-cyan-900 shadow-cyan-950/40'
+        };
+      }
+      if (sub === 'youtube' || name.includes('youtube') || name.includes('yt')) {
+        return {
+          icon: Video,
+          label: 'YouTube Video',
+          style: 'bg-red-950/90 border-red-600/80 text-red-300 hover:bg-red-900 shadow-red-950/40'
+        };
+      }
+      return {
+        icon: Megaphone,
+        label: 'Marketing & Social',
+        style: 'bg-emerald-950/90 border-emerald-600/80 text-emerald-300 hover:bg-emerald-900 shadow-emerald-950/40'
+      };
+    }
+    if (sec === 'freelance') {
+      return {
+        icon: Briefcase,
+        label: 'Client Project',
+        style: 'bg-purple-950/90 border-purple-600/80 text-purple-300 hover:bg-purple-900 shadow-purple-950/40'
+      };
+    }
+    if (sec === 'skills') {
+      return {
+        icon: GraduationCap,
+        label: 'Skills Mastery',
+        style: 'bg-amber-950/90 border-amber-600/80 text-amber-300 hover:bg-amber-900 shadow-amber-950/40'
+      };
+    }
+    return {
+      icon: Layers,
+      label: 'Project',
+      style: 'bg-blue-950/90 border-blue-600/80 text-blue-300 hover:bg-blue-900 shadow-blue-950/40'
+    };
   };
 
   // Construct continuous calendar grid with previous and next month trailing days
@@ -274,7 +340,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                 </span>
               </div>
               <p className="text-xs text-zinc-400 font-medium mt-0.5">
-                Visual timeline for Primary Objectives, Project Deliveries, and Daily Action Steps
+                Visual icon radar for Primary Objectives, Project Deliveries, and Daily Action Steps
               </p>
             </div>
           </div>
@@ -347,11 +413,11 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
           </div>
         </div>
 
-        {/* 2. FILTER & SEARCH TOOLBAR */}
+        {/* 2. FILTER & COLOR LEGEND TOOLBAR */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-850">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-zinc-500 font-semibold text-[11px] uppercase tracking-wider flex items-center gap-1 mr-1">
-              <Filter className="w-3.5 h-3.5 text-zinc-400" /> Filters:
+              <Filter className="w-3.5 h-3.5 text-zinc-400" /> Filter:
             </span>
 
             {/* Toggle Goals */}
@@ -363,8 +429,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                   : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${showGoals ? 'bg-purple-400' : 'bg-zinc-600'}`} />
-              🎯 Goals ({goals.filter((g) => g.target_date).length})
+              <Target className="w-3.5 h-3.5 text-purple-400" />
+              <span>Goals ({goals.filter((g) => g.target_date).length})</span>
             </button>
 
             {/* Toggle Projects */}
@@ -376,8 +442,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                   : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${showProjects ? 'bg-blue-400' : 'bg-zinc-600'}`} />
-              🎬 Projects ({projects.filter((p) => p.deadline).length})
+              <Video className="w-3.5 h-3.5 text-blue-400" />
+              <span>Projects ({projects.filter((p) => p.deadline).length})</span>
             </button>
 
             {/* Toggle Tasks */}
@@ -389,8 +455,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                   : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${showTasks ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
-              ⚡ Tasks ({tasks.filter((t) => t.due_date).length})
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Tasks ({tasks.filter((t) => t.due_date).length})</span>
             </button>
 
             <div className="h-4 w-px bg-zinc-800 mx-1 hidden sm:block" />
@@ -420,6 +486,39 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
               className="w-full pl-8 pr-3 py-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 rounded-xl text-xs text-zinc-100 placeholder:text-zinc-500 outline-none"
             />
           </div>
+        </div>
+
+        {/* 3. ICON COLOR KEY (VISUAL LEGEND) */}
+        <div className="flex flex-wrap items-center gap-3 pt-2 text-[11px] text-zinc-400">
+          <span className="font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Icon Key:</span>
+          <span className="flex items-center gap-1.5">
+            <span className="p-1 rounded bg-purple-950 border border-purple-700 text-purple-400"><Target className="w-3 h-3" /></span>
+            <span>Goal</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="p-1 rounded bg-blue-950 border border-blue-600 text-blue-400"><Video className="w-3 h-3" /></span>
+            <span>Video Project</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="p-1 rounded bg-pink-950 border border-pink-600 text-pink-400"><Megaphone className="w-3 h-3" /></span>
+            <span>Instagram Reel</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="p-1 rounded bg-cyan-950 border border-cyan-600 text-cyan-400"><Megaphone className="w-3 h-3" /></span>
+            <span>TikTok</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="p-1 rounded bg-amber-950 border border-amber-600 text-amber-400"><GraduationCap className="w-3 h-3" /></span>
+            <span>Skills</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="p-1 rounded bg-purple-950 border border-purple-600 text-purple-300"><Briefcase className="w-3 h-3" /></span>
+            <span>Client</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="p-1 rounded bg-emerald-950 border border-emerald-600 text-emerald-400"><CheckCircle2 className="w-3 h-3" /></span>
+            <span>Action Step</span>
+          </span>
         </div>
       </div>
 
@@ -455,7 +554,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                   <div
                     key={dateStr}
                     onClick={() => setSelectedDate(dateStr)}
-                    className={`min-h-[110px] sm:min-h-[125px] p-2 rounded-xl border cursor-pointer transition-all duration-150 flex flex-col justify-between group ${
+                    className={`min-h-[105px] sm:min-h-[120px] p-2.5 rounded-xl border cursor-pointer transition-all duration-150 flex flex-col justify-between group ${
                       isSelected
                         ? 'bg-zinc-900 border-blue-500/80 ring-2 ring-blue-500/20 shadow-lg'
                         : isToday
@@ -492,58 +591,53 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                       )}
                     </div>
 
-                    {/* Event Badges in Cell */}
-                    <div className="space-y-1 my-1 overflow-hidden">
+                    {/* EVENT ICONS ONLY (CLEAN COLOR-CODED BADGES) */}
+                    <div className="flex flex-wrap items-center gap-1.5 my-1.5 overflow-hidden">
                       {/* Goals */}
-                      {dayGoals.slice(0, 1).map((g) => (
+                      {dayGoals.map((g) => (
                         <div
                           key={g.id}
-                          className="px-1.5 py-0.5 rounded-md bg-purple-950/80 border border-purple-800/80 text-purple-200 text-[10px] font-semibold truncate flex items-center gap-1 shadow-sm"
-                          title={`Goal: ${g.title}`}
+                          className="p-1.5 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 text-purple-300 shadow-sm transition-all hover:scale-110"
+                          title={`🎯 [Primary Goal] ${g.title}`}
                         >
-                          <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
-                          <span className="truncate">{g.title}</span>
+                          <Target className="w-3.5 h-3.5" />
                         </div>
                       ))}
 
-                      {/* Projects */}
-                      {dayProjects.slice(0, 1).map((p) => (
-                        <div
-                          key={p.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenProject(p.id);
-                          }}
-                          className="px-1.5 py-0.5 rounded-md bg-blue-950/80 hover:bg-blue-900 border border-blue-800/80 text-blue-200 text-[10px] font-semibold truncate flex items-center gap-1 transition-colors shadow-sm"
-                          title={`Project: ${p.name}`}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                          <span className="truncate">{p.name}</span>
-                        </div>
-                      ))}
+                      {/* Projects (Color-coded by category/platform) */}
+                      {dayProjects.map((p) => {
+                        const badge = getProjectBadge(p);
+                        const IconComponent = badge.icon;
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenProject(p.id);
+                            }}
+                            className={`p-1.5 rounded-lg border shadow-sm transition-all hover:scale-110 cursor-pointer ${badge.style}`}
+                            title={`🎬 [${badge.label}] ${p.name} ${p.client_name ? `(Client: ${p.client_name})` : ''}`}
+                          >
+                            <IconComponent className="w-3.5 h-3.5" />
+                          </div>
+                        );
+                      })}
 
                       {/* Tasks */}
-                      {dayTasks.slice(0, 1).map((t) => (
+                      {dayTasks.map((t) => (
                         <div
                           key={t.id}
                           onClick={(e) => handleToggleTask(t, e)}
-                          className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium truncate flex items-center gap-1 transition-colors ${
+                          className={`p-1.5 rounded-lg border shadow-sm transition-all hover:scale-110 cursor-pointer ${
                             t.completed
-                              ? 'bg-zinc-900/80 text-zinc-500 line-through'
-                              : 'bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800/80 text-emerald-200'
+                              ? 'bg-zinc-900/90 border-zinc-800 text-zinc-600'
+                              : 'bg-emerald-950/90 hover:bg-emerald-900 border-emerald-600/80 text-emerald-300'
                           }`}
-                          title={`Task: ${t.title}`}
+                          title={`⚡ [Action Step] ${t.title} ${t.completed ? '(Completed)' : '(Pending - click to toggle)'}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.completed ? 'bg-zinc-600' : 'bg-emerald-400'}`} />
-                          <span className="truncate">{t.title}</span>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
                         </div>
                       ))}
-
-                      {totalDayItems > 3 && (
-                        <div className="text-[9px] font-bold text-zinc-400 pl-1 font-mono">
-                          +{totalDayItems - 3} more
-                        </div>
-                      )}
                     </div>
 
                     <div className="h-0.5" />
@@ -594,22 +688,33 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                   <span className="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
                     <Video className="w-3.5 h-3.5" /> Projects Due ({selectedProjects.length})
                   </span>
-                  {selectedProjects.map((p) => (
-                    <div
-                      key={p.id}
-                      onClick={() => onOpenProject(p.id)}
-                      className="p-3 bg-blue-950/30 hover:bg-blue-950/60 border border-blue-800/60 hover:border-blue-500 rounded-xl cursor-pointer group transition-all flex items-center justify-between shadow-sm"
-                    >
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-bold text-blue-100 group-hover:text-white flex items-center gap-1.5">
-                          {p.name}
+                  {selectedProjects.map((p) => {
+                    const badge = getProjectBadge(p);
+                    const IconComponent = badge.icon;
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => onOpenProject(p.id)}
+                        className="p-3 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-blue-500 rounded-xl cursor-pointer group transition-all flex items-center justify-between shadow-sm"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`p-1 rounded border ${badge.style}`}>
+                              <IconComponent className="w-3 h-3" />
+                            </span>
+                            <span className="text-xs font-bold text-zinc-100 group-hover:text-white">
+                              {p.name}
+                            </span>
+                          </div>
+                          {p.client_name && <div className="text-[10px] text-zinc-400 font-medium pl-6">Client: {p.client_name}</div>}
+                          <div className="text-[10px] text-zinc-400 font-mono pl-6">
+                            <span className="text-blue-400">{badge.label}</span> • Status: <strong className="text-zinc-300">{p.status}</strong>
+                          </div>
                         </div>
-                        {p.client_name && <div className="text-[10px] text-zinc-400 font-medium">Client: {p.client_name}</div>}
-                        <div className="text-[10px] text-blue-300/80 font-mono">Status: {p.status}</div>
+                        <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
                       </div>
-                      <ArrowRight className="w-4 h-4 text-blue-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -682,7 +787,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
         </div>
       )}
 
-      {/* 3. WEEK SPRINT VIEW */}
+      {/* 3. WEEK SPRINT VIEW (ICON-CODED) */}
       {viewMode === 'week' && (
         <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
@@ -728,42 +833,53 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                       </span>
                     </div>
 
-                    {/* Events inside this Day */}
-                    <div className="space-y-1.5">
+                    {/* Events inside this Day (Icon Grid) */}
+                    <div className="flex flex-wrap items-center gap-2">
                       {dayGoals.map((g) => (
-                        <div key={g.id} className="p-2 bg-purple-950/80 border border-purple-800/80 text-purple-200 rounded-lg text-xs font-medium">
-                          🎯 {g.title}
+                        <div
+                          key={g.id}
+                          className="p-2 rounded-lg bg-purple-950/90 border border-purple-600/80 text-purple-300 shadow-sm"
+                          title={`🎯 [Primary Goal] ${g.title}`}
+                        >
+                          <Target className="w-4 h-4" />
                         </div>
                       ))}
 
-                      {dayProjects.map((p) => (
-                        <div
-                          key={p.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenProject(p.id);
-                          }}
-                          className="p-2 bg-blue-950/80 hover:bg-blue-900 border border-blue-800/80 text-blue-200 rounded-lg text-xs font-medium transition-colors"
-                        >
-                          🎬 {p.name}
-                        </div>
-                      ))}
+                      {dayProjects.map((p) => {
+                        const badge = getProjectBadge(p);
+                        const IconComponent = badge.icon;
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenProject(p.id);
+                            }}
+                            className={`p-2 rounded-lg border shadow-sm transition-all hover:scale-105 cursor-pointer ${badge.style}`}
+                            title={`🎬 [${badge.label}] ${p.name} ${p.client_name ? `(Client: ${p.client_name})` : ''}`}
+                          >
+                            <IconComponent className="w-4 h-4" />
+                          </div>
+                        );
+                      })}
 
                       {dayTasks.map((t) => (
                         <div
                           key={t.id}
                           onClick={(e) => handleToggleTask(t, e)}
-                          className={`p-1.5 rounded-lg text-[11px] flex items-center gap-1.5 ${
-                            t.completed ? 'bg-zinc-900 text-zinc-500 line-through' : 'bg-emerald-950/80 border border-emerald-800/80 text-emerald-200'
+                          className={`p-2 rounded-lg border shadow-sm transition-all hover:scale-105 cursor-pointer ${
+                            t.completed
+                              ? 'bg-zinc-900 border-zinc-800 text-zinc-600'
+                              : 'bg-emerald-950 border-emerald-600 text-emerald-300'
                           }`}
+                          title={`⚡ [Action Step] ${t.title}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.completed ? 'bg-zinc-600' : 'bg-emerald-400'}`} />
-                          <span className="truncate">{t.title}</span>
+                          <CheckCircle2 className="w-4 h-4" />
                         </div>
                       ))}
 
                       {dayGoals.length === 0 && dayProjects.length === 0 && dayTasks.length === 0 && (
-                        <div className="text-[11px] text-zinc-600 text-center py-6">No deadlines</div>
+                        <div className="text-[11px] text-zinc-600 text-center py-6 w-full">No events</div>
                       )}
                     </div>
                   </div>
