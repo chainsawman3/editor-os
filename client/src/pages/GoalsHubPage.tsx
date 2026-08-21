@@ -254,13 +254,38 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
     switch (st) {
       case 'Client':
       case 'Completed':
-        return <span className="px-2.5 py-1 text-[10px] font-mono rounded bg-emerald-950 border border-emerald-700 text-emerald-300 flex items-center gap-1"><UserCheck className="w-3 h-3" /> Active Client</span>;
+        return (
+          <span className="px-3 py-1 text-[11px] font-semibold rounded-xl bg-emerald-950/80 border border-emerald-700/80 text-emerald-300 flex items-center gap-1.5 whitespace-nowrap shadow-sm shadow-emerald-950/30">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <UserCheck className="w-3.5 h-3.5" />
+            <span>Active Client</span>
+          </span>
+        );
       case 'Agreed':
-        return <span className="px-2.5 py-1 text-[10px] font-mono rounded bg-cyan-950 border border-cyan-700 text-cyan-300 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Agreed / Discussion</span>;
+        return (
+          <span className="px-3 py-1 text-[11px] font-semibold rounded-xl bg-cyan-950/80 border border-cyan-700/80 text-cyan-300 flex items-center gap-1.5 whitespace-nowrap shadow-sm shadow-cyan-950/30">
+            <span className="w-2 h-2 rounded-full bg-cyan-400" />
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Agreed / Discussion</span>
+          </span>
+        );
       case 'Contacted':
-        return <span className="px-2.5 py-1 text-[10px] font-mono rounded bg-blue-950 border border-blue-700 text-blue-300 flex items-center gap-1"><Clock className="w-3 h-3" /> Contacted (Waiting)</span>;
+        return (
+          <span className="px-3 py-1 text-[11px] font-semibold rounded-xl bg-blue-950/80 border border-blue-700/80 text-blue-300 flex items-center gap-1.5 whitespace-nowrap shadow-sm shadow-blue-950/30">
+            <span className="w-2 h-2 rounded-full bg-blue-400" />
+            <Clock className="w-3.5 h-3.5" />
+            <span>Contacted (Waiting)</span>
+          </span>
+        );
       case 'Ignored':
-        return <span className="px-2.5 py-1 text-[10px] font-mono rounded bg-zinc-850 border border-zinc-700 text-zinc-400 flex items-center gap-1"><UserX className="w-3 h-3" /> Ignored / Ghosted</span>;
+      default:
+        return (
+          <span className="px-3 py-1 text-[11px] font-semibold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 flex items-center gap-1.5 whitespace-nowrap">
+            <span className="w-2 h-2 rounded-full bg-zinc-600" />
+            <UserX className="w-3.5 h-3.5" />
+            <span>Ignored / Ghosted</span>
+          </span>
+        );
     }
   };
 
@@ -907,96 +932,180 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
           </div>
 
           {/* CRM Funnel Overview Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] text-zinc-400 uppercase block font-medium">Total Leads</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="bg-zinc-950/90 border border-zinc-800/90 p-4 rounded-2xl space-y-1.5 shadow-sm relative overflow-hidden backdrop-blur-md">
+              <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider block">Total Leads</span>
               <span className="text-2xl font-bold font-mono text-zinc-100 block">{clients.length}</span>
+              <span className="text-[11px] text-zinc-500 font-medium block">All pipeline channels</span>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] text-zinc-400 uppercase block font-medium">Contacted / Waiting</span>
+            <div className="bg-zinc-950/90 border border-blue-900/30 p-4 rounded-2xl space-y-1.5 shadow-sm relative overflow-hidden backdrop-blur-md">
+              <span className="text-[10px] text-blue-400 uppercase font-bold tracking-wider block">Contacted / Waiting</span>
               <span className="text-2xl font-bold font-mono text-blue-400 block">
                 {clients.filter((c) => c.status === 'Contacted' || c.status === 'Lead' || c.status === 'Discussion' || c.status === 'Replied').length}
               </span>
+              <span className="text-[11px] text-zinc-500 font-medium block">Awaiting reply / pitch</span>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] text-zinc-400 uppercase block font-medium">Agreed / Won Deals</span>
+            <div className="bg-zinc-950/90 border border-cyan-900/30 p-4 rounded-2xl space-y-1.5 shadow-sm relative overflow-hidden backdrop-blur-md">
+              <span className="text-[10px] text-cyan-400 uppercase font-bold tracking-wider block">Agreed / Won Deals</span>
               <span className="text-2xl font-bold font-mono text-cyan-400 block">
                 {clients.filter((c) => c.status === 'Agreed').length}
               </span>
+              <span className="text-[11px] text-zinc-500 font-medium block">In contract negotiation</span>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] text-zinc-400 uppercase block font-medium">Active Retainer Clients</span>
+            <div className="bg-zinc-950/90 border border-emerald-900/30 p-4 rounded-2xl space-y-1.5 shadow-sm relative overflow-hidden backdrop-blur-md">
+              <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider block">Active Retainers</span>
               <span className="text-2xl font-bold font-mono text-emerald-400 block">
                 {clients.filter((c) => c.status === 'Client' || c.status === 'Completed').length}
+              </span>
+              <span className="text-[11px] text-emerald-500/80 font-mono font-semibold block">
+                ${clients.reduce((acc, c) => acc + (c.revenue || 0), 0).toLocaleString()} Total Value
               </span>
             </div>
           </div>
 
           {/* CLIENTS TABLE */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
-            <div className="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-emerald-400" /> Client Outreach & Pipeline ({filteredClients.length})
-              </h2>
+          <div className="bg-zinc-950/90 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-xl backdrop-blur-md">
+            <div className="p-4 sm:p-5 border-b border-zinc-850 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-800/80 text-emerald-400 shadow-inner">
+                  <Briefcase className="w-4 h-4" />
+                </span>
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2">
+                    Client Outreach & Pipeline
+                    <span className="px-2 py-0.5 text-[11px] font-mono font-bold bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg">
+                      {filteredClients.length}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-0.5 font-medium">
+                    Manage client discussions, agreed deals, contracts, and deliverable links
+                  </p>
+                </div>
+              </div>
+
               <button
                 onClick={() => setShowClientModal(true)}
-                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5 transition-colors"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-950/50 flex items-center gap-1.5 transition-all w-fit"
               >
-                <Plus className="w-3.5 h-3.5" /> Add Client
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Client</span>
               </button>
             </div>
 
             {filteredClients.length === 0 ? (
-              <div className="p-8 text-center text-zinc-400 text-xs">No client records match the current filter.</div>
+              <div className="p-12 text-center text-zinc-400 text-xs font-medium">
+                No client records match the current filter.
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs font-sans">
-                  <thead className="bg-zinc-900/60 font-mono text-[11px] text-zinc-400 border-b border-zinc-800">
+                  <thead className="bg-zinc-900/80 font-mono text-[11px] text-zinc-400 border-b border-zinc-800/80">
                     <tr>
-                      <th className="py-3.5 px-4 font-semibold">Client Name & Lead</th>
-                      <th className="py-3.5 px-4 font-semibold">Status</th>
-                      <th className="py-3.5 px-4 font-semibold">Priority</th>
-                      <th className="py-3.5 px-4 font-semibold">Deadline</th>
-                      <th className="py-3.5 px-4 font-semibold">Linked Project</th>
-                      <th className="py-3.5 px-4 font-semibold">Deal Value</th>
-                      <th className="py-3.5 px-4 text-right font-semibold">Actions</th>
+                      <th className="py-3.5 px-4 font-bold uppercase tracking-wider">Client & Lead</th>
+                      <th className="py-3.5 px-4 font-bold uppercase tracking-wider">Status</th>
+                      <th className="py-3.5 px-4 font-bold uppercase tracking-wider">Priority</th>
+                      <th className="py-3.5 px-4 font-bold uppercase tracking-wider whitespace-nowrap">Deadline</th>
+                      <th className="py-3.5 px-4 font-bold uppercase tracking-wider">Linked Project</th>
+                      <th className="py-3.5 px-4 font-bold uppercase tracking-wider">Deal Value</th>
+                      <th className="py-3.5 px-4 text-right font-bold uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-900">
                     {filteredClients.map((c) => {
                       const linkedP = projects.find((p) => p.id === c.linked_project_id);
+
+                      // Parse Name & Tag in Parentheses (e.g. David Miller (Apex Gym))
+                      const match = c.name.match(/^(.*?)\s*\((.*?)\)$/);
+                      const primaryName = match ? match[1].trim() : c.name;
+                      const subTag = match ? match[2].trim() : null;
+
+                      // Initials for Avatar
+                      const initials = primaryName
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((w) => w[0])
+                        .join('')
+                        .toUpperCase() || 'CL';
+
                       return (
-                        <tr key={c.id} className="hover:bg-zinc-900/40 transition-colors">
-                          <td className="py-3 px-4 font-medium text-zinc-200">
-                            <div className="font-bold text-zinc-100">{c.name}</div>
-                            {c.notes && <div className="text-[11px] text-zinc-400 line-clamp-1">{c.notes}</div>}
+                        <tr key={c.id} className="hover:bg-zinc-900/60 transition-colors group">
+                          {/* Client Name + Avatar */}
+                          <td className="py-4 px-4 font-medium text-zinc-200">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600/80 to-purple-600/80 border border-indigo-500/40 flex items-center justify-center text-white font-bold font-mono text-xs shadow-sm shrink-0">
+                                {initials}
+                              </div>
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-zinc-100 text-xs sm:text-sm">{primaryName}</span>
+                                  {subTag && (
+                                    <span className="px-2 py-0.5 text-[10px] font-mono rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 font-semibold">
+                                      {subTag}
+                                    </span>
+                                  )}
+                                </div>
+                                {c.notes && (
+                                  <div className="text-[11px] text-zinc-400 line-clamp-1 max-w-sm font-normal">
+                                    {c.notes}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </td>
-                          <td className="py-3 px-4">{getClientStatusBadge(c.status)}</td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2.5 py-0.5 text-[10px] font-mono rounded border ${getPriorityColor(c.priority)}`}>
+
+                          {/* Status Badge */}
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            {getClientStatusBadge(c.status)}
+                          </td>
+
+                          {/* Priority Badge */}
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            <span className={`px-2.5 py-1 text-[10px] font-mono font-bold rounded-lg border shadow-sm ${getPriorityColor(c.priority)}`}>
                               {c.priority || 'Medium'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-mono text-zinc-300">{c.deadline || '—'}</td>
-                          <td className="py-3 px-4">
+
+                          {/* Deadline / Follow-up (No awkward wrapping) */}
+                          <td className="py-4 px-4 font-mono text-zinc-300 whitespace-nowrap">
+                            {c.deadline ? (
+                              <span className="flex items-center gap-1.5 font-medium">
+                                <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                                <span>{c.deadline}</span>
+                              </span>
+                            ) : (
+                              <span className="text-zinc-600">—</span>
+                            )}
+                          </td>
+
+                          {/* Linked Project */}
+                          <td className="py-4 px-4">
                             {linkedP ? (
                               <button
                                 onClick={() => onOpenProject(linkedP.id)}
-                                className="text-cyan-400 hover:underline font-mono text-[11px] flex items-center gap-1"
+                                className="px-3 py-1.5 rounded-xl bg-cyan-950/50 hover:bg-cyan-950/80 border border-cyan-800/60 hover:border-cyan-600 text-cyan-300 hover:text-cyan-200 font-sans text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm group/link max-w-[220px]"
                               >
-                                {linkedP.name} <ExternalLink className="w-3 h-3" />
+                                <span className="truncate">{linkedP.name}</span>
+                                <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-70 group-hover/link:opacity-100 group-hover/link:translate-x-0.5 transition-all" />
                               </button>
                             ) : (
-                              <span className="text-zinc-500 font-mono">—</span>
+                              <span className="text-zinc-600 font-mono text-xs">—</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 font-mono text-emerald-400 font-bold">
-                            {c.revenue ? `$${c.revenue}` : '$0'}
+
+                          {/* Deal Value */}
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            <span className="font-mono text-emerald-400 font-bold text-sm bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 rounded-xl shadow-sm">
+                              {c.revenue ? `$${c.revenue.toLocaleString()}` : '$0'}
+                            </span>
                           </td>
-                          <td className="py-3 px-4 text-right">
+
+                          {/* Actions */}
+                          <td className="py-4 px-4 text-right whitespace-nowrap">
                             <button
                               onClick={() => handleDeleteClient(c.id)}
-                              className="p-1.5 text-zinc-500 hover:text-rose-400 rounded transition-colors"
+                              className="p-2 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl transition-all"
+                              title="Delete client record"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
