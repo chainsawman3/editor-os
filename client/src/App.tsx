@@ -65,16 +65,40 @@ export function App() {
     return <PinScreen onSuccess={handleAuthSuccess} />;
   }
 
-  const handleNavigate = (tab: string, entityId?: string) => {
-    if (tab === 'project_detail' && entityId) {
-      setSelectedProjectId(entityId);
+  const [navFilterOptions, setNavFilterOptions] = useState<{
+    status?: string;
+    viewType?: 'all' | 'goals_only' | 'projects_only';
+    clientStatus?: string;
+    platform?: string;
+  }>({});
+
+  const handleNavigate = (tab: string, entityIdOrOptions?: string | any) => {
+    let options: any = {};
+    if (typeof entityIdOrOptions === 'string') {
+      if (tab === 'project_detail') {
+        setSelectedProjectId(entityIdOrOptions);
+        setCurrentTab('project_detail');
+        return;
+      }
+    } else if (entityIdOrOptions && typeof entityIdOrOptions === 'object') {
+      options = entityIdOrOptions;
+    }
+
+    setNavFilterOptions(options);
+
+    if (tab === 'project_detail' && options.projectId) {
+      setSelectedProjectId(options.projectId);
       setCurrentTab('project_detail');
     } else if (tab.startsWith('goal_')) {
       const section = tab.replace('goal_', '') as SectionType;
       setSelectedSection(section);
       setCurrentTab(tab);
     } else if (tab === 'goals') {
-      setSelectedSection('video_editing');
+      if (options.section) {
+        setSelectedSection(options.section as SectionType);
+      } else {
+        setSelectedSection('video_editing');
+      }
       setCurrentTab('goals');
     } else {
       setSelectedProjectId(null);
@@ -91,16 +115,50 @@ export function App() {
     switch (currentTab) {
       case 'goals':
       case 'goal_video_editing':
-        return <GoalsHubPage initialSection="video_editing" onOpenProject={handleOpenProject} />;
+        return (
+          <GoalsHubPage
+            initialSection={selectedSection || 'video_editing'}
+            initialStatus={navFilterOptions.status}
+            initialViewType={navFilterOptions.viewType}
+            initialClientStatus={navFilterOptions.clientStatus}
+            onOpenProject={handleOpenProject}
+          />
+        );
       case 'goal_marketing':
-        return <GoalsHubPage initialSection="marketing" onOpenProject={handleOpenProject} />;
+        return (
+          <GoalsHubPage
+            initialSection="marketing"
+            initialStatus={navFilterOptions.status}
+            initialViewType={navFilterOptions.viewType}
+            initialPlatform={navFilterOptions.platform}
+            onOpenProject={handleOpenProject}
+          />
+        );
       case 'goal_freelance':
-        return <GoalsHubPage initialSection="freelance" onOpenProject={handleOpenProject} />;
+        return (
+          <GoalsHubPage
+            initialSection="freelance"
+            initialClientStatus={navFilterOptions.clientStatus}
+            onOpenProject={handleOpenProject}
+          />
+        );
       case 'goal_skills':
-        return <GoalsHubPage initialSection="skills" onOpenProject={handleOpenProject} />;
+        return (
+          <GoalsHubPage
+            initialSection="skills"
+            initialStatus={navFilterOptions.status}
+            initialViewType={navFilterOptions.viewType}
+            onOpenProject={handleOpenProject}
+          />
+        );
       case 'content':
       case 'dashboard':
-        return <ContentStudioPage onOpenProject={handleOpenProject} />;
+        return (
+          <ContentStudioPage
+            initialStatus={navFilterOptions.status}
+            onOpenProject={handleOpenProject}
+          />
+        );
       case 'calendar':
         return <CalendarPage onOpenProject={handleOpenProject} />;
       case 'project_detail':
@@ -111,13 +169,20 @@ export function App() {
           />
         );
       case 'analytics':
-        return <AnalyticsPage />;
+        return <AnalyticsPage onNavigate={handleNavigate} />;
       case 'inbox':
         return <InboxPage onOpenQuickCapture={() => setIsQuickCaptureOpen(true)} onNavigate={handleNavigate} />;
       case 'settings':
         return <SettingsPage />;
       default:
-        return <GoalsHubPage initialSection="video_editing" onOpenProject={handleOpenProject} />;
+        return (
+          <GoalsHubPage
+            initialSection="video_editing"
+            initialStatus={navFilterOptions.status}
+            initialViewType={navFilterOptions.viewType}
+            onOpenProject={handleOpenProject}
+          />
+        );
     }
   };
 
