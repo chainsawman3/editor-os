@@ -31,9 +31,10 @@ import { CalendarSkeleton } from '../components/common/SkeletonLoader';
 
 interface CalendarPageProps {
   onOpenProject: (projectId: string) => void;
+  onOpenGoal?: (goalId: string) => void;
 }
 
-export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => {
+export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpenGoal }) => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -597,8 +598,12 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                       {dayGoals.map((g) => (
                         <div
                           key={g.id}
-                          className="p-1.5 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 text-purple-300 shadow-sm transition-all hover:scale-110"
-                          title={`🎯 [Primary Goal] ${g.title}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenGoal && onOpenGoal(g.id);
+                          }}
+                          className="p-1.5 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 text-purple-300 shadow-sm transition-all hover:scale-110 cursor-pointer"
+                          title={`🎯 [Primary Goal] ${g.title} (Click to open objective)`}
                         >
                           <Target className="w-3.5 h-3.5" />
                         </div>
@@ -674,8 +679,17 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                     <Target className="w-3.5 h-3.5" /> Primary Goals ({selectedGoals.length})
                   </span>
                   {selectedGoals.map((g) => (
-                    <div key={g.id} className="p-3 bg-purple-950/30 border border-purple-800/60 rounded-xl space-y-1 shadow-sm">
-                      <div className="text-xs font-bold text-purple-100">{g.title}</div>
+                    <div
+                      key={g.id}
+                      onClick={() => onOpenGoal && onOpenGoal(g.id)}
+                      className="p-3 bg-purple-950/30 hover:bg-purple-950/60 border border-purple-800/60 hover:border-purple-500 rounded-xl space-y-1.5 shadow-sm cursor-pointer group transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-bold text-purple-100 group-hover:text-white flex items-center gap-1.5">
+                          {g.title}
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                      </div>
                       {g.description && <p className="text-[11px] text-zinc-400 leading-relaxed font-normal">{g.description}</p>}
                     </div>
                   ))}
@@ -760,9 +774,12 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                       {nearestUpcoming.map((item) => (
                         <div
                           key={item.id}
-                          onClick={() => item.type === 'Project' && onOpenProject(item.id)}
+                          onClick={() => {
+                            if (item.type === 'Project') onOpenProject(item.id);
+                            else if (item.type === 'Goal' && onOpenGoal) onOpenGoal(item.id);
+                          }}
                           className={`p-2.5 bg-zinc-900/60 border border-zinc-800 rounded-xl flex items-center justify-between text-xs transition-colors ${
-                            item.type === 'Project' ? 'cursor-pointer hover:border-blue-500/50' : ''
+                            item.type === 'Project' || item.type === 'Goal' ? 'cursor-pointer hover:border-purple-500/50' : ''
                           }`}
                         >
                           <div className="truncate pr-2">
@@ -771,7 +788,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                             </span>
                             <span className="font-semibold text-zinc-200 truncate block">{item.title}</span>
                           </div>
-                          {item.type === 'Project' && <ArrowRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />}
+                          {(item.type === 'Project' || item.type === 'Goal') && <ArrowRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />}
                         </div>
                       ))}
                     </div>
@@ -781,7 +798,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
             </div>
 
             <div className="text-[11px] text-zinc-500 pt-3 border-t border-zinc-850 text-center font-medium">
-              Click any project card to open its workspace
+              Click any goal or project to open its dedicated workspace
             </div>
           </div>
         </div>
@@ -838,8 +855,12 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                       {dayGoals.map((g) => (
                         <div
                           key={g.id}
-                          className="p-2 rounded-lg bg-purple-950/90 border border-purple-600/80 text-purple-300 shadow-sm"
-                          title={`🎯 [Primary Goal] ${g.title}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenGoal && onOpenGoal(g.id);
+                          }}
+                          className="p-2 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 text-purple-300 shadow-sm transition-all hover:scale-105 cursor-pointer"
+                          title={`🎯 [Primary Goal] ${g.title} (Click to open objective)`}
                         >
                           <Target className="w-4 h-4" />
                         </div>
@@ -913,9 +934,12 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                 return (
                   <div
                     key={`${item.type}_${item.id}`}
-                    onClick={() => isProject && onOpenProject(item.id)}
+                    onClick={() => {
+                      if (isProject) onOpenProject(item.id);
+                      else if (isGoal && onOpenGoal) onOpenGoal(item.id);
+                    }}
                     className={`p-4 sm:p-5 flex items-center justify-between hover:bg-zinc-900/50 transition-colors ${
-                      isProject ? 'cursor-pointer group' : ''
+                      isProject || isGoal ? 'cursor-pointer group' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
@@ -931,7 +955,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                         {item.type}
                       </span>
                       <div>
-                        <div className={`text-xs sm:text-sm font-bold text-zinc-100 ${isProject ? 'group-hover:text-blue-300 transition-colors' : ''}`}>
+                        <div className={`text-xs sm:text-sm font-bold text-zinc-100 ${isProject || isGoal ? 'group-hover:text-purple-300 transition-colors' : ''}`}>
                           {item.title}
                         </div>
                         {isProject && item.raw.client_name && (
@@ -944,8 +968,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject }) => 
                       <span className={`text-xs font-mono font-bold ${item.isOverdue ? 'text-rose-400' : 'text-zinc-300'}`}>
                         {item.date} {item.isOverdue && '(Overdue)'}
                       </span>
-                      {isProject && (
-                        <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-transform" />
+                      {(isProject || isGoal) && (
+                        <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-transform" />
                       )}
                     </div>
                   </div>

@@ -8,6 +8,7 @@ import { GoalsHubPage } from './pages/GoalsHubPage';
 import { ContentStudioPage } from './pages/ContentStudioPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
+import { GoalDetailPage } from './pages/GoalDetailPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { InboxPage } from './pages/InboxPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -19,6 +20,7 @@ export function App() {
   const [currentTab, setCurrentTab] = useState<string>('content');
   const [selectedSection, setSelectedSection] = useState<SectionType>('video_editing');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [cycleDay, setCycleDay] = useState(1);
   const [cycleTotalDays, setCycleTotalDays] = useState(90);
@@ -85,11 +87,19 @@ export function App() {
     let options: any = {};
     if (typeof entityIdOrOptions === 'string') {
       if (tab === 'project_detail') {
-        if (currentTab !== 'project_detail') {
+        if (currentTab !== 'project_detail' && currentTab !== 'goal_detail') {
           setPreviousTab(currentTab);
         }
         setSelectedProjectId(entityIdOrOptions);
         setCurrentTab('project_detail');
+        return;
+      }
+      if (tab === 'goal_detail') {
+        if (currentTab !== 'goal_detail' && currentTab !== 'project_detail') {
+          setPreviousTab(currentTab);
+        }
+        setSelectedGoalId(entityIdOrOptions);
+        setCurrentTab('goal_detail');
         return;
       }
     } else if (entityIdOrOptions && typeof entityIdOrOptions === 'object') {
@@ -99,13 +109,21 @@ export function App() {
     setNavFilterOptions(options);
 
     if (tab === 'project_detail') {
-      if (currentTab !== 'project_detail') {
+      if (currentTab !== 'project_detail' && currentTab !== 'goal_detail') {
         setPreviousTab(currentTab);
       }
       if (options.projectId) {
         setSelectedProjectId(options.projectId);
       }
       setCurrentTab('project_detail');
+    } else if (tab === 'goal_detail') {
+      if (currentTab !== 'goal_detail' && currentTab !== 'project_detail') {
+        setPreviousTab(currentTab);
+      }
+      if (options.goalId) {
+        setSelectedGoalId(options.goalId);
+      }
+      setCurrentTab('goal_detail');
     } else if (tab.startsWith('goal_')) {
       const section = tab.replace('goal_', '') as SectionType;
       setSelectedSection(section);
@@ -119,16 +137,25 @@ export function App() {
       setCurrentTab('goals');
     } else {
       setSelectedProjectId(null);
+      setSelectedGoalId(null);
       setCurrentTab(tab);
     }
   };
 
   const handleOpenProject = (projId: string) => {
-    if (currentTab !== 'project_detail') {
+    if (currentTab !== 'project_detail' && currentTab !== 'goal_detail') {
       setPreviousTab(currentTab);
     }
     setSelectedProjectId(projId);
     setCurrentTab('project_detail');
+  };
+
+  const handleOpenGoal = (goalId: string) => {
+    if (currentTab !== 'goal_detail' && currentTab !== 'project_detail') {
+      setPreviousTab(currentTab);
+    }
+    setSelectedGoalId(goalId);
+    setCurrentTab('goal_detail');
   };
 
   const renderContent = () => {
@@ -142,6 +169,7 @@ export function App() {
             initialViewType={navFilterOptions.viewType}
             initialClientStatus={navFilterOptions.clientStatus}
             onOpenProject={handleOpenProject}
+            onOpenGoal={handleOpenGoal}
           />
         );
       case 'goal_marketing':
@@ -152,6 +180,7 @@ export function App() {
             initialViewType={navFilterOptions.viewType}
             initialPlatform={navFilterOptions.platform}
             onOpenProject={handleOpenProject}
+            onOpenGoal={handleOpenGoal}
           />
         );
       case 'goal_freelance':
@@ -160,6 +189,7 @@ export function App() {
             initialSection="freelance"
             initialClientStatus={navFilterOptions.clientStatus}
             onOpenProject={handleOpenProject}
+            onOpenGoal={handleOpenGoal}
           />
         );
       case 'goal_skills':
@@ -169,6 +199,7 @@ export function App() {
             initialStatus={navFilterOptions.status}
             initialViewType={navFilterOptions.viewType}
             onOpenProject={handleOpenProject}
+            onOpenGoal={handleOpenGoal}
           />
         );
       case 'content':
@@ -180,12 +211,20 @@ export function App() {
           />
         );
       case 'calendar':
-        return <CalendarPage onOpenProject={handleOpenProject} />;
+        return <CalendarPage onOpenProject={handleOpenProject} onOpenGoal={handleOpenGoal} />;
       case 'project_detail':
         return (
           <ProjectDetailPage
             projectId={selectedProjectId || 'proj_talking_head_ad'}
             onBack={() => handleNavigate(previousTab || 'goals')}
+          />
+        );
+      case 'goal_detail':
+        return (
+          <GoalDetailPage
+            goalId={selectedGoalId || 'goal_video_editing_1'}
+            onBack={() => handleNavigate(previousTab || 'goals')}
+            onOpenProject={handleOpenProject}
           />
         );
       case 'analytics':
@@ -201,6 +240,7 @@ export function App() {
             initialStatus={navFilterOptions.status}
             initialViewType={navFilterOptions.viewType}
             onOpenProject={handleOpenProject}
+            onOpenGoal={handleOpenGoal}
           />
         );
     }

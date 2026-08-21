@@ -38,6 +38,7 @@ interface GoalsHubPageProps {
   initialPlatform?: string;
   initialClientStatus?: string;
   onOpenProject: (projectId: string) => void;
+  onOpenGoal?: (goalId: string) => void;
 }
 
 export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
@@ -46,7 +47,8 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
   initialViewType = 'all',
   initialPlatform,
   initialClientStatus,
-  onOpenProject
+  onOpenProject,
+  onOpenGoal
 }) => {
   const [activeSection, setActiveSection] = useState<SectionType>(initialSection);
   const [marketingPlatform, setMarketingPlatform] = useState<MarketingPlatform | 'all'>((initialPlatform as any) || 'all');
@@ -641,7 +643,8 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                     return (
                       <div
                         key={g.id}
-                        className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-emerald-500/50 ring-1 ring-purple-500/[0.08] hover:ring-emerald-500/30 rounded-xl p-5 sm:p-6 transition-all duration-200 space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-emerald-950/30"
+                        onClick={() => onOpenGoal && onOpenGoal(g.id)}
+                        className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-purple-500/80 ring-1 ring-purple-500/[0.08] hover:ring-purple-500/30 rounded-xl p-5 sm:p-6 transition-all duration-200 space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-purple-950/30 cursor-pointer group"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-2">
@@ -653,14 +656,25 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                                 {g.priority || 'High'}
                               </span>
                             </div>
-                            <h3 className="text-base font-bold text-zinc-100 font-sans leading-snug">{g.title}</h3>
+                            <h3 className="text-base font-bold text-zinc-100 group-hover:text-purple-200 transition-colors font-sans leading-snug">
+                              {g.title}
+                            </h3>
                           </div>
-                          <button
-                            onClick={(e) => handleDeleteGoal(g.id, e)}
-                            className="p-1 text-zinc-400 hover:text-rose-400 rounded transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-purple-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-semibold pr-1 opacity-0 group-hover:opacity-100">
+                              Open <ArrowRight className="w-3.5 h-3.5" />
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteGoal(g.id, e);
+                              }}
+                              className="p-1 text-zinc-400 hover:text-rose-400 rounded transition-colors"
+                              title="Delete Goal"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
 
                         {g.description && <p className="text-xs text-zinc-400 leading-relaxed font-normal">{g.description}</p>}
@@ -681,18 +695,21 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                               {linkedProjects.map((lp) => (
                                 <div
                                   key={lp.id}
-                                  onClick={() => onOpenProject(lp.id)}
-                                  className="p-3 bg-[#1b1728]/80 hover:bg-[#231e34] border border-purple-900/35 hover:border-emerald-500/40 rounded-lg flex items-center justify-between cursor-pointer group transition-all duration-150"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenProject(lp.id);
+                                  }}
+                                  className="p-3 bg-[#1b1728]/80 hover:bg-[#231e34] border border-purple-900/35 hover:border-emerald-500/40 rounded-lg flex items-center justify-between cursor-pointer group/proj transition-all duration-150"
                                 >
                                   <div className="flex items-center gap-2.5">
-                                    <Video className="w-3.5 h-3.5 text-purple-400 group-hover:text-emerald-300 transition-colors" />
-                                    <span className="text-xs font-semibold text-zinc-200 group-hover:text-white">{lp.name}</span>
+                                    <Video className="w-3.5 h-3.5 text-purple-400 group-hover/proj:text-emerald-300 transition-colors" />
+                                    <span className="text-xs font-semibold text-zinc-200 group-hover/proj:text-white">{lp.name}</span>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <span className={`px-2 py-0.5 text-[9px] font-mono rounded border ${getPriorityColor(lp.priority)}`}>
                                       {lp.priority}
                                     </span>
-                                    <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-emerald-300 transition-transform group-hover:translate-x-0.5" />
+                                    <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover/proj:text-emerald-300 transition-transform group-hover/proj:translate-x-0.5" />
                                   </div>
                                 </div>
                               ))}
