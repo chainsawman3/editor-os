@@ -18,7 +18,9 @@ import {
   Megaphone,
   Briefcase,
   GraduationCap,
-  Edit2
+  Edit2,
+  X,
+  RotateCcw
 } from 'lucide-react';
 import { EditProjectModal } from '../components/common/EditProjectModal';
 
@@ -36,7 +38,7 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
   const [selectedSection, setSelectedSection] = useState<string>('all');
   const [selectedUrgency, setSelectedUrgency] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'urgency' | 'priority' | 'progress' | 'name'>('urgency');
+  const [sortBy, setSortBy] = useState<'urgency' | 'urgency_desc' | 'priority' | 'progress' | 'name'>('urgency');
 
   const loadData = async () => {
     try {
@@ -83,6 +85,8 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
         isToday: false,
         isTomorrow: false,
         isThisWeek: false,
+        isUpcoming: false,
+        isUndated: true,
         formattedDate: 'No Deadline',
         urgencyLabel: 'No Deadline Set',
         badgeColor: 'bg-zinc-900 text-zinc-500 border-zinc-800',
@@ -103,6 +107,8 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
     const isToday = daysRemaining === 0;
     const isTomorrow = daysRemaining === 1;
     const isThisWeek = daysRemaining >= 0 && daysRemaining <= 7;
+    const isUpcoming = daysRemaining > 7;
+    const isUndated = false;
 
     const formattedDate = deadlineDate.toLocaleDateString('en-US', {
       month: 'short',
@@ -151,6 +157,8 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
       isToday,
       isTomorrow,
       isThisWeek,
+      isUpcoming,
+      isUndated,
       formattedDate,
       urgencyLabel,
       badgeColor,
@@ -163,16 +171,22 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
     return projects
       .filter((p) => {
         // Section / Category Filter
-        if (selectedSection !== 'all' && p.section !== selectedSection) {
-          return false;
+        if (selectedSection !== 'all') {
+          if (selectedSection === 'freelance') {
+            // Freelance includes projects marked as freelance OR with a client name
+            const isFreelance = p.section === 'freelance' || Boolean(p.client_name);
+            if (!isFreelance) return false;
+          } else if (p.section !== selectedSection) {
+            return false;
+          }
         }
 
         // Urgency Filter
         const info = getDeadlineDetails(p.deadline);
         if (selectedUrgency === 'overdue' && !info.isOverdue) return false;
-        if (selectedUrgency === 'this_week' && !info.isThisWeek && !info.isOverdue) return false;
-        if (selectedUrgency === 'active' && (p.status === 'Ready' || p.status === 'Posted')) return false;
-        if (selectedUrgency === 'completed' && p.status !== 'Ready' && p.status !== 'Posted') return false;
+        if (selectedUrgency === 'this_week' && !info.isThisWeek) return false;
+        if (selectedUrgency === 'upcoming' && !info.isUpcoming) return false;
+        if (selectedUrgency === 'undated' && !info.isUndated) return false;
 
         // Search Filter
         if (searchQuery.trim()) {
@@ -180,7 +194,8 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
           const matchName = p.name.toLowerCase().includes(q);
           const matchClient = p.client_name ? p.client_name.toLowerCase().includes(q) : false;
           const matchDesc = p.description ? p.description.toLowerCase().includes(q) : false;
-          if (!matchName && !matchClient && !matchDesc) return false;
+          const matchSection = p.section ? p.section.toLowerCase().includes(q) : false;
+          if (!matchName && !matchClient && !matchDesc && !matchSection) return false;
         }
 
         return true;
@@ -195,8 +210,15 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
           return infoA.daysRemaining - infoB.daysRemaining;
         }
 
+        if (sortBy === 'urgency_desc') {
+          // Latest deadline first, no-deadline at very end
+          if (infoA.isUndated) return 1;
+          if (infoB.isUndated) return -1;
+          return infoB.daysRemaining - infoA.daysRemaining;
+        }
+
         if (sortBy === 'priority') {
-          const weight: Record<string, number> = { High: 3, Hard: 3, Medium: 2, Low: 1 };
+          const weight: Record<string, number> = { High: 3, Hard: 3, Medium: 2, Low: 1, Easy: 1 };
           const pA = weight[a.priority] || 1;
           const pB = weight[b.priority] || 1;
           if (pA !== pB) return pB - pA;
@@ -242,6 +264,26 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
     return { overdueCount, dueThisWeekCount, upcomingCount, noDeadlineCount };
   }, [projects]);
 
+  // Category items count for badges
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      all: projects.length,
+      video_editing: 0,
+      marketing: 0,
+      freelance: 0,
+      skills: 0
+    };
+
+    projects.forEach((p) => {
+      if (p.section === 'video_editing') counts.video_editing += 1;
+      if (p.section === 'marketing') counts.marketing += 1;
+      if (p.section === 'skills') counts.skills += 1;
+      if (p.section === 'freelance' || Boolean(p.client_name)) counts.freelance += 1;
+    });
+
+    return counts;
+  }, [projects]);
+
   const categories = [
     { id: 'all', label: 'All Categories', icon: Layers },
     { id: 'video_editing', label: 'Video Editing', icon: Video },
@@ -249,6 +291,15 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
     { id: 'freelance', label: 'Freelance & Clients', icon: Briefcase },
     { id: 'skills', label: 'Skills & Learning', icon: GraduationCap }
   ];
+
+  const resetAllFilters = () => {
+    setSelectedSection('all');
+    setSelectedUrgency('all');
+    setSearchQuery('');
+    setSortBy('urgency');
+  };
+
+  const isAnyFilterActive = selectedSection !== 'all' || selectedUrgency !== 'all' || searchQuery.trim() !== '';
 
   const getPriorityColor = (p?: string) => {
     switch (p) {
@@ -313,83 +364,131 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
             </div>
           </div>
 
-          {/* Quick Urgency Metric Pills */}
+          {/* Quick Urgency Metric Pills (Interactive Toggles) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
-            {/* Overdue */}
-            <div
+            {/* 1. Overdue */}
+            <button
+              type="button"
               onClick={() => setSelectedUrgency(selectedUrgency === 'overdue' ? 'all' : 'overdue')}
-              className={`px-3 py-2 rounded-xl border cursor-pointer transition-all ${
+              className={`px-3 py-2 rounded-xl border text-left cursor-pointer transition-all duration-150 ${
                 selectedUrgency === 'overdue'
-                  ? 'bg-rose-950/60 border-rose-600 ring-1 ring-rose-500/40'
-                  : 'bg-zinc-900/80 hover:bg-zinc-850 border-zinc-800/90'
+                  ? 'bg-rose-950/80 border-rose-500 ring-2 ring-rose-500/40 shadow-lg shadow-rose-950/50 scale-[1.02]'
+                  : 'bg-zinc-900/80 hover:bg-zinc-850 border-zinc-800/90 hover:border-zinc-700'
               }`}
+              title="Filter to overdue projects"
             >
-              <div className="flex items-center gap-1.5 text-[10px] text-rose-400 font-bold uppercase tracking-wider">
-                <AlertTriangle className="w-3 h-3" /> Overdue
+              <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1.5 text-[10px] text-rose-400 font-bold uppercase tracking-wider">
+                  <AlertTriangle className="w-3 h-3" /> Overdue
+                </div>
+                {selectedUrgency === 'overdue' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
+                )}
               </div>
               <div className="text-base font-bold font-mono text-zinc-100 mt-0.5">
                 {stats.overdueCount} <span className="text-xs text-zinc-500 font-normal">items</span>
               </div>
-            </div>
+            </button>
 
-            {/* This Week */}
-            <div
+            {/* 2. This Week (<= 7 Days) */}
+            <button
+              type="button"
               onClick={() => setSelectedUrgency(selectedUrgency === 'this_week' ? 'all' : 'this_week')}
-              className={`px-3 py-2 rounded-xl border cursor-pointer transition-all ${
+              className={`px-3 py-2 rounded-xl border text-left cursor-pointer transition-all duration-150 ${
                 selectedUrgency === 'this_week'
-                  ? 'bg-amber-950/60 border-amber-600 ring-1 ring-amber-500/40'
-                  : 'bg-zinc-900/80 hover:bg-zinc-850 border-zinc-800/90'
+                  ? 'bg-amber-950/80 border-amber-500 ring-2 ring-amber-500/40 shadow-lg shadow-amber-950/50 scale-[1.02]'
+                  : 'bg-zinc-900/80 hover:bg-zinc-850 border-zinc-800/90 hover:border-zinc-700'
               }`}
+              title="Filter to projects due within 7 days"
             >
-              <div className="flex items-center gap-1.5 text-[10px] text-amber-400 font-bold uppercase tracking-wider">
-                <Flame className="w-3 h-3" /> &le; 7 Days
+              <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1.5 text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                  <Flame className="w-3 h-3" /> &le; 7 Days
+                </div>
+                {selectedUrgency === 'this_week' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                )}
               </div>
               <div className="text-base font-bold font-mono text-zinc-100 mt-0.5">
                 {stats.dueThisWeekCount} <span className="text-xs text-zinc-500 font-normal">items</span>
               </div>
-            </div>
+            </button>
 
-            {/* Upcoming */}
-            <div className="px-3 py-2 rounded-xl bg-zinc-900/80 border border-zinc-800/90">
-              <div className="flex items-center gap-1.5 text-[10px] text-blue-400 font-bold uppercase tracking-wider">
-                <Calendar className="w-3 h-3" /> Upcoming
+            {/* 3. Upcoming (> 7 Days) */}
+            <button
+              type="button"
+              onClick={() => setSelectedUrgency(selectedUrgency === 'upcoming' ? 'all' : 'upcoming')}
+              className={`px-3 py-2 rounded-xl border text-left cursor-pointer transition-all duration-150 ${
+                selectedUrgency === 'upcoming'
+                  ? 'bg-blue-950/80 border-blue-500 ring-2 ring-blue-500/40 shadow-lg shadow-blue-950/50 scale-[1.02]'
+                  : 'bg-zinc-900/80 hover:bg-zinc-850 border-zinc-800/90 hover:border-zinc-700'
+              }`}
+              title="Filter to future upcoming deliverables"
+            >
+              <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1.5 text-[10px] text-blue-400 font-bold uppercase tracking-wider">
+                  <Calendar className="w-3 h-3" /> Upcoming
+                </div>
+                {selectedUrgency === 'upcoming' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                )}
               </div>
               <div className="text-base font-bold font-mono text-zinc-100 mt-0.5">
                 {stats.upcomingCount} <span className="text-xs text-zinc-500 font-normal">items</span>
               </div>
-            </div>
+            </button>
 
-            {/* No Deadline */}
-            <div className="px-3 py-2 rounded-xl bg-zinc-900/80 border border-zinc-800/90">
-              <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
-                <Sparkles className="w-3 h-3" /> Undated
+            {/* 4. Undated (No Deadline) */}
+            <button
+              type="button"
+              onClick={() => setSelectedUrgency(selectedUrgency === 'undated' ? 'all' : 'undated')}
+              className={`px-3 py-2 rounded-xl border text-left cursor-pointer transition-all duration-150 ${
+                selectedUrgency === 'undated'
+                  ? 'bg-zinc-800 border-zinc-500 ring-2 ring-zinc-400/30 shadow-lg scale-[1.02]'
+                  : 'bg-zinc-900/80 hover:bg-zinc-850 border-zinc-800/90 hover:border-zinc-700'
+              }`}
+              title="Filter to undated projects"
+            >
+              <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3" /> Undated
+                </div>
+                {selectedUrgency === 'undated' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
+                )}
               </div>
               <div className="text-base font-bold font-mono text-zinc-100 mt-0.5">
                 {stats.noDeadlineCount} <span className="text-xs text-zinc-500 font-normal">items</span>
               </div>
-            </div>
+            </button>
           </div>
         </div>
 
-        {/* 2. CATEGORY PILLS BAR */}
+        {/* 2. CATEGORY PILLS & CONTROLS TOOLBAR */}
         <div className="pt-3 border-t border-zinc-850/90 flex items-center justify-between gap-4 flex-wrap">
           {/* Categories */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             {categories.map((cat) => {
               const Icon = cat.icon;
               const isCatActive = selectedSection === cat.id;
+              const count = categoryCounts[cat.id] ?? 0;
               return (
                 <button
                   key={cat.id}
-                  onClick={() => setSelectedSection(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 ${
+                  onClick={() => setSelectedSection(isCatActive && cat.id !== 'all' ? 'all' : cat.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 ${
                     isCatActive
-                      ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
+                      ? 'bg-zinc-800 text-white shadow-sm border border-zinc-600 ring-1 ring-white/10'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent'
                   }`}
                 >
                   <Icon className={`w-3.5 h-3.5 ${isCatActive ? 'text-purple-400' : 'text-zinc-500'}`} />
                   <span>{cat.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                    isCatActive ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500'
+                  }`}>
+                    {count}
+                  </span>
                 </button>
               );
             })}
@@ -405,12 +504,20 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search projects or clients..."
-                className="pl-8 pr-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-zinc-600 w-48 sm:w-56"
+                className="pl-8 pr-8 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-zinc-600 w-48 sm:w-56"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="p-1 text-zinc-500 hover:text-zinc-200 absolute right-2 top-1/2 -translate-y-1/2"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
             {/* Sort Selector */}
-            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-zinc-300">
+            <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-300">
               <ArrowUpDown className="w-3.5 h-3.5 text-zinc-500" />
               <select
                 value={sortBy}
@@ -418,6 +525,7 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
                 className="bg-transparent outline-none cursor-pointer text-xs font-medium text-zinc-200"
               >
                 <option value="urgency" className="bg-zinc-950">Sort: Earliest Deadline</option>
+                <option value="urgency_desc" className="bg-zinc-950">Sort: Latest Deadline</option>
                 <option value="priority" className="bg-zinc-950">Sort: Highest Priority</option>
                 <option value="progress" className="bg-zinc-950">Sort: Task Progress</option>
                 <option value="name" className="bg-zinc-950">Sort: Name (A-Z)</option>
@@ -425,16 +533,75 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
             </div>
           </div>
         </div>
+
+        {/* 3. ACTIVE FILTERS PILL & RESET BAR */}
+        {isAnyFilterActive && (
+          <div className="pt-2.5 border-t border-zinc-850/80 flex items-center justify-between gap-2 flex-wrap text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-zinc-500 font-semibold text-[11px] uppercase tracking-wider flex items-center gap-1">
+                <Filter className="w-3 h-3 text-purple-400" /> Active Filters:
+              </span>
+              {selectedSection !== 'all' && (
+                <span className="px-2.5 py-0.5 rounded-lg bg-zinc-850 border border-zinc-750 text-purple-300 font-semibold flex items-center gap-1 text-[11px]">
+                  Category: {categories.find((c) => c.id === selectedSection)?.label}
+                  <button onClick={() => setSelectedSection('all')} className="hover:text-white ml-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {selectedUrgency !== 'all' && (
+                <span className="px-2.5 py-0.5 rounded-lg bg-zinc-850 border border-zinc-750 text-amber-300 font-semibold flex items-center gap-1 text-[11px]">
+                  Urgency: {
+                    selectedUrgency === 'overdue'
+                      ? '🚨 Overdue'
+                      : selectedUrgency === 'this_week'
+                      ? '🔥 ≤ 7 Days'
+                      : selectedUrgency === 'upcoming'
+                      ? '📅 Upcoming'
+                      : '✨ Undated'
+                  }
+                  <button onClick={() => setSelectedUrgency('all')} className="hover:text-white ml-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {searchQuery.trim() && (
+                <span className="px-2.5 py-0.5 rounded-lg bg-zinc-850 border border-zinc-750 text-cyan-300 font-semibold flex items-center gap-1 text-[11px]">
+                  Query: "{searchQuery}"
+                  <button onClick={() => setSearchQuery('')} className="hover:text-white ml-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={resetAllFilters}
+              className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors px-2.5 py-1 rounded-lg hover:bg-rose-950/40 border border-transparent hover:border-rose-900/50"
+            >
+              <RotateCcw className="w-3 h-3" /> Reset All Filters
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* 3. COMPACT PROJECT CARDS GRID */}
+      {/* 4. COMPACT PROJECT CARDS GRID */}
       {filteredAndSortedProjects.length === 0 ? (
-        <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-12 text-center space-y-3">
-          <Clock className="w-8 h-8 text-zinc-600 mx-auto" />
-          <h3 className="text-sm font-bold text-zinc-300">No project deliverables found</h3>
-          <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-            Try adjusting your category filter, urgency selection, or search query.
-          </p>
+        <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-12 text-center space-y-4">
+          <Clock className="w-10 h-10 text-zinc-600 mx-auto animate-pulse" />
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-zinc-200">No project deliverables match your filter</h3>
+            <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+              Try clicking "Reset All Filters" or adjusting category, urgency, or search text.
+            </p>
+          </div>
+          <button
+            onClick={resetAllFilters}
+            className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-750 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-sm"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-purple-400" />
+            <span>Show All Projects ({projects.length})</span>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -540,6 +707,7 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
           })}
         </div>
       )}
+
       {/* Edit Project Modal */}
       <EditProjectModal
         isOpen={!!editingProject}
