@@ -26,10 +26,12 @@ import {
   Film,
   Megaphone,
   AlignLeft,
-  Share2
+  Share2,
+  Edit2
 } from 'lucide-react';
 import { ProjectDetailSkeleton } from '../components/common/SkeletonLoader';
 import { RichScriptEditor } from '../components/script/RichScriptEditor';
+import { EditProjectModal } from '../components/common/EditProjectModal';
 
 interface ProjectDetailPageProps {
   projectId: string;
@@ -46,6 +48,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
   const [scriptContent, setScriptContent] = useState('');
   const [isSavingScript, setIsSavingScript] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // New Reference Modal / Form
   const [showRefModal, setShowRefModal] = useState(false);
@@ -112,6 +115,14 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
     if (!project) return;
     const updated = await api.updateProject(projectId, { status: newStatus });
     setProject({ ...project, status: updated.status });
+  };
+
+  const handleUpdateProject = async (updated: Partial<Project> & { id: string }) => {
+    if (!project) return;
+    const newProj = { ...project, ...updated };
+    setProject(newProj);
+    await api.updateProject(updated.id, updated);
+    loadProjectData();
   };
 
   const handleToggleTask = async (task: Task) => {
@@ -283,8 +294,17 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
           </div>
         </div>
 
-        {/* Right: Priority & Interactive Status Selector */}
+        {/* Right: Edit Details button + Priority + Interactive Status Selector */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-zinc-300 hover:text-white transition-all shadow-sm group"
+            title="Edit Project Name, Deadline, Description, etc."
+          >
+            <Edit2 className="w-3.5 h-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
+            <span>Edit Details</span>
+          </button>
+
           <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-lg border shadow-sm ${getPriorityColor(project.priority)}`}>
             {project.priority} Priority
           </span>
@@ -759,6 +779,14 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
           </div>
         </div>
       )}
+
+      {/* Edit Project Modal */}
+      <EditProjectModal
+        isOpen={showEditModal}
+        project={project}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleUpdateProject}
+      />
     </div>
   );
 };

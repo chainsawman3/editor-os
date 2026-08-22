@@ -19,9 +19,11 @@ import {
   Check,
   Megaphone,
   Briefcase,
-  GraduationCap
+  GraduationCap,
+  Edit2
 } from 'lucide-react';
 import { ProjectDetailSkeleton } from '../components/common/SkeletonLoader';
+import { EditProjectModal } from '../components/common/EditProjectModal';
 
 interface GoalDetailPageProps {
   goalId: string;
@@ -45,8 +47,9 @@ export const GoalDetailPage: React.FC<GoalDetailPageProps> = ({ goalId, onBack, 
   const [editNextAction, setEditNextAction] = useState('');
   const [editNotes, setEditNotes] = useState('');
 
-  // Add Project Modal
+  // Add Project Modal & Edit Project Modal
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [newProjName, setNewProjName] = useState('');
   const [newProjDesc, setNewProjDesc] = useState('');
   const [newProjDeadline, setNewProjDeadline] = useState('');
@@ -125,6 +128,12 @@ export const GoalDetailPage: React.FC<GoalDetailPageProps> = ({ goalId, onBack, 
     setNewProjDeadline('');
     setNewProjClient('');
     setShowAddProjectModal(false);
+    loadData();
+  };
+
+  const handleUpdateProject = async (updated: Partial<Project> & { id: string }) => {
+    setProjects((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+    await api.updateProject(updated.id, updated);
     loadData();
   };
 
@@ -417,9 +426,21 @@ export const GoalDetailPage: React.FC<GoalDetailPageProps> = ({ goalId, onBack, 
                       <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-blue-950/80 border border-blue-800 text-blue-300 font-bold uppercase">
                         {p.status}
                       </span>
-                      <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${getPriorityColor(p.priority)}`}>
-                        {p.priority}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingProject(p);
+                          }}
+                          className="p-1 text-zinc-400 hover:text-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Edit Project"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${getPriorityColor(p.priority)}`}>
+                          {p.priority}
+                        </span>
+                      </div>
                     </div>
 
                     <h3 className="text-sm font-bold text-zinc-100 group-hover:text-blue-300 transition-colors leading-snug">
@@ -551,6 +572,14 @@ export const GoalDetailPage: React.FC<GoalDetailPageProps> = ({ goalId, onBack, 
           </div>
         </div>
       )}
+
+      {/* Edit Project Modal */}
+      <EditProjectModal
+        isOpen={!!editingProject}
+        project={editingProject}
+        onClose={() => setEditingProject(null)}
+        onSave={handleUpdateProject}
+      />
     </div>
   );
 };

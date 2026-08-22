@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { api } from '../api';
 import { Goal, Project, Client, SectionType, MarketingPlatform, ProjectPriority, ClientStatus, ProjectStatus } from '../types';
 import { GoalsHubSkeleton } from '../components/common/SkeletonLoader';
+import { EditGoalModal } from '../components/common/EditGoalModal';
+import { EditProjectModal } from '../components/common/EditProjectModal';
 import {
   Target,
   Plus,
@@ -69,10 +71,12 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modals
+  // Modals & Edit States
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showClientModal, setShowClientModal] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   // Goal Form
   const [goalTitle, setGoalTitle] = useState('');
@@ -211,6 +215,18 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
     setClientDeadline('');
     setClientLinkedProj('');
     setShowClientModal(false);
+    loadAllData();
+  };
+
+  const handleUpdateGoal = async (updated: Partial<Goal> & { id: string }) => {
+    setGoals((prev) => prev.map((g) => (g.id === updated.id ? { ...g, ...updated } : g)));
+    await api.updateGoal(updated.id, updated);
+    loadAllData();
+  };
+
+  const handleUpdateProject = async (updated: Partial<Project> & { id: string }) => {
+    setProjects((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+    await api.updateProject(updated.id, updated);
     loadAllData();
   };
 
@@ -686,9 +702,16 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                             </h3>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-purple-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-semibold pr-1 opacity-0 group-hover:opacity-100">
-                              Open <ArrowRight className="w-3.5 h-3.5" />
-                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingGoal(g);
+                              }}
+                              className="p-1 text-zinc-400 hover:text-purple-300 rounded transition-colors"
+                              title="Edit Goal"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -794,12 +817,25 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                                 {p.priority}
                               </span>
                             </div>
-                            <button
-                              onClick={(e) => handleDeleteProject(p.id, e)}
-                              className="p-1 text-zinc-400 hover:text-rose-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingProject(p);
+                                }}
+                                className="p-1 text-zinc-400 hover:text-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Edit Project"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => handleDeleteProject(p.id, e)}
+                                className="p-1 text-zinc-400 hover:text-rose-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Delete Project"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
 
                           <h3 className="text-base font-bold text-zinc-100 group-hover:text-white font-sans transition-colors leading-snug">
@@ -1408,6 +1444,23 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
           </div>
         </div>
       )}
+
+      {/* Edit Goal Modal */}
+      <EditGoalModal
+        isOpen={!!editingGoal}
+        goal={editingGoal}
+        onClose={() => setEditingGoal(null)}
+        onSave={handleUpdateGoal}
+      />
+
+      {/* Edit Project Modal */}
+      <EditProjectModal
+        isOpen={!!editingProject}
+        project={editingProject}
+        goals={goals}
+        onClose={() => setEditingProject(null)}
+        onSave={handleUpdateProject}
+      />
     </div>
   );
 };

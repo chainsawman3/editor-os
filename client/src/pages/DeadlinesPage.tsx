@@ -17,8 +17,10 @@ import {
   Video,
   Megaphone,
   Briefcase,
-  GraduationCap
+  GraduationCap,
+  Edit2
 } from 'lucide-react';
+import { EditProjectModal } from '../components/common/EditProjectModal';
 
 interface DeadlinesPageProps {
   onOpenProject: (projectId: string) => void;
@@ -28,6 +30,7 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   // Filter & Search State
   const [selectedSection, setSelectedSection] = useState<string>('all');
@@ -35,21 +38,28 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'urgency' | 'priority' | 'progress' | 'name'>('urgency');
 
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [p, t] = await Promise.all([api.getProjects(), api.getTasks()]);
+      setProjects(p || []);
+      setTasks(t || []);
+    } catch (err) {
+      console.error('Error loading deadlines data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [p, t] = await Promise.all([api.getProjects(), api.getTasks()]);
-        setProjects(p || []);
-        setTasks(t || []);
-      } catch (err) {
-        console.error('Error loading deadlines data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
+
+  const handleUpdateProject = async (updated: Partial<Project> & { id: string }) => {
+    setProjects((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+    await api.updateProject(updated.id, updated);
+    loadData();
+  };
 
   // Compute tasks count per project
   const tasksByProject = useMemo(() => {
@@ -459,10 +469,22 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
                       </span>
                     </div>
 
-                    {/* Status Badge */}
-                    <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md border ${getStatusColor(project.status)}`}>
-                      {project.status}
-                    </span>
+                    {/* Status Badge & Edit Button */}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingProject(project);
+                        }}
+                        className="p-1 text-zinc-400 hover:text-blue-400 rounded hover:bg-zinc-850 transition-colors"
+                        title="Edit Project Details"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md border ${getStatusColor(project.status)}`}>
+                        {project.status}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Project Title */}
@@ -518,6 +540,13 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
           })}
         </div>
       )}
+      {/* Edit Project Modal */}
+      <EditProjectModal
+        isOpen={!!editingProject}
+        project={editingProject}
+        onClose={() => setEditingProject(null)}
+        onSave={handleUpdateProject}
+      />
     </div>
   );
 };

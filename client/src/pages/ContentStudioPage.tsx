@@ -19,9 +19,11 @@ import {
   Plus,
   Search,
   Filter,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Edit2
 } from 'lucide-react';
 import { ContentStudioSkeleton } from '../components/common/SkeletonLoader';
+import { EditProjectModal } from '../components/common/EditProjectModal';
 
 interface ContentStudioPageProps {
   initialStatus?: string;
@@ -47,6 +49,9 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
 
   // Confirmation Modal State for Task Checkbox
   const [confirmTask, setConfirmTask] = useState<Task | null>(null);
+
+  // Edit Project Modal State
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   // Create Project Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -113,6 +118,12 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
       console.error(err);
       setShowCreateModal(false);
     }
+  };
+
+  const handleUpdateProject = async (updated: Partial<Project> & { id: string }) => {
+    setProjects((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+    await api.updateProject(updated.id, updated);
+    loadData();
   };
 
   // Filtered Projects
@@ -406,7 +417,19 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
                             <span className={`px-2.5 py-1 text-[10px] font-mono rounded border ${getPriorityColor(p.priority)}`}>
                               {p.priority}
                             </span>
-                            <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider">{p.section.replace('_', ' ')}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[11px] text-zinc-400 font-semibold uppercase tracking-wider">{p.section.replace('_', ' ')}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingProject(p);
+                                }}
+                                className="p-1 text-zinc-400 hover:text-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Edit Project"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
 
                           <h4 className="text-sm font-bold text-zinc-100 group-hover:text-white line-clamp-1 leading-snug font-sans">
@@ -588,6 +611,15 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
           </div>,
           document.body
         )}
+
+      {/* Edit Project Modal */}
+      <EditProjectModal
+        isOpen={!!editingProject}
+        project={editingProject}
+        goals={goals}
+        onClose={() => setEditingProject(null)}
+        onSave={handleUpdateProject}
+      />
     </div>
   );
 };
