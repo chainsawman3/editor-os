@@ -153,15 +153,85 @@ export const RichNoteEditor: React.FC<RichNoteEditorProps> = ({
     execCmd('insertHTML', html);
   };
 
-  // Apply Highlight / Color
+  // Apply or Remove Highlight (Toggle behavior)
   const applyHighlight = (color: string) => {
+    const active = getActiveEditor();
+    if (!active) return;
+    active.focus();
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
     const selectedText = selection.toString();
     if (!selectedText) return;
 
-    const html = `<mark style="background-color: ${color}; color: #ffffff; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${selectedText}</mark>`;
-    execCmd('insertHTML', html);
+    // Helper: Find closest mark ancestor
+    const getClosestMark = (node: Node | null): HTMLElement | null => {
+      let curr = node;
+      while (curr && curr !== active) {
+        if (curr.nodeType === Node.ELEMENT_NODE && (curr as HTMLElement).tagName === 'MARK') {
+          return curr as HTMLElement;
+        }
+        curr = curr.parentNode;
+      }
+      return null;
+    };
+
+    const anchorMark = getClosestMark(selection.anchorNode);
+    const focusMark = getClosestMark(selection.focusNode);
+    const commonMark = getClosestMark(range.commonAncestorContainer);
+
+    const fragment = range.cloneContents();
+    const internalMarks = fragment.querySelectorAll('mark');
+
+    const markToUnwrap = commonMark || anchorMark || focusMark;
+
+    if (markToUnwrap) {
+      // Un-highlight: Replace mark with its child nodes/text
+      const parent = markToUnwrap.parentNode;
+      if (parent) {
+        while (markToUnwrap.firstChild) {
+          parent.insertBefore(markToUnwrap.firstChild, markToUnwrap);
+        }
+        parent.removeChild(markToUnwrap);
+        parent.normalize();
+        handleInput();
+        setShowColorPicker(false);
+        return;
+      }
+    } else if (internalMarks.length > 0) {
+      // Selection spans across highlighted elements: remove mark wrapper from selected content
+      const tempDiv = document.createElement('div');
+      tempDiv.appendChild(fragment);
+      tempDiv.querySelectorAll('mark').forEach((m) => {
+        const textNode = document.createTextNode(m.textContent || '');
+        m.replaceWith(textNode);
+      });
+      range.deleteContents();
+      range.insertNode(tempDiv.firstChild || document.createTextNode(tempDiv.textContent || ''));
+      active.normalize();
+      handleInput();
+      setShowColorPicker(false);
+      return;
+    }
+
+    // Otherwise apply new highlight
+    const mark = document.createElement('mark');
+    mark.style.backgroundColor = color;
+    mark.style.color = '#ffffff';
+    mark.style.padding = '2px 6px';
+    mark.style.borderRadius = '4px';
+    mark.style.fontWeight = '500';
+
+    try {
+      range.surroundContents(mark);
+    } catch (e) {
+      const markHtml = `<mark style="background-color: ${color}; color: #ffffff; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${selectedText}</mark>`;
+      document.execCommand('insertHTML', false, markHtml);
+    }
+
+    handleInput();
     setShowColorPicker(false);
   };
 
