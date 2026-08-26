@@ -228,16 +228,27 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
     return true;
   };
 
+  // Helper to extract note calendar date (custom date or created_at fallback)
+  const getNoteDate = (n: NoteItem): string => {
+    if (n.date && typeof n.date === 'string' && n.date.trim() !== '' && n.date !== 'null') {
+      return n.date.trim().split('T')[0];
+    }
+    if (n.created_at && typeof n.created_at === 'string' && n.created_at !== 'null') {
+      return n.created_at.split('T')[0];
+    }
+    return '';
+  };
+
   // Selected date events
   const selectedGoals = showGoals ? goals.filter((g) => g.target_date === selectedDate && matchFilter(g)) : [];
   const selectedProjects = showProjects ? projects.filter((p) => p.deadline === selectedDate && matchFilter(p)) : [];
   const selectedTasks = showTasks ? tasks.filter((t) => t.due_date === selectedDate && matchFilter(t)) : [];
-  const selectedNotes = showNotes ? notes.filter((n) => n.date === selectedDate && matchFilter(n)) : [];
+  const selectedNotes = showNotes ? notes.filter((n) => getNoteDate(n) === selectedDate && matchFilter(n)) : [];
 
   // All upcoming deadlines for Agenda view
   const allDeadlines: Array<{
     id: string;
-    type: 'Goal' | 'Project' | 'Task';
+    type: 'Goal' | 'Project' | 'Task' | 'Note';
     title: string;
     date: string;
     isOverdue: boolean;
@@ -285,6 +296,19 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
         date: t.due_date!,
         isOverdue: !t.completed && t.due_date! < todayStr,
         raw: t
+      });
+    });
+  }
+
+  if (showNotes) {
+    notes.filter((n) => getNoteDate(n) && matchFilter(n)).forEach((n) => {
+      allDeadlines.push({
+        id: n.id,
+        type: 'Note',
+        title: n.title,
+        date: getNoteDate(n),
+        isOverdue: false,
+        raw: n
       });
     });
   }
@@ -476,7 +500,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               }`}
             >
               <StickyNote className="w-3.5 h-3.5 text-amber-400" />
-              <span>Notes ({notes.filter((n) => n.date).length})</span>
+              <span>Notes ({notes.filter((n) => Boolean(getNoteDate(n))).length})</span>
             </button>
 
             <div className="h-4 w-px bg-zinc-800 mx-1 hidden sm:block" />
@@ -502,8 +526,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search deadlines..."
-              className="w-full pl-8 pr-3 py-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 rounded-xl text-xs text-zinc-100 placeholder:text-zinc-500 outline-none"
+              placeholder="Search projects, goals, notes..."
+              className="w-full pl-9 pr-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-200 placeholder:text-zinc-500 outline-none focus:border-zinc-600"
             />
           </div>
         </div>
@@ -565,7 +589,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                 const dayGoals = showGoals ? goals.filter((g) => g.target_date === dateStr && matchFilter(g)) : [];
                 const dayProjects = showProjects ? projects.filter((p) => p.deadline === dateStr && matchFilter(p)) : [];
                 const dayTasks = showTasks ? tasks.filter((t) => t.due_date === dateStr && matchFilter(t)) : [];
-                const dayNotes = showNotes ? notes.filter((n) => n.date === dateStr && matchFilter(n)) : [];
+                const dayNotes = showNotes ? notes.filter((n) => getNoteDate(n) === dateStr && matchFilter(n)) : [];
                 const totalDayItems = dayGoals.length + dayProjects.length + dayTasks.length + dayNotes.length;
 
                 const isToday = dateStr === todayStr;
@@ -1013,6 +1037,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                 const isGoal = item.type === 'Goal';
                 const isProject = item.type === 'Project';
                 const isTask = item.type === 'Task';
+                const isNote = item.type === 'Note';
 
                 return (
                   <div
@@ -1020,9 +1045,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                     onClick={() => {
                       if (isProject) onOpenProject(item.id);
                       else if (isGoal && onOpenGoal) onOpenGoal(item.id);
+                      else if (isNote && onOpenNote) onOpenNote(item.id);
                     }}
                     className={`p-4 sm:p-5 flex items-center justify-between hover:bg-zinc-900/50 transition-colors ${
-                      isProject || isGoal ? 'cursor-pointer group' : ''
+                      isProject || isGoal || isNote ? 'cursor-pointer group' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
@@ -1032,17 +1058,22 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             ? 'bg-purple-950/80 border border-purple-800 text-purple-300'
                             : isProject
                             ? 'bg-blue-950/80 border border-blue-800 text-blue-300'
+                            : isNote
+                            ? 'bg-amber-950/80 border border-amber-500/80 text-amber-300'
                             : 'bg-emerald-950/80 border border-emerald-800 text-emerald-300'
                         }`}
                       >
                         {item.type}
                       </span>
                       <div>
-                        <div className={`text-xs sm:text-sm font-bold text-zinc-100 ${isProject || isGoal ? 'group-hover:text-purple-300 transition-colors' : ''}`}>
+                        <div className={`text-xs sm:text-sm font-bold text-zinc-100 ${isProject || isGoal ? 'group-hover:text-purple-300' : isNote ? 'group-hover:text-amber-300' : ''} transition-colors`}>
                           {item.title}
                         </div>
                         {isProject && item.raw.client_name && (
                           <div className="text-[11px] text-zinc-400">Client: {item.raw.client_name}</div>
+                        )}
+                        {isNote && item.raw.folder && (
+                          <div className="text-[11px] text-zinc-400">Folder: {item.raw.folder}</div>
                         )}
                       </div>
                     </div>
@@ -1051,8 +1082,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                       <span className={`text-xs font-mono font-bold ${item.isOverdue ? 'text-rose-400' : 'text-zinc-300'}`}>
                         {item.date} {item.isOverdue && '(Overdue)'}
                       </span>
-                      {(isProject || isGoal) && (
-                        <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-transform" />
+                      {(isProject || isGoal || isNote) && (
+                        <ArrowRight className={`w-4 h-4 text-zinc-500 ${isNote ? 'group-hover:text-amber-400' : 'group-hover:text-purple-400'} group-hover:translate-x-0.5 transition-transform`} />
                       )}
                     </div>
                   </div>

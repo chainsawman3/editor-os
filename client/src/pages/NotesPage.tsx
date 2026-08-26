@@ -113,11 +113,13 @@ export const NotesPage: React.FC<NotesPageProps> = ({ initialNoteId }) => {
   // Create New Note
   const handleCreateNote = async () => {
     try {
+      const todayStr = new Date().toISOString().split('T')[0];
       const newNote = await api.createNote({
         title: 'Untitled Note',
         content: '<h1>Untitled Note</h1><p>Start writing your thoughts, daily plans, or action checklist here...</p><div class="note-task-item"><input type="checkbox" /> <span>First key action item</span></div>',
         tags: ['Daily'],
         color: 'amber',
+        date: todayStr,
         is_pinned: false
       });
 
@@ -441,9 +443,9 @@ export const NotesPage: React.FC<NotesPageProps> = ({ initialNoteId }) => {
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    {/* Calendar scheduled indicator if note has date */}
-                    {note.date && (
-                      <span title={`Scheduled in Calendar: ${note.date}`} className="text-zinc-500 mr-0.5">
+                    {/* Calendar scheduled indicator */}
+                    {(note.date || note.created_at) && (
+                      <span title={`Calendar: ${note.date || (note.created_at ? note.created_at.split('T')[0] : '')}`} className="text-zinc-500 mr-0.5">
                         <CalendarIcon className="w-3 h-3 text-amber-400/80" />
                       </span>
                     )}
@@ -505,7 +507,7 @@ export const NotesPage: React.FC<NotesPageProps> = ({ initialNoteId }) => {
                   <CalendarIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <input
                     type="date"
-                    value={currentNote.date || ''}
+                    value={currentNote.date || (currentNote.created_at ? currentNote.created_at.split('T')[0] : '')}
                     onChange={(e) => handleDateChange(e.target.value)}
                     className="bg-transparent text-xs text-zinc-200 outline-none cursor-pointer font-medium p-0 border-none focus:ring-0"
                   />

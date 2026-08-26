@@ -157,6 +157,8 @@ export async function initTursoTables() {
         content TEXT,
         tags TEXT,
         is_pinned INTEGER,
+        pinned_at TEXT,
+        date TEXT,
         color TEXT,
         created_at TEXT,
         updated_at TEXT
@@ -166,6 +168,14 @@ export async function initTursoTables() {
     for (const sql of tables) {
       await queryTurso(sql);
     }
+
+    // Dynamic Column Migrations for existing deployments
+    try {
+      await queryTurso('ALTER TABLE notes ADD COLUMN date TEXT;');
+    } catch {}
+    try {
+      await queryTurso('ALTER TABLE notes ADD COLUMN pinned_at TEXT;');
+    } catch {}
 
     isInitialized = true;
   } catch (err) {
@@ -801,7 +811,7 @@ export const tursoApi = {
       tags: noteData.tags || [],
       is_pinned: Boolean(noteData.is_pinned),
       pinned_at: noteData.pinned_at || (noteData.is_pinned ? new Date().toISOString() : undefined),
-      date: noteData.date || '',
+      date: noteData.date || new Date().toISOString().split('T')[0],
       color: noteData.color || 'amber',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

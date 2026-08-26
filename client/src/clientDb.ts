@@ -435,6 +435,7 @@ Full episode on Spotify link.`,
       tags: ['Daily', 'Routine', 'Focus'],
       is_pinned: true,
       color: 'amber',
+      date: todayStr,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     },
@@ -446,6 +447,7 @@ Full episode on Spotify link.`,
       tags: ['Hooks', 'Content', 'Viral'],
       is_pinned: false,
       color: 'yellow',
+      date: todayStr,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
