@@ -314,77 +314,52 @@ export const NotesPage: React.FC = () => {
           ) : (
             filteredNotes.map((note) => {
               const isSelected = note.id === selectedNoteId;
-              const taskStats = getTaskStats(note.content);
 
               return (
                 <div
                   key={note.id}
                   onClick={() => setSelectedNoteId(note.id)}
-                  className={`group p-3 rounded-2xl border transition-all cursor-pointer relative space-y-1.5 ${
+                  className={`group px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
                     isSelected
-                      ? 'bg-amber-500/10 border-amber-500/40 shadow-sm shadow-amber-950/20'
+                      ? 'bg-amber-500/15 border-amber-500/50 shadow-sm shadow-amber-950/20'
                       : 'bg-zinc-900/60 hover:bg-zinc-900 border-zinc-850 hover:border-zinc-750'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <h4
-                      className={`text-xs font-bold truncate flex-1 ${
-                        isSelected ? 'text-amber-300' : 'text-zinc-200 group-hover:text-white'
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <StickyNote
+                      className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                        isSelected ? 'text-amber-400' : 'text-zinc-500 group-hover:text-amber-400/80'
+                      }`}
+                    />
+                    <span
+                      className={`text-xs truncate ${
+                        isSelected ? 'text-amber-200 font-bold' : 'text-zinc-200 group-hover:text-white font-medium'
                       }`}
                     >
                       {note.title || 'Untitled Note'}
-                    </h4>
-
-                    <div className="flex items-center gap-1 shrink-0">
-                      {note.is_pinned && (
-                        <span title="Pinned">
-                          <Pin className="w-3 h-3 text-amber-400 fill-amber-400/40" />
-                        </span>
-                      )}
-                      <button
-                        onClick={(e) => handleTogglePin(note.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-amber-400 transition-opacity"
-                        title={note.is_pinned ? 'Unpin' : 'Pin to top'}
-                      >
-                        <Pin className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => handleDeleteNote(note.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-rose-400 transition-opacity"
-                        title="Delete note"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
+                    </span>
                   </div>
 
-                  {/* Note Snippet */}
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed font-sans">
-                    {getSnippet(note.content)}
-                  </p>
-
-                  {/* Bottom Badges */}
-                  <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 pt-1">
-                    <span className="px-1.5 py-0.5 rounded bg-zinc-800/80 border border-zinc-750 text-zinc-300 font-sans">
-                      {note.folder || 'Daily Scratchpad'}
-                    </span>
-
-                    <div className="flex items-center gap-2">
-                      {taskStats && (
-                        <span className="flex items-center gap-1 text-amber-400 font-semibold">
-                          <CheckSquare className="w-3 h-3" />
-                          <span>
-                            {taskStats.completed}/{taskStats.total}
-                          </span>
-                        </span>
-                      )}
-                      <span>
-                        {new Date(note.updated_at).toLocaleDateString([], {
-                          month: 'short',
-                          day: 'numeric'
-                        })}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {note.is_pinned && (
+                      <span title="Pinned">
+                        <Pin className="w-3 h-3 text-amber-400 fill-amber-400/40" />
                       </span>
-                    </div>
+                    )}
+                    <button
+                      onClick={(e) => handleTogglePin(note.id, e)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-amber-400 transition-opacity"
+                      title={note.is_pinned ? 'Unpin' : 'Pin to top'}
+                    >
+                      <Pin className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteNote(note.id, e)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-rose-400 transition-opacity"
+                      title="Delete note"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
               );
