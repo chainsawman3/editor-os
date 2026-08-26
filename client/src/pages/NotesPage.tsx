@@ -10,32 +10,13 @@ import {
   Trash2,
   Copy,
   Check,
-  Download,
-  Folder,
-  Tag,
-  CheckSquare,
-  Sparkles,
-  Clock,
-  ChevronRight,
-  MoreVertical,
-  FileText,
-  Bookmark
+  Download
 } from 'lucide-react';
-
-const PRESET_FOLDERS = [
-  'All Notes',
-  'Daily Scratchpad',
-  'Script Ideas',
-  'Checklists',
-  'Client Notes',
-  'Personal Memos'
-];
 
 export const NotesPage: React.FC = () => {
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFolder, setSelectedFolder] = useState('All Notes');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -67,32 +48,23 @@ export const NotesPage: React.FC = () => {
     return notes.find((n) => n.id === selectedNoteId) || null;
   }, [notes, selectedNoteId]);
 
-  // Filtered Notes
+  // Filtered Notes by Search
   const filteredNotes = useMemo(() => {
     return notes.filter((n) => {
-      // Search filter
-      const matchesSearch =
-        searchQuery.trim() === '' ||
-        n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        n.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (n.folder && n.folder.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      // Folder filter
-      const matchesFolder =
-        selectedFolder === 'All Notes' ||
-        (selectedFolder === 'Pinned' && n.is_pinned) ||
-        n.folder === selectedFolder;
-
-      return matchesSearch && matchesFolder;
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        n.title.toLowerCase().includes(q) ||
+        n.content.toLowerCase().includes(q)
+      );
     });
-  }, [notes, searchQuery, selectedFolder]);
+  }, [notes, searchQuery]);
 
   // Create New Note
-  const handleCreateNote = async (folderName?: string) => {
+  const handleCreateNote = async () => {
     try {
       const newNote = await api.createNote({
         title: 'Untitled Note',
-        folder: folderName || (selectedFolder !== 'All Notes' && selectedFolder !== 'Pinned' ? selectedFolder : 'Daily Scratchpad'),
         content: '<h1>Untitled Note</h1><p>Start writing your thoughts, daily plans, or action checklist here...</p><div class="note-task-item"><input type="checkbox" /> <span>First key action item</span></div>',
         tags: ['Daily'],
         color: 'amber',
@@ -146,12 +118,10 @@ export const NotesPage: React.FC = () => {
   const handleContentChange = (newHtml: string) => {
     if (!currentNote) return;
 
-    // Update local state immediately for responsive typing
     setNotes((prev) =>
       prev.map((n) => (n.id === currentNote.id ? { ...n, content: newHtml, updated_at: new Date().toISOString() } : n))
     );
 
-    // Debounce save to database
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     setIsSaving(true);
     saveTimeoutRef.current = setTimeout(async () => {
@@ -182,26 +152,19 @@ export const NotesPage: React.FC = () => {
     }, 500);
   };
 
-  // Update Folder
-  const handleFolderChange = async (newFolder: string) => {
-    if (!currentNote) return;
-    const updated = await api.updateNote(currentNote.id, { folder: newFolder });
-    setNotes((prev) => prev.map((n) => (n.id === currentNote.id ? updated : n)));
-  };
-
   // Copy Note as Plain Text
   const handleCopyNote = () => {
     if (!currentNote) return;
     const cleanText = `${currentNote.title}\n\n${currentNote.content.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim()}`;
     navigator.clipboard.writeText(cleanText);
     setIsCopied(true);
-    setTimeout(() => setIsCopied(null as any), 2000);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   // Export Note as .md File
   const handleExportMarkdown = () => {
     if (!currentNote) return;
-    const cleanText = `# ${currentNote.title}\n*Folder: ${currentNote.folder || 'Daily Scratchpad'}*\n\n${currentNote.content.replace(/<[^>]*>/g, '\n').replace(/&nbsp;/g, ' ').trim()}`;
+    const cleanText = `# ${currentNote.title}\n\n${currentNote.content.replace(/<[^>]*>/g, '\n').replace(/&nbsp;/g, ' ').trim()}`;
     const blob = new Blob([cleanText], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -211,25 +174,11 @@ export const NotesPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Helper to extract plain snippet for card preview
-  const getSnippet = (html: string) => {
-    const plain = html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim();
-    return plain.length > 85 ? `${plain.substring(0, 85)}...` : plain || 'Empty note...';
-  };
-
-  // Helper to calculate checkboxes in a note
-  const getTaskStats = (html: string) => {
-    const total = (html.match(/type="checkbox"/g) || []).length;
-    if (total === 0) return null;
-    const completed = (html.match(/type="checkbox"[^>]*checked/g) || []).length;
-    return { total, completed };
-  };
-
   return (
     <div className="flex-1 flex overflow-hidden bg-black text-zinc-100 font-sans">
       {/* 1. LEFT SIDEBAR: NOTE EXPLORER */}
       <div className="w-80 sm:w-88 border-r border-zinc-850 flex flex-col bg-zinc-950/90 shrink-0 select-none">
-        {/* Header with Title & + New Note Button */}
+        {/* Header with Title, New Note & Search */}
         <div className="p-4 border-b border-zinc-850 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -238,14 +187,14 @@ export const NotesPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
-                  <span>Notes & Scratchpad</span>
+                  <span>Notes</span>
                 </h2>
-                <span className="text-[10px] font-mono text-zinc-400">Isolated Creative Hub</span>
+                <span className="text-[10px] font-mono text-zinc-400">Creative Scratchpad</span>
               </div>
             </div>
 
             <button
-              onClick={() => handleCreateNote()}
+              onClick={handleCreateNote}
               className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-amber-950/40 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -260,39 +209,13 @@ export const NotesPage: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search notes, tags, checklists..."
+              placeholder="Search notes..."
               className="w-full pl-9 pr-3 py-2 bg-zinc-900/90 border border-zinc-800 rounded-xl text-xs text-zinc-200 placeholder:text-zinc-500 outline-none focus:border-amber-500/50 transition-colors"
             />
           </div>
-
-          {/* Folder Pills Bar */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
-            {PRESET_FOLDERS.map((folder) => {
-              const count =
-                folder === 'All Notes'
-                  ? notes.length
-                  : notes.filter((n) => n.folder === folder).length;
-              const isSelected = selectedFolder === folder;
-
-              return (
-                <button
-                  key={folder}
-                  onClick={() => setSelectedFolder(folder)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all shrink-0 flex items-center gap-1 ${
-                    isSelected
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent'
-                  }`}
-                >
-                  <span>{folder}</span>
-                  <span className="text-[9px] font-mono opacity-60">({count})</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
-        {/* Note Cards List */}
+        {/* Note Cards List (Title only) */}
         <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
           {isLoading ? (
             <div className="p-8 text-center text-xs font-mono text-zinc-500 animate-pulse">
@@ -303,9 +226,9 @@ export const NotesPage: React.FC = () => {
               <div className="w-10 h-10 mx-auto rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600">
                 <StickyNote className="w-5 h-5" />
               </div>
-              <p className="text-xs text-zinc-400 font-medium">No notes found in this view</p>
+              <p className="text-xs text-zinc-400 font-medium">No notes found</p>
               <button
-                onClick={() => handleCreateNote()}
+                onClick={handleCreateNote}
                 className="text-xs text-amber-400 hover:text-amber-300 font-semibold underline"
               >
                 + Create Note
@@ -372,7 +295,7 @@ export const NotesPage: React.FC = () => {
       <div className="flex-1 flex flex-col bg-zinc-950 overflow-hidden">
         {currentNote ? (
           <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-3 overflow-hidden max-w-5xl w-full mx-auto">
-            {/* Note Top Bar: Title & Metadata Actions */}
+            {/* Note Top Bar: Title & Clean Action Buttons */}
             <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-zinc-850">
               <div className="flex-1 min-w-[200px] flex items-center gap-2">
                 <input
@@ -386,22 +309,6 @@ export const NotesPage: React.FC = () => {
 
               {/* Action Toolbar */}
               <div className="flex items-center gap-2">
-                {/* Folder Selector Dropdown */}
-                <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 rounded-xl">
-                  <Folder className="w-3.5 h-3.5 text-amber-400" />
-                  <select
-                    value={currentNote.folder || 'Daily Scratchpad'}
-                    onChange={(e) => handleFolderChange(e.target.value)}
-                    className="bg-transparent text-xs text-zinc-300 outline-none cursor-pointer font-medium"
-                  >
-                    {PRESET_FOLDERS.filter((f) => f !== 'All Notes' && f !== 'Pinned').map((f) => (
-                      <option key={f} value={f} className="bg-zinc-900 text-zinc-200">
-                        {f}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* Pin Toggle */}
                 <button
                   onClick={() => handleTogglePin(currentNote.id)}
@@ -462,11 +369,11 @@ export const NotesPage: React.FC = () => {
             <div className="space-y-1 max-w-sm">
               <h3 className="text-base font-bold text-zinc-100">Select or Create a Note</h3>
               <p className="text-xs text-zinc-400">
-                Draft daily action items, viral hook concepts, client briefs, and meeting memos with zero distraction.
+                Draft daily action items, briefs, and thoughts with clean distraction-free workspace.
               </p>
             </div>
             <button
-              onClick={() => handleCreateNote()}
+              onClick={handleCreateNote}
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-bold text-xs flex items-center gap-2 shadow-lg shadow-amber-950/40 cursor-pointer"
             >
               <Plus className="w-4 h-4" />

@@ -15,10 +15,6 @@ import {
   Minus,
   Maximize2,
   Palette,
-  Film,
-  Video,
-  Volume2,
-  Megaphone,
   RemoveFormatting,
   X
 } from 'lucide-react';
@@ -136,21 +132,6 @@ export const RichNoteEditor: React.FC<RichNoteEditorProps> = ({
 
     const checkboxHtml = `<div class="note-task-item" style="display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; padding: 2px 0;"><input type="checkbox" style="margin-top: 4px; cursor: pointer; accent-color: #f59e0b; width: 15px; height: 15px;" /> <span style="flex: 1; outline: none;">${selectedText}</span></div><p><br/></p>`;
     execCmd('insertHTML', checkboxHtml);
-  };
-
-  // Insert Creative Component Pills
-  const insertPill = (type: 'hook' | 'scene' | 'audio' | 'cta' | 'action', label: string) => {
-    const styles: Record<string, { bg: string; border: string; text: string; icon: string }> = {
-      hook: { bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)', text: '#fbbf24', icon: '🪝' },
-      scene: { bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.4)', text: '#60a5fa', icon: '🎬' },
-      audio: { bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.4)', text: '#c084fc', icon: '🔊' },
-      cta: { bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)', text: '#34d399', icon: '📢' },
-      action: { bg: 'rgba(244, 63, 94, 0.15)', border: 'rgba(244, 63, 94, 0.4)', text: '#fb7185', icon: '⚡' }
-    };
-
-    const s = styles[type];
-    const html = `<span class="pill-${type}" style="display: inline-flex; align-items: center; gap: 4px; background: ${s.bg}; border: 1px solid ${s.border}; color: ${s.text}; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; margin: 0 4px; font-family: monospace; letter-spacing: 0.5px;">${s.icon} ${label}</span>&nbsp;`;
-    execCmd('insertHTML', html);
   };
 
   // Apply or Remove Highlight (Toggle behavior)
@@ -405,42 +386,6 @@ export const RichNoteEditor: React.FC<RichNoteEditorProps> = ({
             <RemoveFormatting className="w-3.5 h-3.5" />
           </button>
         </div>
-
-        {/* Creative Quick Pills */}
-        <div className="hidden xl:flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => insertPill('hook', 'Hook')}
-            className="px-2 py-1 rounded-lg text-[11px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-colors flex items-center gap-1"
-          >
-            <Film className="w-3 h-3" />
-            <span>Hook</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => insertPill('scene', 'Scene')}
-            className="px-2 py-1 rounded-lg text-[11px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 transition-colors flex items-center gap-1"
-          >
-            <Video className="w-3 h-3" />
-            <span>Scene</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => insertPill('audio', 'Audio')}
-            className="px-2 py-1 rounded-lg text-[11px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20 transition-colors flex items-center gap-1"
-          >
-            <Volume2 className="w-3 h-3" />
-            <span>Audio</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => insertPill('cta', 'CTA')}
-            className="px-2 py-1 rounded-lg text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors flex items-center gap-1"
-          >
-            <Megaphone className="w-3 h-3" />
-            <span>CTA</span>
-          </button>
-        </div>
       </div>
 
       {/* Focus Mode Trigger */}
@@ -507,7 +452,7 @@ export const RichNoteEditor: React.FC<RichNoteEditorProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                  <Film className="w-4 h-4" />
+                  <Maximize2 className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-zinc-100">Distraction-Free Note Canvas</h3>
