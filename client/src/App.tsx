@@ -15,6 +15,7 @@ const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then((m
 const GoalDetailPage = lazy(() => import('./pages/GoalDetailPage').then((m) => ({ default: m.GoalDetailPage })));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
 const InboxPage = lazy(() => import('./pages/InboxPage').then((m) => ({ default: m.InboxPage })));
+const NotesPage = lazy(() => import('./pages/NotesPage').then((m) => ({ default: m.NotesPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
 export function App() {
@@ -233,6 +234,8 @@ export function App() {
         );
       case 'analytics':
         return <AnalyticsPage onNavigate={handleNavigate} />;
+      case 'notes':
+        return <NotesPage />;
       case 'inbox':
         return <InboxPage onOpenQuickCapture={() => setIsQuickCaptureOpen(true)} onNavigate={handleNavigate} />;
       case 'settings':

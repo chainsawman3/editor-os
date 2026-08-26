@@ -78,6 +78,64 @@ button {
   @apply transition-all duration-150 active:scale-[0.98];
 }
 
+/* Rich Note Editor & Checkbox Checklist Styling */
+.rich-note-editor h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  margin: 0.75rem 0 0.5rem 0;
+}
+.rich-note-editor h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e4e4e7;
+  margin: 0.6rem 0 0.4rem 0;
+}
+.rich-note-editor h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #d4d4d8;
+  margin: 0.5rem 0 0.3rem 0;
+}
+.rich-note-editor p {
+  margin: 0.35rem 0;
+}
+.rich-note-editor blockquote {
+  border-left: 3px solid #f59e0b;
+  padding-left: 0.75rem;
+  margin: 0.6rem 0;
+  color: #a1a1aa;
+  font-style: italic;
+}
+.rich-note-editor hr {
+  border: none;
+  border-top: 1px solid #27272a;
+  margin: 1rem 0;
+}
+.rich-note-editor ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.rich-note-editor ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.note-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0;
+  transition: opacity 0.15s ease;
+}
+.note-task-item.completed-task span,
+.note-task-item:has(input:checked) span {
+  text-decoration: line-through;
+  color: #71717a;
+}
+
+
 /* Card hover transitions */
 .hover-card {
   @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg;

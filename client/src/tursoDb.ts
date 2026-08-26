@@ -4,7 +4,8 @@ import {
   Goal,
   Task,
   Client,
-  QuickIdea
+  QuickIdea,
+  NoteItem
 } from './types';
 import { initialDefaultDatabase, getLocalDb, saveLocalDb, getLocalSummary } from './clientDb';
 
@@ -148,6 +149,17 @@ export async function initTursoTables() {
         target_category TEXT,
         triaged INTEGER,
         created_at TEXT
+      );`,
+      `CREATE TABLE IF NOT EXISTS notes (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        folder TEXT,
+        content TEXT,
+        tags TEXT,
+        is_pinned INTEGER,
+        color TEXT,
+        created_at TEXT,
+        updated_at TEXT
       );`
     ];
 
@@ -755,6 +767,109 @@ export const tursoApi = {
     await queryTurso('DELETE FROM quick_ideas WHERE id = ?;', [id]);
   },
 
+  // Notes & Daily Scratchpad (Completely isolated from analytics)
+  getNotes: async (): Promise<NoteItem[]> => {
+    const cached = getCached<NoteItem[]>('notes');
+    if (cached) return cached;
+
+    try {
+      await initTursoTables();
+      const rows = await queryTurso('SELECT * FROM notes ORDER BY is_pinned DESC, updated_at DESC;');
+      if (rows && rows.length > 0) {
+        const notes = rows.map(mapNoteRow);
+        return setCached('notes', notes);
+      }
+      const localNotes = getLocalDb().notes || [];
+      return setCached('notes', localNotes);
+    } catch {
+      return getLocalDb().notes || [];
+    }
+  },
+
+  getNote: async (id: string): Promise<NoteItem | null> => {
+    const notes = await tursoApi.getNotes();
+    return notes.find((n) => n.id === id) || null;
+  },
+
+  createNote: async (noteData: Partial<NoteItem>): Promise<NoteItem> => {
+    const id = noteData.id || `note_${Date.now()}`;
+    const newNote: NoteItem = {
+      id,
+      title: noteData.title || 'Untitled Note',
+      folder: noteData.folder || 'Daily Scratchpad',
+      content: noteData.content || '<p><br/></p>',
+      tags: noteData.tags || [],
+      is_pinned: Boolean(noteData.is_pinned),
+      color: noteData.color || 'amber',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const db = getLocalDb();
+    db.notes = [newNote, ...(db.notes || [])];
+    saveLocalDb(db);
+
+    invalidateTursoCache();
+    await queryTurso(
+      `INSERT INTO notes (id, title, folder, content, tags, is_pinned, color, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      [
+        newNote.id,
+        newNote.title,
+        newNote.folder || 'Daily Scratchpad',
+        newNote.content,
+        JSON.stringify(newNote.tags || []),
+        newNote.is_pinned ? 1 : 0,
+        newNote.color || 'amber',
+        newNote.created_at,
+        newNote.updated_at
+      ]
+    );
+
+    return newNote;
+  },
+
+  updateNote: async (id: string, noteData: Partial<NoteItem>): Promise<NoteItem> => {
+    const db = getLocalDb();
+    const existing = (db.notes || []).find((n) => n.id === id);
+    const updated: NoteItem = {
+      ...(existing || ({} as NoteItem)),
+      ...noteData,
+      id,
+      updated_at: new Date().toISOString()
+    };
+
+    db.notes = (db.notes || []).map((n) => (n.id === id ? updated : n));
+    saveLocalDb(db);
+
+    invalidateTursoCache();
+    await queryTurso(
+      `UPDATE notes SET title = ?, folder = ?, content = ?, tags = ?, is_pinned = ?, color = ?, updated_at = ?
+       WHERE id = ?;`,
+      [
+        updated.title,
+        updated.folder || 'Daily Scratchpad',
+        updated.content,
+        JSON.stringify(updated.tags || []),
+        updated.is_pinned ? 1 : 0,
+        updated.color || 'amber',
+        updated.updated_at,
+        id
+      ]
+    );
+
+    return updated;
+  },
+
+  deleteNote: async (id: string): Promise<void> => {
+    const db = getLocalDb();
+    db.notes = (db.notes || []).filter((n) => n.id !== id);
+    saveLocalDb(db);
+
+    invalidateTursoCache();
+    await queryTurso('DELETE FROM notes WHERE id = ?;', [id]);
+  },
+
   getAnalytics: async () => {
     const cached = getCached<any>('analytics');
     if (cached) return cached;
@@ -1138,3 +1253,23 @@ function mapQuickIdeaRow(row: any): QuickIdea {
     created_at: String(row.created_at || '')
   };
 }
+
+function mapNoteRow(row: any): NoteItem {
+  let tags: string[] = [];
+  try {
+    if (row.tags) tags = JSON.parse(row.tags);
+  } catch {}
+
+  return {
+    id: String(row.id),
+    title: String(row.title || 'Untitled Note'),
+    folder: row.folder ? String(row.folder) : 'Daily Scratchpad',
+    content: String(row.content || ''),
+    tags: Array.isArray(tags) ? tags : [],
+    is_pinned: Boolean(row.is_pinned === 1 || row.is_pinned === '1' || row.is_pinned === true),
+    color: row.color ? String(row.color) : 'amber',
+    created_at: String(row.created_at || new Date().toISOString()),
+    updated_at: String(row.updated_at || new Date().toISOString())
+  };
+}
+

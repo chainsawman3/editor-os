@@ -15,7 +15,8 @@ import {
   QuickIdea,
   Win,
   Report,
-  Settings
+  Settings,
+  NoteItem
 } from './types';
 
 export interface LocalDatabaseSchema {
@@ -36,6 +37,7 @@ export interface LocalDatabaseSchema {
   wins: Win[];
   reports: Report[];
   comments: any[];
+  notes: NoteItem[];
 }
 
 const STORAGE_KEY = 'editor_os_local_db_v2';
@@ -423,7 +425,31 @@ Full episode on Spotify link.`,
   reference_items: [],
   wins: [],
   reports: [],
-  comments: []
+  comments: [],
+  notes: [
+    {
+      id: 'note_daily_scratchpad',
+      title: 'Daily Morning Flow & Priority Checklist',
+      folder: 'Daily Scratchpad',
+      content: `<h1>Daily Editing Protocol</h1><p>Start each editing block with 50 minutes of deep focus without checking social notifications.</p><div class="note-task-item"><input type="checkbox" checked /> <span>Review timeline cuts for talking head deliverable</span></div><div class="note-task-item"><input type="checkbox" checked /> <span>Sound design sweep (-6dB dialogue, -18dB audio track)</span></div><div class="note-task-item"><input type="checkbox" /> <span>Render 4K ProRes master export</span></div><div class="note-task-item"><input type="checkbox" /> <span>Send Vimeo review link to client</span></div><hr/><blockquote>"Focus on high leverage storytelling beats before micro-tweaking color curves."</blockquote>`,
+      tags: ['Daily', 'Routine', 'Focus'],
+      is_pinned: true,
+      color: 'amber',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'note_hook_brainstorm',
+      title: 'Viral Hook Concepts & Visual Pacing Ideas',
+      folder: 'Script Ideas',
+      content: `<h2>High-Retention Short Form Hooks</h2><p>Here are 3 tested formulas to test for upcoming YouTube Shorts & TikTok reels:</p><div class="note-task-item"><input type="checkbox" /> <span><strong>Formula 1:</strong> "Stop editing your videos like this in 2026..."</span></div><div class="note-task-item"><input type="checkbox" /> <span><strong>Formula 2:</strong> "The 1 secret plugin top editors use to cut render times in half"</span></div><div class="note-task-item"><input type="checkbox" /> <span><strong>Formula 3:</strong> "Before vs After sound design transformation"</span></div><hr/><p><em>Tip: Keep visual scene cuts under 2.8 seconds in the first 10 seconds.</em></p>`,
+      tags: ['Hooks', 'Content', 'Viral'],
+      is_pinned: false,
+      color: 'yellow',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ]
 };
 
 export function getLocalDb(): LocalDatabaseSchema {
@@ -433,6 +459,9 @@ export function getLocalDb(): LocalDatabaseSchema {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.projects && parsed.goals) {
+        if (!parsed.notes || !Array.isArray(parsed.notes)) {
+          parsed.notes = initialDefaultDatabase.notes;
+        }
         return parsed;
       }
     }

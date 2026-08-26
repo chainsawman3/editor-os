@@ -60,6 +60,13 @@ export const api = {
   createQuickIdea: tursoApi.createQuickIdea,
   deleteQuickIdea: tursoApi.deleteQuickIdea,
 
+  // Notes & Daily Scratchpad
+  getNotes: tursoApi.getNotes,
+  getNote: tursoApi.getNote,
+  createNote: tursoApi.createNote,
+  updateNote: tursoApi.updateNote,
+  deleteNote: tursoApi.deleteNote,
+
   // Analytics
   getAnalytics: tursoApi.getAnalytics,
 

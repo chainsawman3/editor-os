@@ -293,3 +293,15 @@ export interface DashboardSummaryResponse {
     type: string;
   }>;
 }
+
+export interface NoteItem {
+  id: string;
+  title: string;
+  folder?: string;
+  content: string;
+  tags?: string[];
+  is_pinned?: boolean;
+  color?: string;
+  created_at: string;
+  updated_at: string;
+}
