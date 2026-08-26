@@ -393,72 +393,72 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
+    <div className="p-3 sm:p-6 space-y-3.5 sm:space-y-6 max-w-7xl mx-auto font-sans">
       {/* 1. TOP HEADER & SUB-SECTION TABS */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5 font-sans">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-850 pb-5">
-          <div className="flex items-center gap-3.5">
-            <span className="p-2.5 rounded-xl bg-purple-950/50 border border-purple-800/60 text-purple-400 shadow-inner">
-              <Target className="w-5 h-5" />
+      <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-sm space-y-3.5 sm:space-y-5 font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-zinc-850 pb-3.5 sm:pb-5">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <span className="p-2 sm:p-2.5 rounded-xl bg-purple-950/50 border border-purple-800/60 text-purple-400 shadow-inner shrink-0">
+              <Target className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
             <div>
-              <h1 className="text-xl font-bold text-zinc-100 tracking-tight">Goals & Objectives Hub</h1>
-              <p className="text-xs text-zinc-400 font-medium mt-0.5">
+              <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">Goals & Objectives Hub</h1>
+              <p className="text-xs text-zinc-400 font-medium mt-0.5 hidden sm:block">
                 Define high-level objectives, link production projects, and manage client pipeline
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             {activeSection !== 'freelance' && (
               <>
                 <button
                   onClick={() => setShowGoalModal(true)}
-                  className="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                  className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>+ New Goal</span>
+                  <span>New Goal</span>
                 </button>
                 <button
                   onClick={() => setShowProjectModal(true)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-900/20"
+                  className="flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-900/20 shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>+ New Project</span>
+                  <span>New Project</span>
                 </button>
               </>
             )}
             {activeSection === 'freelance' && (
               <button
                 onClick={() => setShowClientModal(true)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-900/20"
+                className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-900/20"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>+ Add Client / Lead</span>
+                <span>Add Client / Lead</span>
               </button>
             )}
           </div>
         </div>
 
         {/* 4 PRIMARY SUB-SECTION SWITCHER */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <button
             onClick={() => {
               setActiveSection('video_editing');
               resetFilters();
             }}
-            className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
+            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center gap-2.5 sm:gap-3 ${
               activeSection === 'video_editing'
                 ? 'bg-zinc-900 border-blue-500/50 text-white shadow-md ring-1 ring-blue-500/20'
                 : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <div className={`p-2 rounded-lg border ${activeSection === 'video_editing' ? 'bg-blue-950/80 border-blue-800 text-blue-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+            <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'video_editing' ? 'bg-blue-950/80 border-blue-800 text-blue-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
               <Clapperboard className="w-4 h-4" />
             </div>
-            <div>
-              <div className="text-xs font-bold text-zinc-100">Video Editing</div>
-              <div className="text-[11px] text-zinc-400 font-normal">Portfolio & Client Edits</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Video Editing</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Portfolio & Client Edits</div>
             </div>
           </button>
 
@@ -467,18 +467,18 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               setActiveSection('marketing');
               resetFilters();
             }}
-            className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
+            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center gap-2.5 sm:gap-3 ${
               activeSection === 'marketing'
                 ? 'bg-zinc-900 border-emerald-500/50 text-white shadow-md ring-1 ring-emerald-500/20'
                 : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <div className={`p-2 rounded-lg border ${activeSection === 'marketing' ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+            <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'marketing' ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
               <Megaphone className="w-4 h-4" />
             </div>
-            <div>
-              <div className="text-xs font-bold text-zinc-100">Marketing & Content</div>
-              <div className="text-[11px] text-zinc-400 font-normal">Instagram, TikTok, YouTube</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Marketing & Content</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Instagram, TikTok, YouTube</div>
             </div>
           </button>
 
@@ -487,18 +487,18 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               setActiveSection('freelance');
               resetClientFilters();
             }}
-            className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
+            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center gap-2.5 sm:gap-3 ${
               activeSection === 'freelance'
                 ? 'bg-zinc-900 border-purple-500/50 text-white shadow-md ring-1 ring-purple-500/20'
                 : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <div className={`p-2 rounded-lg border ${activeSection === 'freelance' ? 'bg-purple-950/80 border-purple-800 text-purple-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+            <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'freelance' ? 'bg-purple-950/80 border-purple-800 text-purple-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
               <Briefcase className="w-4 h-4" />
             </div>
-            <div>
-              <div className="text-xs font-bold text-zinc-100">Client CRM & Leads</div>
-              <div className="text-[11px] text-zinc-400 font-normal">Outreach & Pipeline</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Client CRM & Leads</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Outreach & Pipeline</div>
             </div>
           </button>
 
@@ -507,31 +507,31 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               setActiveSection('skills');
               resetFilters();
             }}
-            className={`p-3.5 rounded-xl border text-left transition-all flex items-center gap-3 ${
+            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center gap-2.5 sm:gap-3 ${
               activeSection === 'skills'
                 ? 'bg-zinc-900 border-amber-500/50 text-white shadow-md ring-1 ring-amber-500/20'
                 : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <div className={`p-2 rounded-lg border ${activeSection === 'skills' ? 'bg-amber-950/80 border-amber-800 text-amber-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+            <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'skills' ? 'bg-amber-950/80 border-amber-800 text-amber-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
               <GraduationCap className="w-4 h-4" />
             </div>
-            <div>
-              <div className="text-xs font-bold text-zinc-100">Skills & VFX Mastery</div>
-              <div className="text-[11px] text-zinc-400 font-normal">Techniques & Learning</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Skills & VFX Mastery</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Techniques & Learning</div>
             </div>
           </button>
         </div>
 
         {/* MARKETING PLATFORMS SUB-PILLS */}
         {activeSection === 'marketing' && (
-          <div className="flex items-center gap-2 pt-3 border-t border-zinc-850 overflow-x-auto">
-            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mr-1">Platforms:</span>
+          <div className="flex items-center gap-1.5 pt-3 border-t border-zinc-850 overflow-x-auto scrollbar-none">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mr-1 shrink-0">Platforms:</span>
             {(['all', 'instagram', 'tiktok', 'youtube', 'linkedin', 'fiverr'] as const).map((plat) => (
               <button
                 key={plat}
                 onClick={() => setMarketingPlatform(plat)}
-                className={`px-3 py-1 text-xs rounded-lg uppercase font-semibold transition-all ${
+                className={`px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs rounded-lg uppercase font-semibold transition-all shrink-0 ${
                   marketingPlatform === plat
                     ? 'bg-emerald-950/80 border border-emerald-700 text-emerald-300 shadow-sm'
                     : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
@@ -546,13 +546,13 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
 
       {/* 2. DYNAMIC FILTER & VIEW TOOLBAR (FOR NON-FREELANCE SECTIONS) */}
       {activeSection !== 'freelance' && (
-        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-sm space-y-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm space-y-2.5 sm:space-y-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
             {/* View Mode Switcher: All vs Only Goals vs Only Projects */}
-            <div className="flex items-center bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+            <div className="flex items-center bg-zinc-900 p-0.5 sm:p-1 rounded-xl border border-zinc-800 overflow-x-auto w-full sm:w-auto scrollbar-none">
               <button
                 onClick={() => setViewType('all')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all shrink-0 ${
                   viewType === 'all'
                     ? 'bg-zinc-800 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -562,7 +562,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               </button>
               <button
                 onClick={() => setViewType('goals_only')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${
                   viewType === 'goals_only'
                     ? 'bg-purple-950/80 border border-purple-700 text-purple-300 shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -573,7 +573,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               </button>
               <button
                 onClick={() => setViewType('projects_only')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${
                   viewType === 'projects_only'
                     ? 'bg-blue-950/80 border border-blue-700 text-blue-300 shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -585,14 +585,14 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
             </div>
 
             {/* Real-time Search Box */}
-            <div className="relative min-w-[240px] flex-1 sm:max-w-xs">
-              <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative w-full sm:w-auto flex-1 sm:max-w-xs">
+              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search projects or goals..."
-                className="w-full pl-9 pr-8 py-1.5 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 rounded-xl text-xs text-zinc-100 placeholder:text-zinc-500 outline-none"
+                className="w-full pl-8 sm:pl-9 pr-8 py-1.5 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 rounded-xl text-[11px] sm:text-xs text-zinc-100 placeholder:text-zinc-500 outline-none"
               />
               {searchQuery && (
                 <button
@@ -606,16 +606,16 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
           </div>
 
           {/* Phase & Priority Filter Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-850 text-xs">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-zinc-500 font-semibold text-[11px] uppercase tracking-wider flex items-center gap-1 mr-1">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-400" /> Phase:
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2.5 sm:pt-3 border-t border-zinc-850 text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0 w-full sm:w-auto">
+              <span className="text-zinc-500 font-semibold text-[10px] sm:text-[11px] uppercase tracking-wider flex items-center gap-1 mr-0.5 shrink-0">
+                <SlidersHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-400" /> Phase:
               </span>
               {(['all', 'Planning', 'In Progress', 'Ready', 'Paused'] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition-all shrink-0 ${
                     statusFilter === st
                       ? 'bg-blue-600 text-white font-bold shadow-sm'
                       : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
@@ -625,14 +625,14 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                 </button>
               ))}
 
-              <div className="h-4 w-px bg-zinc-800 mx-1" />
+              <div className="h-4 w-px bg-zinc-800 mx-1 shrink-0" />
 
-              <span className="text-zinc-500 font-semibold text-[11px] uppercase tracking-wider mr-1">Priority:</span>
+              <span className="text-zinc-500 font-semibold text-[10px] sm:text-[11px] uppercase tracking-wider mr-0.5 shrink-0">Priority:</span>
               {(['all', 'High', 'Medium', 'Low'] as const).map((pr) => (
                 <button
                   key={pr}
                   onClick={() => setPriorityFilter(pr)}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition-all shrink-0 ${
                     priorityFilter === pr
                       ? 'bg-zinc-100 text-zinc-950 font-bold'
                       : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
@@ -646,7 +646,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
             {isFiltersActive && (
               <button
                 onClick={resetFilters}
-                className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
+                className="text-[11px] sm:text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold self-end sm:self-auto shrink-0"
               >
                 <X className="w-3.5 h-3.5" /> Clear Filters
               </button>
@@ -678,26 +678,26 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   {filteredGoals.map((g) => {
                     const linkedProjects = projects.filter((p) => p.goal_id === g.id);
                     return (
                       <div
                         key={g.id}
                         onClick={() => onOpenGoal && onOpenGoal(g.id)}
-                        className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-purple-500/80 ring-1 ring-purple-500/[0.08] hover:ring-purple-500/30 rounded-xl p-5 sm:p-6 transition-all duration-200 space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-purple-950/30 cursor-pointer group"
+                        className="bg-[#13111c] hover:bg-[#181523] border border-purple-900/40 hover:border-purple-500/80 ring-1 ring-purple-500/[0.08] hover:ring-purple-500/30 rounded-xl p-3.5 sm:p-6 transition-all duration-200 space-y-3.5 sm:space-y-4 shadow-md shadow-black/40 hover:shadow-lg hover:shadow-purple-950/30 cursor-pointer group"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="px-2.5 py-1 text-[10px] font-mono rounded bg-purple-950/70 border border-purple-800/70 text-purple-300 uppercase font-bold tracking-wider">
+                        <div className="flex items-start justify-between gap-2.5 sm:gap-3">
+                          <div className="space-y-1.5 sm:space-y-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                              <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-mono rounded bg-purple-950/70 border border-purple-800/70 text-purple-300 uppercase font-bold tracking-wider">
                                 🎯 MAIN OBJECTIVE
                               </span>
-                              <span className={`px-2.5 py-1 text-[10px] font-mono rounded border ${getPriorityColor(g.priority)} font-bold`}>
+                              <span className={`px-2 sm:px-2.5 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-mono rounded border ${getPriorityColor(g.priority)} font-bold`}>
                                 {g.priority || 'High'}
                               </span>
                             </div>
-                            <h3 className="text-base font-bold text-zinc-100 group-hover:text-purple-200 transition-colors font-sans leading-snug">
+                            <h3 className="text-sm sm:text-base font-bold text-zinc-100 group-hover:text-purple-200 transition-colors font-sans leading-snug">
                               {g.title}
                             </h3>
                           </div>
