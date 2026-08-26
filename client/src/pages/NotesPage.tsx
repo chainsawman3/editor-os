@@ -13,6 +13,30 @@ import {
   Download
 } from 'lucide-react';
 
+// Helper: Sort notes with strict pinned priority (first pinned on top, unpinned sorted newest first)
+const sortNotes = (list: NoteItem[]): NoteItem[] => {
+  return [...list].sort((a, b) => {
+    const aPinned = Boolean(a.is_pinned);
+    const bPinned = Boolean(b.is_pinned);
+
+    // 1. Pinned notes always come before unpinned notes
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+
+    // 2. If both are pinned: sort by pinned_at ASC (first note pinned stays #1, subsequent pinned follows)
+    if (aPinned && bPinned) {
+      const aTime = a.pinned_at || a.created_at || '';
+      const bTime = b.pinned_at || b.created_at || '';
+      return aTime.localeCompare(bTime);
+    }
+
+    // 3. Unpinned notes: newest first (created_at DESC)
+    const aCreated = a.created_at || '';
+    const bCreated = b.created_at || '';
+    return bCreated.localeCompare(aCreated);
+  });
+};
+
 export const NotesPage: React.FC = () => {
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -32,9 +56,10 @@ export const NotesPage: React.FC = () => {
     try {
       setIsLoading(true);
       const data = await api.getNotes();
-      setNotes(data || []);
-      if (data && data.length > 0) {
-        setSelectedNoteId(data[0].id);
+      const sorted = sortNotes(data || []);
+      setNotes(sorted);
+      if (sorted.length > 0) {
+        setSelectedNoteId(sorted[0].id);
       }
     } catch (err) {
       console.error('Failed to load notes:', err);
@@ -50,14 +75,13 @@ export const NotesPage: React.FC = () => {
 
   // Filtered Notes by Search
   const filteredNotes = useMemo(() => {
-    return notes.filter((n) => {
-      const q = searchQuery.toLowerCase().trim();
-      if (!q) return true;
-      return (
-        n.title.toLowerCase().includes(q) ||
-        n.content.toLowerCase().includes(q)
-      );
-    });
+    const sorted = sortNotes(notes);
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return sorted;
+    return sorted.filter((n) =>
+      n.title.toLowerCase().includes(q) ||
+      n.content.toLowerCase().includes(q)
+    );
   }, [notes, searchQuery]);
 
   // Create New Note
@@ -71,7 +95,7 @@ export const NotesPage: React.FC = () => {
         is_pinned: false
       });
 
-      setNotes((prev) => [newNote, ...prev]);
+      setNotes((prev) => sortNotes([newNote, ...prev]));
       setSelectedNoteId(newNote.id);
     } catch (err) {
       console.error('Failed to create note:', err);
@@ -86,7 +110,7 @@ export const NotesPage: React.FC = () => {
     try {
       await api.deleteNote(id);
       const remaining = notes.filter((n) => n.id !== id);
-      setNotes(remaining);
+      setNotes(sortNotes(remaining));
       if (selectedNoteId === id) {
         setSelectedNoteId(remaining.length > 0 ? remaining[0].id : null);
       }
@@ -95,19 +119,22 @@ export const NotesPage: React.FC = () => {
     }
   };
 
-  // Toggle Pin Note
+  // Toggle Pin Note with FIFO pinned_at timestamp
   const handleTogglePin = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const target = notes.find((n) => n.id === id);
     if (!target) return;
 
     const newPinned = !target.is_pinned;
+    const now = new Date().toISOString();
+    const pinnedAt = newPinned ? (target.pinned_at || now) : undefined;
+
     try {
-      const updated = await api.updateNote(id, { is_pinned: newPinned });
+      const updated = await api.updateNote(id, { is_pinned: newPinned, pinned_at: pinnedAt });
       setNotes((prev) =>
-        prev
-          .map((n) => (n.id === id ? updated : n))
-          .sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0))
+        sortNotes(
+          prev.map((n) => (n.id === id ? { ...n, ...updated, is_pinned: newPinned, pinned_at: pinnedAt } : n))
+        )
       );
     } catch (err) {
       console.error('Failed to toggle pin:', err);

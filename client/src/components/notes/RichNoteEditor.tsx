@@ -130,7 +130,7 @@ export const RichNoteEditor: React.FC<RichNoteEditorProps> = ({
     const selection = window.getSelection();
     const selectedText = selection && selection.toString().trim() ? selection.toString() : 'New Action Item';
 
-    const checkboxHtml = `<div class="note-task-item" style="display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; padding: 2px 0;"><input type="checkbox" style="margin-top: 4px; cursor: pointer; accent-color: #f59e0b; width: 15px; height: 15px;" /> <span style="flex: 1; outline: none;">${selectedText}</span></div><p><br/></p>`;
+    const checkboxHtml = `<div class="note-task-item"><input type="checkbox" /> <span>${selectedText}</span></div><p><br/></p>`;
     execCmd('insertHTML', checkboxHtml);
   };
 

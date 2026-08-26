@@ -122,19 +122,75 @@ button {
   padding-left: 1.25rem;
   margin: 0.5rem 0;
 }
+/* Custom Styled Task Checkboxes in Note Editor */
 .note-task-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin: 4px 0;
-  transition: opacity 0.15s ease;
-}
-.note-task-item.completed-task span,
-.note-task-item:has(input:checked) span {
-  text-decoration: line-through;
-  color: #71717a;
+  gap: 10px;
+  margin: 6px 0;
+  padding: 2px 0;
+  line-height: 1.5;
+  transition: all 0.15s ease;
 }
 
+.note-task-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  border: 1.5px solid #52525b;
+  border-radius: 5px;
+  background-color: #18181b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3px;
+  margin-right: 0;
+  padding: 0;
+  position: relative;
+  outline: none;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.note-task-item input[type="checkbox"]:hover {
+  border-color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.12);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.25);
+}
+
+.note-task-item input[type="checkbox"]:checked {
+  background-color: #f59e0b;
+  border-color: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+
+.note-task-item input[type="checkbox"]:checked::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid #000000;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+
+.note-task-item span {
+  flex: 1;
+  outline: none;
+  color: #f4f4f5;
+  transition: all 0.15s ease;
+}
+
+.note-task-item.completed-task span,
+.note-task-item:has(input[type="checkbox"]:checked) span {
+  text-decoration: line-through;
+  color: #71717a !important;
+  opacity: 0.75;
+}
 
 /* Card hover transitions */
 .hover-card {
