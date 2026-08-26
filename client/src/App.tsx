@@ -2,6 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { api } from './api';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { MobileNavBar } from './components/layout/MobileNavBar';
 import { QuickCaptureModal } from './components/layout/QuickCaptureModal';
 import { SectionType } from './types';
 import { PinScreen } from './components/PinScreen';
@@ -26,6 +27,7 @@ export function App() {
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [cycleDay, setCycleDay] = useState(1);
   const [cycleTotalDays, setCycleTotalDays] = useState(90);
   const [previousTab, setPreviousTab] = useState<string>('goals');
@@ -265,25 +267,28 @@ export function App() {
 
   return (
     <div className="flex h-screen bg-black text-zinc-100 overflow-hidden font-sans">
-      {/* 1. Left Sidebar */}
+      {/* 1. Left Sidebar (Desktop Fixed & Mobile Slide-Over Drawer) */}
       <Sidebar
         currentTab={currentTab}
         onSelectTab={handleNavigate}
         onOpenQuickCapture={() => setIsQuickCaptureOpen(true)}
         cycleDay={cycleDay}
         cycleTotalDays={cycleTotalDays}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* 2. Main Workspace Layout */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <Header
           title={currentTab.replace('_', ' ').toUpperCase()}
           cycleDay={cycleDay}
           streakDays={12}
           onOpenQuickCapture={() => setIsQuickCaptureOpen(true)}
+          onToggleMobileMenu={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
 
-        <main className="flex-1 overflow-y-auto bg-zinc-950/60 pb-12">
+        <main className="flex-1 overflow-y-auto bg-zinc-950/60 pb-24 md:pb-12">
           <div key={currentTab + (selectedProjectId || '')} className="page-transition min-h-full">
             <Suspense
               fallback={
@@ -296,9 +301,16 @@ export function App() {
             </Suspense>
           </div>
         </main>
+
+        {/* 3. Mobile Bottom Navigation Bar (< md) */}
+        <MobileNavBar
+          currentTab={currentTab}
+          onSelectTab={handleNavigate}
+          onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
+        />
       </div>
 
-      {/* 3. Global Quick Capture Modal (⌘K) */}
+      {/* 4. Global Quick Capture Modal (⌘K) */}
       {isQuickCaptureOpen && (
         <QuickCaptureModal
           isOpen={isQuickCaptureOpen}

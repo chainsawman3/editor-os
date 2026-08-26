@@ -15,7 +15,8 @@ import {
   CheckSquare,
   Square,
   AlertTriangle,
-  X
+  X,
+  ChevronLeft
 } from 'lucide-react';
 
 // Helper: Sort notes with strict pinned priority (first pinned on top, unpinned sorted newest first)
@@ -283,7 +284,7 @@ export const NotesPage: React.FC<NotesPageProps> = ({ initialNoteId }) => {
   return (
     <div className="flex-1 flex overflow-hidden bg-black text-zinc-100 font-sans">
       {/* 1. LEFT SIDEBAR: NOTE EXPLORER */}
-      <div className="w-80 sm:w-88 border-r border-zinc-850 flex flex-col bg-zinc-950/90 shrink-0 select-none">
+      <div className={`w-full md:w-80 lg:w-88 border-r border-zinc-850 flex flex-col bg-zinc-950/90 shrink-0 select-none ${selectedNoteId ? 'hidden md:flex' : 'flex'}`}>
         {/* Header with Title, Multi-Select & Search */}
         <div className="p-4 border-b border-zinc-850 space-y-3">
           <div className="flex items-center justify-between">
@@ -482,18 +483,26 @@ export const NotesPage: React.FC<NotesPageProps> = ({ initialNoteId }) => {
       </div>
 
       {/* 2. RIGHT MAIN WORKSPACE: ACTIVE NOTE EDITOR */}
-      <div className="flex-1 flex flex-col bg-zinc-950 overflow-hidden">
+      <div className={`flex-1 flex flex-col bg-zinc-950 overflow-hidden ${!selectedNoteId ? 'hidden md:flex' : 'flex'}`}>
         {currentNote ? (
-          <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-3 overflow-hidden max-w-5xl w-full mx-auto">
+          <div className="flex-1 flex flex-col p-3 sm:p-6 space-y-3 overflow-hidden max-w-5xl w-full mx-auto">
             {/* Note Top Bar: Title & Clean Action Buttons */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-zinc-850">
-              <div className="flex-1 min-w-[200px] flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-zinc-850">
+              <div className="flex-1 min-w-[180px] flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedNoteId(null)}
+                  className="md:hidden px-2.5 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white flex items-center gap-1 text-xs font-semibold shrink-0"
+                  title="Back to notes list"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Notes</span>
+                </button>
                 <input
                   type="text"
                   value={currentNote.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder="Note Title..."
-                  className="text-lg sm:text-xl font-bold text-white bg-transparent outline-none focus:ring-1 focus:ring-amber-500/50 rounded-lg px-2 py-1 w-full"
+                  className="text-base sm:text-xl font-bold text-white bg-transparent outline-none focus:ring-1 focus:ring-amber-500/50 rounded-lg px-2 py-1 w-full"
                 />
               </div>
 

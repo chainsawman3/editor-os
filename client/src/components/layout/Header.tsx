@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Plus } from 'lucide-react';
+import { Flame, Plus, Menu } from 'lucide-react';
 
 interface HeaderProps {
   title: string;
@@ -7,6 +7,7 @@ interface HeaderProps {
   cycleDay: number;
   streakDays: number;
   onOpenQuickCapture: () => void;
+  onToggleMobileMenu?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -14,7 +15,8 @@ export const Header: React.FC<HeaderProps> = ({
   subtitle,
   cycleDay,
   streakDays,
-  onOpenQuickCapture
+  onOpenQuickCapture,
+  onToggleMobileMenu
 }) => {
   const currentDateFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
@@ -23,11 +25,22 @@ export const Header: React.FC<HeaderProps> = ({
   });
 
   return (
-    <header className="h-14 bg-zinc-950 border-b border-zinc-800 px-6 flex items-center justify-between shrink-0 font-sans">
-      {/* Title / Breadcrumb */}
-      <div>
-        <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wide">{title}</h2>
-        {subtitle && <p className="text-[11px] text-zinc-400">{subtitle}</p>}
+    <header className="h-14 bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 flex items-center justify-between shrink-0 font-sans select-none">
+      {/* Left: Mobile Menu Trigger + Title / Breadcrumb */}
+      <div className="flex items-center gap-3">
+        {onToggleMobileMenu && (
+          <button
+            onClick={onToggleMobileMenu}
+            className="md:hidden p-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            title="Open navigation menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+        )}
+        <div>
+          <h2 className="text-xs sm:text-sm font-bold text-zinc-100 uppercase tracking-wide truncate max-w-[160px] sm:max-w-none">{title}</h2>
+          {subtitle && <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate max-w-[160px] sm:max-w-none">{subtitle}</p>}
+        </div>
       </div>
 
       {/* Right Stats & Quick Actions */}

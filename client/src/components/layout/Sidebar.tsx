@@ -15,7 +15,8 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  StickyNote
+  StickyNote,
+  X
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,6 +25,8 @@ interface SidebarProps {
   onOpenQuickCapture: () => void;
   cycleDay: number;
   cycleTotalDays: number;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -31,9 +34,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   onOpenQuickCapture,
   cycleDay,
-  cycleTotalDays
+  cycleTotalDays,
+  isMobileOpen = false,
+  onCloseMobile
 }) => {
   const [isGoalsExpanded, setIsGoalsExpanded] = useState(true);
+
+  const handleTabClick = (tab: string, section?: string) => {
+    onSelectTab(tab, section);
+    if (onCloseMobile) {
+      onCloseMobile();
+    }
+  };
 
   const goalSubSections = [
     { id: 'video_editing', label: 'Video Editing', icon: Video },
@@ -44,17 +56,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const isContentActive = currentTab === 'content' || currentTab === 'dashboard';
 
-  return (
-    <aside className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col justify-between shrink-0 select-none h-screen font-sans">
+  const sidebarContent = (
+    <div className="flex flex-col justify-between h-full">
       {/* 1. Header & Navigation Top Section */}
       <div className="flex flex-col">
         {/* Brand Header */}
-        <div
-          onClick={() => onSelectTab('goals')}
-          title="Go to Goals & Projects Hub"
-          className="p-4 border-b border-zinc-850 flex items-center justify-between cursor-pointer hover:bg-zinc-900/50 transition-colors group"
-        >
-          <div className="flex items-center gap-3">
+        <div className="p-4 border-b border-zinc-850 flex items-center justify-between">
+          <div
+            onClick={() => handleTabClick('goals')}
+            title="Go to Goals & Projects Hub"
+            className="flex items-center gap-3 cursor-pointer group flex-1"
+          >
             <div className="w-8 h-8 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700/80 flex items-center justify-center font-bold text-xs text-white shadow-sm group-hover:border-purple-500/50 transition-colors">
               OS
             </div>
@@ -67,6 +79,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </p>
             </div>
           </div>
+
+          {/* Close button on mobile */}
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="md:hidden p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              title="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* 90-Day Sprint Progress Card */}
@@ -108,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="px-2.5 py-1.5 space-y-1 overflow-y-auto max-h-[calc(100vh-270px)]">
           {/* Main Landing: Content Studio */}
           <button
-            onClick={() => onSelectTab('content')}
+            onClick={() => handleTabClick('content')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
               isContentActive
                 ? 'bg-blue-600/15 border border-blue-500/40 text-blue-300 shadow-sm'
@@ -123,7 +146,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-0.5 pt-1">
             <div
               onClick={() => {
-                onSelectTab('goals');
+                handleTabClick('goals');
                 setIsGoalsExpanded(!isGoalsExpanded);
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer font-medium ${
@@ -158,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   return (
                     <button
                       key={sub.id}
-                      onClick={() => onSelectTab(`goal_${sub.id}`, sub.id)}
+                      onClick={() => handleTabClick(`goal_${sub.id}`, sub.id)}
                       className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left font-medium ${
                         isSubActive
                           ? 'bg-zinc-800/90 text-zinc-100 font-semibold'
@@ -176,7 +199,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Deadlines */}
           <button
-            onClick={() => onSelectTab('deadlines')}
+            onClick={() => handleTabClick('deadlines')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
               currentTab === 'deadlines'
                 ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
@@ -187,9 +210,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Deadlines</span>
           </button>
 
-          {/* Notes & Daily Scratchpad (Yellow/Amber Overlay) */}
+          {/* Notes & Daily Scratchpad */}
           <button
-            onClick={() => onSelectTab('notes')}
+            onClick={() => handleTabClick('notes')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-all font-medium ${
               currentTab === 'notes'
                 ? 'bg-amber-500/15 border border-amber-500/40 text-amber-300 font-semibold shadow-sm shadow-amber-950/30'
@@ -202,7 +225,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Calendar */}
           <button
-            onClick={() => onSelectTab('calendar')}
+            onClick={() => handleTabClick('calendar')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
               currentTab === 'calendar'
                 ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
@@ -215,7 +238,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Analytics */}
           <button
-            onClick={() => onSelectTab('analytics')}
+            onClick={() => handleTabClick('analytics')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
               currentTab === 'analytics'
                 ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
@@ -228,7 +251,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Idea Inbox */}
           <button
-            onClick={() => onSelectTab('inbox')}
+            onClick={() => handleTabClick('inbox')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
               currentTab === 'inbox'
                 ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
@@ -241,7 +264,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Settings */}
           <button
-            onClick={() => onSelectTab('settings')}
+            onClick={() => handleTabClick('settings')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
               currentTab === 'settings'
                 ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
@@ -264,6 +287,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
           Turso Cloud
         </span>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Fixed Sidebar */}
+      <aside className="hidden md:flex flex-col justify-between w-64 bg-zinc-950 border-r border-zinc-800 shrink-0 select-none h-screen font-sans">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Slide-Over Drawer */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop Blur Overlay */}
+          <div
+            onClick={onCloseMobile}
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+          />
+
+          {/* Drawer Content */}
+          <div className="relative w-72 max-w-[85vw] bg-zinc-950 border-r border-zinc-800 h-full shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-left duration-200">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
