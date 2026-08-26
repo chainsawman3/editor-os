@@ -800,6 +800,8 @@ export const tursoApi = {
       content: noteData.content || '<p><br/></p>',
       tags: noteData.tags || [],
       is_pinned: Boolean(noteData.is_pinned),
+      pinned_at: noteData.pinned_at || (noteData.is_pinned ? new Date().toISOString() : undefined),
+      date: noteData.date || '',
       color: noteData.color || 'amber',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -811,8 +813,8 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `INSERT INTO notes (id, title, folder, content, tags, is_pinned, color, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO notes (id, title, folder, content, tags, is_pinned, pinned_at, date, color, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         newNote.id,
         newNote.title,
@@ -820,6 +822,8 @@ export const tursoApi = {
         newNote.content,
         JSON.stringify(newNote.tags || []),
         newNote.is_pinned ? 1 : 0,
+        newNote.pinned_at || null,
+        newNote.date || null,
         newNote.color || 'amber',
         newNote.created_at,
         newNote.updated_at
@@ -844,7 +848,7 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `UPDATE notes SET title = ?, folder = ?, content = ?, tags = ?, is_pinned = ?, color = ?, updated_at = ?
+      `UPDATE notes SET title = ?, folder = ?, content = ?, tags = ?, is_pinned = ?, pinned_at = ?, date = ?, color = ?, updated_at = ?
        WHERE id = ?;`,
       [
         updated.title,
@@ -852,6 +856,8 @@ export const tursoApi = {
         updated.content,
         JSON.stringify(updated.tags || []),
         updated.is_pinned ? 1 : 0,
+        updated.pinned_at || null,
+        updated.date || null,
         updated.color || 'amber',
         updated.updated_at,
         id
@@ -1267,6 +1273,8 @@ function mapNoteRow(row: any): NoteItem {
     content: String(row.content || ''),
     tags: Array.isArray(tags) ? tags : [],
     is_pinned: Boolean(row.is_pinned === 1 || row.is_pinned === '1' || row.is_pinned === true),
+    pinned_at: row.pinned_at && row.pinned_at !== 'null' ? String(row.pinned_at) : undefined,
+    date: row.date && row.date !== 'null' ? String(row.date) : '',
     color: row.color ? String(row.color) : 'amber',
     created_at: String(row.created_at || new Date().toISOString()),
     updated_at: String(row.updated_at || new Date().toISOString())

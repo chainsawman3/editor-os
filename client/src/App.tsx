@@ -24,6 +24,7 @@ export function App() {
   const [selectedSection, setSelectedSection] = useState<SectionType>('video_editing');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [cycleDay, setCycleDay] = useState(1);
   const [cycleTotalDays, setCycleTotalDays] = useState(90);
@@ -216,7 +217,16 @@ export function App() {
       case 'deadlines':
         return <DeadlinesPage onOpenProject={handleOpenProject} />;
       case 'calendar':
-        return <CalendarPage onOpenProject={handleOpenProject} onOpenGoal={handleOpenGoal} />;
+        return (
+          <CalendarPage
+            onOpenProject={handleOpenProject}
+            onOpenGoal={handleOpenGoal}
+            onOpenNote={(noteId) => {
+              setSelectedNoteId(noteId);
+              setCurrentTab('notes');
+            }}
+          />
+        );
       case 'project_detail':
         return (
           <ProjectDetailPage
@@ -235,7 +245,7 @@ export function App() {
       case 'analytics':
         return <AnalyticsPage onNavigate={handleNavigate} />;
       case 'notes':
-        return <NotesPage />;
+        return <NotesPage initialNoteId={selectedNoteId} />;
       case 'inbox':
         return <InboxPage onOpenQuickCapture={() => setIsQuickCaptureOpen(true)} onNavigate={handleNavigate} />;
       case 'settings':

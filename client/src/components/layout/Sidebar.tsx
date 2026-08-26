@@ -109,19 +109,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Main Landing: Content Studio */}
           <button
             onClick={() => onSelectTab('content')}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
               isContentActive
                 ? 'bg-blue-600/15 border border-blue-500/40 text-blue-300 shadow-sm'
                 : 'text-zinc-300 hover:text-white hover:bg-zinc-900 border border-transparent'
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <Clapperboard className={`w-4 h-4 ${isContentActive ? 'text-blue-400' : 'text-zinc-400'}`} />
-              <span>Content Studio</span>
-            </div>
-            <span className="text-[9px] px-1.5 py-0.5 rounded font-mono bg-blue-950/80 border border-blue-800 text-blue-300 font-bold uppercase tracking-wider">
-              Main
-            </span>
+            <Clapperboard className={`w-4 h-4 ${isContentActive ? 'text-blue-400' : 'text-zinc-400'}`} />
+            <span>Content Studio</span>
           </button>
 
           {/* Goals Hub (Expandable) */}
@@ -195,23 +190,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Notes & Daily Scratchpad (Yellow/Amber Overlay) */}
           <button
             onClick={() => onSelectTab('notes')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all font-medium ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-all font-medium ${
               currentTab === 'notes'
                 ? 'bg-amber-500/15 border border-amber-500/40 text-amber-300 font-semibold shadow-sm shadow-amber-950/30'
                 : 'text-zinc-400 hover:text-amber-200 hover:bg-amber-500/10 border border-transparent'
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <StickyNote className={`w-4 h-4 ${currentTab === 'notes' ? 'text-amber-400' : 'text-amber-500/80'}`} />
-              <span>Notes</span>
-            </div>
-            <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider ${
-              currentTab === 'notes'
-                ? 'bg-amber-500/25 border border-amber-500/40 text-amber-300'
-                : 'bg-zinc-900 border border-zinc-800 text-zinc-500'
-            }`}>
-              Daily
-            </span>
+            <StickyNote className={`w-4 h-4 ${currentTab === 'notes' ? 'text-amber-400' : 'text-amber-500/80'}`} />
+            <span>Notes</span>
           </button>
 
           {/* Calendar */}

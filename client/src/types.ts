@@ -302,6 +302,7 @@ export interface NoteItem {
   tags?: string[];
   is_pinned?: boolean;
   pinned_at?: string;
+  date?: string;
   color?: string;
   created_at: string;
   updated_at: string;

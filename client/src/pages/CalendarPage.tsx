@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { Goal, Project, Task, SectionType } from '../types';
+import { Goal, Project, Task, NoteItem, SectionType } from '../types';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -25,19 +25,22 @@ import {
   Check,
   Megaphone,
   Briefcase,
-  GraduationCap
+  GraduationCap,
+  StickyNote
 } from 'lucide-react';
 import { CalendarSkeleton } from '../components/common/SkeletonLoader';
 
 interface CalendarPageProps {
   onOpenProject: (projectId: string) => void;
   onOpenGoal?: (goalId: string) => void;
+  onOpenNote?: (noteId: string) => void;
 }
 
-export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpenGoal }) => {
+export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpenGoal, onOpenNote }) => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Calendar State
@@ -49,16 +52,18 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
   const [showGoals, setShowGoals] = useState(true);
   const [showProjects, setShowProjects] = useState(true);
   const [showTasks, setShowTasks] = useState(true);
+  const [showNotes, setShowNotes] = useState(true);
   const [selectedSection, setSelectedSection] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const loadAllData = async () => {
     try {
       setLoading(true);
-      const [g, p, t] = await Promise.all([api.getGoals(), api.getProjects(), api.getTasks()]);
-      setGoals(g);
-      setProjects(p);
-      setTasks(t);
+      const [g, p, t, n] = await Promise.all([api.getGoals(), api.getProjects(), api.getTasks(), api.getNotes()]);
+      setGoals(g || []);
+      setProjects(p || []);
+      setTasks(t || []);
+      setNotes(n || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -227,6 +232,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
   const selectedGoals = showGoals ? goals.filter((g) => g.target_date === selectedDate && matchFilter(g)) : [];
   const selectedProjects = showProjects ? projects.filter((p) => p.deadline === selectedDate && matchFilter(p)) : [];
   const selectedTasks = showTasks ? tasks.filter((t) => t.due_date === selectedDate && matchFilter(t)) : [];
+  const selectedNotes = showNotes ? notes.filter((n) => n.date === selectedDate && matchFilter(n)) : [];
 
   // All upcoming deadlines for Agenda view
   const allDeadlines: Array<{
@@ -460,6 +466,19 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               <span>Tasks ({tasks.filter((t) => t.due_date).length})</span>
             </button>
 
+            {/* Toggle Notes */}
+            <button
+              onClick={() => setShowNotes(!showNotes)}
+              className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                showNotes
+                  ? 'bg-amber-950/80 border-amber-600/80 text-amber-300 shadow-sm'
+                  : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <StickyNote className="w-3.5 h-3.5 text-amber-400" />
+              <span>Notes ({notes.filter((n) => n.date).length})</span>
+            </button>
+
             <div className="h-4 w-px bg-zinc-800 mx-1 hidden sm:block" />
 
             {/* Category Filter */}
@@ -546,7 +565,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                 const dayGoals = showGoals ? goals.filter((g) => g.target_date === dateStr && matchFilter(g)) : [];
                 const dayProjects = showProjects ? projects.filter((p) => p.deadline === dateStr && matchFilter(p)) : [];
                 const dayTasks = showTasks ? tasks.filter((t) => t.due_date === dateStr && matchFilter(t)) : [];
-                const totalDayItems = dayGoals.length + dayProjects.length + dayTasks.length;
+                const dayNotes = showNotes ? notes.filter((n) => n.date === dateStr && matchFilter(n)) : [];
+                const totalDayItems = dayGoals.length + dayProjects.length + dayTasks.length + dayNotes.length;
 
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === selectedDate;
@@ -641,6 +661,21 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                           title={`⚡ [Action Step] ${t.title} ${t.completed ? '(Completed)' : '(Pending - click to toggle)'}`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
+                        </div>
+                      ))}
+
+                      {/* Notes (Scheduled Note with StickyNote icon) */}
+                      {dayNotes.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenNote && onOpenNote(n.id);
+                          }}
+                          className="p-1.5 rounded-lg bg-amber-950/90 hover:bg-amber-900 border border-amber-500/80 text-amber-300 shadow-sm shadow-amber-950/40 transition-all hover:scale-110 cursor-pointer"
+                          title={`📝 [Note] ${n.title} (Click to open note)`}
+                        >
+                          <StickyNote className="w-3.5 h-3.5" />
                         </div>
                       ))}
                     </div>
@@ -757,12 +792,45 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                 </div>
               )}
 
+              {/* Day Notes (Scheduled in Calendar) */}
+              {selectedNotes.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-xs font-bold uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
+                    <StickyNote className="w-3.5 h-3.5" /> Scheduled Notes ({selectedNotes.length})
+                  </span>
+                  {selectedNotes.map((n) => (
+                    <div
+                      key={n.id}
+                      onClick={() => onOpenNote && onOpenNote(n.id)}
+                      className="p-3 bg-amber-950/25 hover:bg-amber-950/50 border border-amber-500/40 hover:border-amber-400 rounded-xl space-y-1 shadow-sm cursor-pointer group transition-all flex items-center justify-between"
+                    >
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="p-1 rounded bg-amber-950/80 border border-amber-500/50 text-amber-400">
+                            <StickyNote className="w-3 h-3" />
+                          </span>
+                          <span className="text-xs font-bold text-amber-200 group-hover:text-white truncate">
+                            {n.title}
+                          </span>
+                        </div>
+                        {n.folder && (
+                          <div className="text-[10px] text-zinc-400 font-mono pl-6">
+                            Folder: <strong className="text-zinc-300">{n.folder}</strong>
+                          </div>
+                        )}
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Empty State */}
-              {selectedGoals.length === 0 && selectedProjects.length === 0 && selectedTasks.length === 0 && (
+              {selectedGoals.length === 0 && selectedProjects.length === 0 && selectedTasks.length === 0 && selectedNotes.length === 0 && (
                 <div className="py-6 text-center space-y-4">
                   <div className="p-4 bg-zinc-900/50 border border-zinc-850 rounded-xl space-y-2">
                     <Clock className="w-5 h-5 text-zinc-500 mx-auto" />
-                    <p className="text-xs text-zinc-400 font-medium">No deadlines or tasks scheduled on this day.</p>
+                    <p className="text-xs text-zinc-400 font-medium">No deadlines, notes, or tasks scheduled on this day.</p>
                   </div>
 
                   {/* Nearest Upcoming Summary Widget */}
@@ -825,6 +893,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               const dayGoals = showGoals ? goals.filter((g) => g.target_date === dStr && matchFilter(g)) : [];
               const dayProjects = showProjects ? projects.filter((p) => p.deadline === dStr && matchFilter(p)) : [];
               const dayTasks = showTasks ? tasks.filter((t) => t.due_date === dStr && matchFilter(t)) : [];
+              const dayNotes = showNotes ? notes.filter((n) => n.date === dStr && matchFilter(n)) : [];
 
               return (
                 <div
@@ -899,7 +968,21 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                         </div>
                       ))}
 
-                      {dayGoals.length === 0 && dayProjects.length === 0 && dayTasks.length === 0 && (
+                      {dayNotes.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenNote && onOpenNote(n.id);
+                          }}
+                          className="p-2 rounded-lg bg-amber-950/90 hover:bg-amber-900 border border-amber-500/80 text-amber-300 shadow-sm shadow-amber-950/40 transition-all hover:scale-105 cursor-pointer"
+                          title={`📝 [Note] ${n.title}`}
+                        >
+                          <StickyNote className="w-4 h-4" />
+                        </div>
+                      ))}
+
+                      {dayGoals.length === 0 && dayProjects.length === 0 && dayTasks.length === 0 && dayNotes.length === 0 && (
                         <div className="text-[11px] text-zinc-600 text-center py-6 w-full">No events</div>
                       )}
                     </div>
