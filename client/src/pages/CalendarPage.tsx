@@ -355,161 +355,161 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
+    <div className="p-2.5 sm:p-6 space-y-3.5 sm:space-y-6 max-w-7xl mx-auto font-sans">
       {/* 1. TOP HEADER & MAIN CONTROLS */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <span className="p-2.5 rounded-xl bg-purple-950/60 border border-purple-800/80 text-purple-400 shadow-inner">
-              <CalendarIcon className="w-5 h-5" />
+      <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-sm space-y-3.5 sm:space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <span className="p-2 sm:p-2.5 rounded-xl bg-purple-950/60 border border-purple-800/80 text-purple-400 shadow-inner shrink-0">
+              <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-zinc-100 tracking-tight">Production & Milestones Calendar</h1>
-                <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-purple-950/70 border border-purple-800/70 text-purple-300 font-bold uppercase">
-                  Sprint Schedule
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">Calendar</h1>
+                <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-mono rounded bg-purple-950/70 border border-purple-800/70 text-purple-300 font-bold uppercase">
+                  Schedule
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 font-medium mt-0.5">
-                Visual icon radar for Primary Objectives, Project Deliveries, and Daily Action Steps
+              <p className="text-[11px] sm:text-xs text-zinc-400 font-medium hidden sm:block">
+                Visual radar for Primary Objectives, Project Deliveries, and Daily Notes
               </p>
             </div>
           </div>
 
           {/* Month Navigation & View Modes */}
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2.5 flex-wrap">
             <button
               onClick={handleToday}
-              className="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5"
+              className="px-2.5 sm:px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1 shrink-0"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Today</span>
+              <span className="text-xs">Today</span>
             </button>
 
-            <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 shadow-inner">
+            <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-0.5 sm:p-1 shadow-inner">
               <button
                 onClick={handlePrevMonth}
-                className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-1 sm:p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
                 title="Previous Month"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
-              <span className="px-3 text-xs font-bold text-zinc-100 min-w-[140px] text-center font-sans tracking-wide">
+              <span className="px-2 sm:px-3 text-xs font-bold text-zinc-100 min-w-[100px] sm:min-w-[140px] text-center font-sans tracking-wide">
                 {monthNames[month]} {year}
               </span>
               <button
                 onClick={handleNextMonth}
-                className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-1 sm:p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
                 title="Next Month"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
 
-            <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 shadow-inner">
+            <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-0.5 sm:p-1 shadow-inner">
               <button
                 onClick={() => setViewMode('month')}
-                className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
                   viewMode === 'month'
                     ? 'bg-zinc-800 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                <CalendarDays className="w-3.5 h-3.5" />
+                <CalendarDays className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>Month</span>
               </button>
               <button
                 onClick={() => setViewMode('week')}
-                className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
                   viewMode === 'week'
                     ? 'bg-zinc-800 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                <CalendarRange className="w-3.5 h-3.5" />
-                <span>Week Sprint</span>
+                <CalendarRange className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>Week</span>
               </button>
               <button
                 onClick={() => setViewMode('agenda')}
-                className={`px-3 py-1.5 text-xs rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
                   viewMode === 'agenda'
                     ? 'bg-zinc-800 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                <ListOrdered className="w-3.5 h-3.5" />
-                <span>Agenda List</span>
+                <ListOrdered className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>List</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* 2. FILTER & COLOR LEGEND TOOLBAR */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-850">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-zinc-500 font-semibold text-[11px] uppercase tracking-wider flex items-center gap-1 mr-1">
-              <Filter className="w-3.5 h-3.5 text-zinc-400" /> Filter:
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-3 border-t border-zinc-850">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <span className="text-zinc-500 font-semibold text-[10px] sm:text-[11px] uppercase tracking-wider flex items-center gap-1 mr-0.5 shrink-0">
+              <Filter className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-400" /> Filter:
             </span>
 
             {/* Toggle Goals */}
             <button
               onClick={() => setShowGoals(!showGoals)}
-              className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+              className={`px-2 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-all border shrink-0 ${
                 showGoals
                   ? 'bg-purple-950/80 border-purple-700/80 text-purple-300 shadow-sm'
                   : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <Target className="w-3.5 h-3.5 text-purple-400" />
+              <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400" />
               <span>Goals ({goals.filter((g) => g.target_date).length})</span>
             </button>
 
             {/* Toggle Projects */}
             <button
               onClick={() => setShowProjects(!showProjects)}
-              className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+              className={`px-2 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-all border shrink-0 ${
                 showProjects
                   ? 'bg-blue-950/80 border-blue-700/80 text-blue-300 shadow-sm'
                   : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <Video className="w-3.5 h-3.5 text-blue-400" />
+              <Video className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400" />
               <span>Projects ({projects.filter((p) => p.deadline).length})</span>
             </button>
 
             {/* Toggle Tasks */}
             <button
               onClick={() => setShowTasks(!showTasks)}
-              className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+              className={`px-2 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-all border shrink-0 ${
                 showTasks
                   ? 'bg-emerald-950/80 border-emerald-700/80 text-emerald-300 shadow-sm'
                   : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
               <span>Tasks ({tasks.filter((t) => t.due_date).length})</span>
             </button>
 
             {/* Toggle Notes */}
             <button
               onClick={() => setShowNotes(!showNotes)}
-              className={`px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+              className={`px-2 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-all border shrink-0 ${
                 showNotes
                   ? 'bg-amber-950/80 border-amber-600/80 text-amber-300 shadow-sm'
                   : 'bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <StickyNote className="w-3.5 h-3.5 text-amber-400" />
+              <StickyNote className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
               <span>Notes ({notes.filter((n) => Boolean(getNoteDate(n))).length})</span>
             </button>
+          </div>
 
-            <div className="h-4 w-px bg-zinc-800 mx-1 hidden sm:block" />
-
+          <div className="flex items-center gap-2">
             {/* Category Filter */}
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
-              className="px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-xl text-xs outline-none focus:border-zinc-600 font-medium"
+              className="px-2 py-1 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-xl text-[11px] sm:text-xs outline-none focus:border-zinc-600 font-medium"
             >
               <option value="all">All Categories</option>
               <option value="video_editing">Video Editing</option>
@@ -517,73 +517,40 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               <option value="skills">Skills & Mastery</option>
               <option value="freelance">Freelance</option>
             </select>
-          </div>
 
-          {/* Quick Search */}
-          <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search projects, goals, notes..."
-              className="w-full pl-9 pr-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-200 placeholder:text-zinc-500 outline-none focus:border-zinc-600"
-            />
+            {/* Quick Search */}
+            <div className="relative min-w-[140px] flex-1 sm:max-w-xs">
+              <Search className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="w-full pl-7 sm:pl-8 pr-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-xl text-[11px] sm:text-xs text-zinc-200 placeholder:text-zinc-500 outline-none focus:border-zinc-600"
+              />
+            </div>
           </div>
-        </div>
-
-        {/* 3. ICON COLOR KEY (VISUAL LEGEND) */}
-        <div className="flex flex-wrap items-center gap-3 pt-2 text-[11px] text-zinc-400">
-          <span className="font-semibold text-zinc-500 uppercase tracking-wider text-[10px]">Icon Key:</span>
-          <span className="flex items-center gap-1.5">
-            <span className="p-1 rounded bg-purple-950 border border-purple-700 text-purple-400"><Target className="w-3 h-3" /></span>
-            <span>Goal</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="p-1 rounded bg-blue-950 border border-blue-600 text-blue-400"><Video className="w-3 h-3" /></span>
-            <span>Video Project</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="p-1 rounded bg-pink-950 border border-pink-600 text-pink-400"><Megaphone className="w-3 h-3" /></span>
-            <span>Instagram Reel</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="p-1 rounded bg-cyan-950 border border-cyan-600 text-cyan-400"><Megaphone className="w-3 h-3" /></span>
-            <span>TikTok</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="p-1 rounded bg-amber-950 border border-amber-600 text-amber-400"><GraduationCap className="w-3 h-3" /></span>
-            <span>Skills</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="p-1 rounded bg-purple-950 border border-purple-600 text-purple-300"><Briefcase className="w-3 h-3" /></span>
-            <span>Client</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="p-1 rounded bg-emerald-950 border border-emerald-600 text-emerald-400"><CheckCircle2 className="w-3 h-3" /></span>
-            <span>Action Step</span>
-          </span>
         </div>
       </div>
 
       {/* 2. MONTH GRID VIEW */}
       {viewMode === 'month' && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Main Month Calendar Grid (3 Cols) */}
-          <div className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-sm">
+          <div className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-2.5 sm:p-5 space-y-2 sm:space-y-3 shadow-sm">
             {/* Weekday Header Columns */}
-            <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-zinc-400 pb-2 border-b border-zinc-850">
-              <span className="text-zinc-500">Sun</span>
-              <span>Mon</span>
-              <span>Tue</span>
-              <span>Wed</span>
-              <span>Thu</span>
-              <span>Fri</span>
-              <span className="text-zinc-500">Sat</span>
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs font-bold text-zinc-400 pb-1.5 sm:pb-2 border-b border-zinc-850">
+              <span className="text-zinc-500"><span className="sm:hidden">S</span><span className="hidden sm:inline">Sun</span></span>
+              <span><span className="sm:hidden">M</span><span className="hidden sm:inline">Mon</span></span>
+              <span><span className="sm:hidden">T</span><span className="hidden sm:inline">Tue</span></span>
+              <span><span className="sm:hidden">W</span><span className="hidden sm:inline">Wed</span></span>
+              <span><span className="sm:hidden">T</span><span className="hidden sm:inline">Thu</span></span>
+              <span><span className="sm:hidden">F</span><span className="hidden sm:inline">Fri</span></span>
+              <span className="text-zinc-500"><span className="sm:hidden">S</span><span className="hidden sm:inline">Sat</span></span>
             </div>
 
             {/* Days Grid Cells */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
               {calendarCells.map((cell) => {
                 const { dateStr, dayNum, isCurrentMonth } = cell;
                 const dayGoals = showGoals ? goals.filter((g) => g.target_date === dateStr && matchFilter(g)) : [];
@@ -599,7 +566,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                   <div
                     key={dateStr}
                     onClick={() => setSelectedDate(dateStr)}
-                    className={`min-h-[105px] sm:min-h-[120px] p-2.5 rounded-xl border cursor-pointer transition-all duration-150 flex flex-col justify-between group ${
+                    className={`min-h-[58px] sm:min-h-[105px] md:min-h-[120px] p-1 sm:p-2.5 rounded-lg sm:rounded-xl border cursor-pointer transition-all duration-150 flex flex-col justify-between group overflow-hidden ${
                       isSelected
                         ? 'bg-zinc-900 border-blue-500/80 ring-2 ring-blue-500/20 shadow-lg'
                         : isToday
@@ -612,7 +579,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                     {/* Day Number Header */}
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-lg transition-colors font-mono ${
+                        className={`text-[10px] sm:text-xs font-bold px-1 sm:px-2 py-0.2 sm:py-0.5 rounded sm:rounded-lg transition-colors font-mono ${
                           isToday
                             ? 'bg-blue-600 text-white font-bold shadow-sm'
                             : isSelected
@@ -627,7 +594,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
 
                       {totalDayItems > 0 && (
                         <span
-                          className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                          className={`hidden sm:inline-block text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
                             isCurrentMonth ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-900 text-zinc-600'
                           }`}
                         >
@@ -637,7 +604,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                     </div>
 
                     {/* EVENT ICONS ONLY (CLEAN COLOR-CODED BADGES) */}
-                    <div className="flex flex-wrap items-center gap-1.5 my-1.5 overflow-hidden">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-1.5 my-0.5 sm:my-1.5 overflow-hidden">
                       {/* Goals */}
                       {dayGoals.map((g) => (
                         <div
@@ -646,10 +613,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             e.stopPropagation();
                             onOpenGoal && onOpenGoal(g.id);
                           }}
-                          className="p-1.5 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 hover:border-zinc-200 text-purple-300 shadow-sm transition-colors cursor-pointer"
+                          className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 hover:border-zinc-200 text-purple-300 shadow-sm transition-colors cursor-pointer"
                           title={`🎯 [Primary Goal] ${g.title} (Click to open objective)`}
                         >
-                          <Target className="w-3.5 h-3.5" />
+                          <Target className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
                         </div>
                       ))}
 
@@ -664,10 +631,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                               e.stopPropagation();
                               onOpenProject(p.id);
                             }}
-                            className={`p-1.5 rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${badge.style}`}
+                            className={`p-1 sm:p-1.5 rounded-md sm:rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${badge.style}`}
                             title={`🎬 [${badge.label}] ${p.name} ${p.client_name ? `(Client: ${p.client_name})` : ''}`}
                           >
-                            <IconComponent className="w-3.5 h-3.5" />
+                            <IconComponent className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
                           </div>
                         );
                       })}
@@ -677,14 +644,14 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                         <div
                           key={t.id}
                           onClick={(e) => handleToggleTask(t, e)}
-                          className={`p-1.5 rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${
+                          className={`p-1 sm:p-1.5 rounded-md sm:rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${
                             t.completed
                               ? 'bg-zinc-900/90 border-zinc-800 text-zinc-600'
                               : 'bg-emerald-950/90 hover:bg-emerald-900 border-emerald-600/80 text-emerald-300'
                           }`}
                           title={`⚡ [Action Step] ${t.title} ${t.completed ? '(Completed)' : '(Pending - click to toggle)'}`}
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <CheckCircle2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
                         </div>
                       ))}
 
@@ -696,10 +663,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             e.stopPropagation();
                             onOpenNote && onOpenNote(n.id);
                           }}
-                          className="p-1.5 rounded-lg bg-amber-950/90 hover:bg-amber-900 border border-amber-500/80 hover:border-zinc-200 text-amber-300 shadow-sm shadow-amber-950/40 transition-colors cursor-pointer"
+                          className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-amber-950/90 hover:bg-amber-900 border border-amber-500/80 hover:border-zinc-200 text-amber-300 shadow-sm shadow-amber-950/40 transition-colors cursor-pointer"
                           title={`📝 [Note] ${n.title} (Click to open note)`}
                         >
-                          <StickyNote className="w-3.5 h-3.5" />
+                          <StickyNote className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
                         </div>
                       ))}
                     </div>
@@ -917,7 +884,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               const dayGoals = showGoals ? goals.filter((g) => g.target_date === dStr && matchFilter(g)) : [];
               const dayProjects = showProjects ? projects.filter((p) => p.deadline === dStr && matchFilter(p)) : [];
               const dayTasks = showTasks ? tasks.filter((t) => t.due_date === dStr && matchFilter(t)) : [];
-              const dayNotes = showNotes ? notes.filter((n) => n.date === dStr && matchFilter(n)) : [];
+              const dayNotes = showNotes ? notes.filter((n) => getNoteDate(n) === dStr && matchFilter(n)) : [];
 
               return (
                 <div
