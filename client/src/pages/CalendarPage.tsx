@@ -646,7 +646,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             e.stopPropagation();
                             onOpenGoal && onOpenGoal(g.id);
                           }}
-                          className="p-1.5 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 text-purple-300 shadow-sm transition-all hover:scale-110 cursor-pointer"
+                          className="p-1.5 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 hover:border-zinc-200 text-purple-300 shadow-sm transition-colors cursor-pointer"
                           title={`🎯 [Primary Goal] ${g.title} (Click to open objective)`}
                         >
                           <Target className="w-3.5 h-3.5" />
@@ -664,7 +664,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                               e.stopPropagation();
                               onOpenProject(p.id);
                             }}
-                            className={`p-1.5 rounded-lg border shadow-sm transition-all hover:scale-110 cursor-pointer ${badge.style}`}
+                            className={`p-1.5 rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${badge.style}`}
                             title={`🎬 [${badge.label}] ${p.name} ${p.client_name ? `(Client: ${p.client_name})` : ''}`}
                           >
                             <IconComponent className="w-3.5 h-3.5" />
@@ -677,7 +677,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                         <div
                           key={t.id}
                           onClick={(e) => handleToggleTask(t, e)}
-                          className={`p-1.5 rounded-lg border shadow-sm transition-all hover:scale-110 cursor-pointer ${
+                          className={`p-1.5 rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${
                             t.completed
                               ? 'bg-zinc-900/90 border-zinc-800 text-zinc-600'
                               : 'bg-emerald-950/90 hover:bg-emerald-900 border-emerald-600/80 text-emerald-300'
@@ -696,7 +696,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             e.stopPropagation();
                             onOpenNote && onOpenNote(n.id);
                           }}
-                          className="p-1.5 rounded-lg bg-amber-950/90 hover:bg-amber-900 border border-amber-500/80 text-amber-300 shadow-sm shadow-amber-950/40 transition-all hover:scale-110 cursor-pointer"
+                          className="p-1.5 rounded-lg bg-amber-950/90 hover:bg-amber-900 border border-amber-500/80 hover:border-zinc-200 text-amber-300 shadow-sm shadow-amber-950/40 transition-colors cursor-pointer"
                           title={`📝 [Note] ${n.title} (Click to open note)`}
                         >
                           <StickyNote className="w-3.5 h-3.5" />
@@ -952,7 +952,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             e.stopPropagation();
                             onOpenGoal && onOpenGoal(g.id);
                           }}
-                          className="p-2 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 text-purple-300 shadow-sm transition-all hover:scale-105 cursor-pointer"
+                          className="p-2 rounded-lg bg-purple-950/90 hover:bg-purple-900 border border-purple-600/80 hover:border-zinc-200 text-purple-300 shadow-sm transition-colors cursor-pointer"
                           title={`🎯 [Primary Goal] ${g.title} (Click to open objective)`}
                         >
                           <Target className="w-4 h-4" />
@@ -969,7 +969,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                               e.stopPropagation();
                               onOpenProject(p.id);
                             }}
-                            className={`p-2 rounded-lg border shadow-sm transition-all hover:scale-105 cursor-pointer ${badge.style}`}
+                            className={`p-2 rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${badge.style}`}
                             title={`🎬 [${badge.label}] ${p.name} ${p.client_name ? `(Client: ${p.client_name})` : ''}`}
                           >
                             <IconComponent className="w-4 h-4" />
@@ -981,7 +981,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                         <div
                           key={t.id}
                           onClick={(e) => handleToggleTask(t, e)}
-                          className={`p-2 rounded-lg border shadow-sm transition-all hover:scale-105 cursor-pointer ${
+                          className={`p-2 rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${
                             t.completed
                               ? 'bg-zinc-900 border-zinc-800 text-zinc-600'
                               : 'bg-emerald-950 border-emerald-600 text-emerald-300'
@@ -999,7 +999,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             e.stopPropagation();
                             onOpenNote && onOpenNote(n.id);
                           }}
-                          className="p-2 rounded-lg bg-amber-950/90 hover:bg-amber-900 border border-amber-500/80 text-amber-300 shadow-sm shadow-amber-950/40 transition-all hover:scale-105 cursor-pointer"
+                          className="p-2 rounded-lg bg-amber-950/90 hover:bg-amber-900 border border-amber-500/80 hover:border-zinc-200 text-amber-300 shadow-sm shadow-amber-950/40 transition-colors cursor-pointer"
                           title={`📝 [Note] ${n.title}`}
                         >
                           <StickyNote className="w-4 h-4" />
