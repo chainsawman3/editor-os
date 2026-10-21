@@ -6,6 +6,8 @@ import { MobileNavBar } from './components/layout/MobileNavBar';
 import { QuickCaptureModal } from './components/layout/QuickCaptureModal';
 import { SectionType } from './types';
 import { PinScreen } from './components/PinScreen';
+import { checkTaskReminders } from './utils/notifications';
+import { Bell, X as XIcon, CheckCircle2 } from 'lucide-react';
 
 // Dynamic code-split page imports for minimal bandwidth usage
 const GoalsHubPage = lazy(() => import('./pages/GoalsHubPage').then((m) => ({ default: m.GoalsHubPage })));
@@ -18,6 +20,7 @@ const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then((m) => ({ 
 const InboxPage = lazy(() => import('./pages/InboxPage').then((m) => ({ default: m.InboxPage })));
 const NotesPage = lazy(() => import('./pages/NotesPage').then((m) => ({ default: m.NotesPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const TasksPage = lazy(() => import('./pages/TasksPage').then((m) => ({ default: m.TasksPage })));
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -31,6 +34,46 @@ export function App() {
   const [cycleDay, setCycleDay] = useState(1);
   const [cycleTotalDays, setCycleTotalDays] = useState(90);
   const [previousTab, setPreviousTab] = useState<string>('goals');
+  const [reminderToast, setReminderToast] = useState<{ task: any; message: string } | null>(null);
+
+  // Background Task Reminder Scanner (Runs on mount and every 60 seconds)
+  useEffect(() => {
+    const runCheck = async () => {
+      try {
+        const tasks = await api.getTasks();
+        if (tasks && tasks.length > 0) {
+          checkTaskReminders(tasks);
+        }
+      } catch (e) {
+        // Silent error handling for background scanner
+      }
+    };
+
+    runCheck();
+    const interval = setInterval(runCheck, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Listen to in-app task reminder toasts & desktop click events
+  useEffect(() => {
+    const handleToast = (e: any) => {
+      if (e.detail) {
+        setReminderToast(e.detail);
+        setTimeout(() => setReminderToast(null), 10000);
+      }
+    };
+
+    const handleOpenTasks = () => {
+      setCurrentTab('tasks');
+    };
+
+    window.addEventListener('editor_os_task_reminder_toast', handleToast);
+    window.addEventListener('editor_os_open_tasks', handleOpenTasks);
+    return () => {
+      window.removeEventListener('editor_os_task_reminder_toast', handleToast);
+      window.removeEventListener('editor_os_open_tasks', handleOpenTasks);
+    };
+  }, []);
   const [navFilterOptions, setNavFilterOptions] = useState<{
     status?: string;
     viewType?: 'all' | 'goals_only' | 'projects_only';
@@ -309,6 +352,53 @@ export function App() {
           onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
         />
       </div>
+
+      {/* In-App Deadline Alert Toast */}
+      {reminderToast && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm w-full bg-zinc-950/95 backdrop-blur-xl border border-blue-500/80 rounded-2xl p-4 shadow-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+          <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+            <Bell className="w-4 h-4 animate-bounce" />
+          </div>
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+                Deadline Reminder
+              </span>
+              <button
+                onClick={() => setReminderToast(null)}
+                className="text-zinc-500 hover:text-white p-0.5"
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <h4 className="text-xs font-bold text-white truncate">
+              {reminderToast.task?.title || 'Task Reminder'}
+            </h4>
+            {reminderToast.task?.due_date && (
+              <p className="text-[11px] text-zinc-400">
+                Due: {reminderToast.task.due_date} {reminderToast.task.due_time ? '@ ' + reminderToast.task.due_time : ''}
+              </p>
+            )}
+            <div className="pt-1.5 flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setReminderToast(null);
+                  setCurrentTab('tasks');
+                }}
+                className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] font-bold"
+              >
+                Open Tasks
+              </button>
+              <button
+                onClick={() => setReminderToast(null)}
+                className="px-2 py-1 bg-zinc-900 hover:bg-zinc-850 text-zinc-400 text-[10px] rounded-lg"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 4. Global Quick Capture Modal (⌘K) */}
       {isQuickCaptureOpen && (

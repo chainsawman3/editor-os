@@ -166,6 +166,36 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
     };
   };
 
+  // Helper for Task Badge color on Calendar (Changes color when completed and stays!)
+  const getTaskCalendarBadge = (t: Task) => {
+    if (t.completed) {
+      return {
+        style: 'bg-emerald-950/90 hover:bg-emerald-900 border-emerald-500/80 text-emerald-400 shadow-sm shadow-emerald-950/50',
+        title: `✅ [Completed Task] ${t.title} (Click to reopen)`,
+        iconColor: 'text-emerald-400'
+      };
+    }
+    if (t.priority === 'High') {
+      return {
+        style: 'bg-rose-950/90 hover:bg-rose-900 border-rose-500/80 text-rose-300 shadow-sm shadow-rose-950/50',
+        title: `⚡ [High Priority Task] ${t.title} ${t.due_time ? `@ ${t.due_time}` : ''} (Click to complete)`,
+        iconColor: 'text-rose-400'
+      };
+    }
+    if (t.priority === 'Low') {
+      return {
+        style: 'bg-zinc-850 hover:bg-zinc-800 border-zinc-700/80 text-zinc-300 shadow-sm',
+        title: `⚡ [Low Priority Task] ${t.title} (Click to complete)`,
+        iconColor: 'text-zinc-400'
+      };
+    }
+    return {
+      style: 'bg-blue-950/90 hover:bg-blue-900 border-blue-500/80 text-blue-300 shadow-sm shadow-blue-950/50',
+      title: `⚡ [Task] ${t.title} ${t.due_time ? `@ ${t.due_time}` : ''} (Click to complete)`,
+      iconColor: 'text-blue-400'
+    };
+  };
+
   // Construct continuous calendar grid with previous and next month trailing days
   interface CalendarCell {
     dateStr: string;
@@ -639,21 +669,20 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                         );
                       })}
 
-                      {/* Tasks */}
-                      {dayTasks.map((t) => (
-                        <div
-                          key={t.id}
-                          onClick={(e) => handleToggleTask(t, e)}
-                          className={`p-1 sm:p-1.5 rounded-md sm:rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${
-                            t.completed
-                              ? 'bg-zinc-900/90 border-zinc-800 text-zinc-600'
-                              : 'bg-emerald-950/90 hover:bg-emerald-900 border-emerald-600/80 text-emerald-300'
-                          }`}
-                          title={`⚡ [Action Step] ${t.title} ${t.completed ? '(Completed)' : '(Pending - click to toggle)'}`}
-                        >
-                          <CheckCircle2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
-                        </div>
-                      ))}
+                      {/* Tasks (Color changes when marked completed and stays on calendar!) */}
+                      {dayTasks.map((t) => {
+                        const badge = getTaskCalendarBadge(t);
+                        return (
+                          <div
+                            key={t.id}
+                            onClick={(e) => handleToggleTask(t, e)}
+                            className={`p-1 sm:p-1.5 rounded-md sm:rounded-lg border transition-all hover:scale-105 active:scale-95 cursor-pointer ${badge.style}`}
+                            title={badge.title}
+                          >
+                            <CheckCircle2 className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 ${badge.iconColor}`} />
+                          </div>
+                        );
+                      })}
 
                       {/* Notes (Scheduled Note with StickyNote icon) */}
                       {dayNotes.map((n) => (
@@ -758,28 +787,65 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                 </div>
               )}
 
-              {/* Day Tasks */}
+              {/* Day Tasks (Visual Color Status and Toggle) */}
               {selectedTasks.length > 0 && (
                 <div className="space-y-2">
-                  <span className="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Action Steps ({selectedTasks.length})
+                  <span className="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Tasks ({selectedTasks.length})
+                    </span>
+                    <span className="text-[10px] text-zinc-500 lowercase font-mono">click to toggle</span>
                   </span>
-                  {selectedTasks.map((t) => (
-                    <div
-                      key={t.id}
-                      onClick={() => handleToggleTask(t)}
-                      className="p-2.5 bg-zinc-900/80 hover:bg-zinc-850 border border-zinc-800 rounded-xl flex items-center justify-between cursor-pointer group transition-all"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <button type="button" className={t.completed ? 'text-emerald-400' : 'text-zinc-500 group-hover:text-emerald-400 transition-colors'}>
-                          {t.completed ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
-                        </button>
-                        <span className={`text-xs ${t.completed ? 'line-through text-zinc-500 font-normal' : 'text-zinc-200 font-medium'}`}>
-                          {t.title}
+                  {selectedTasks.map((t) => {
+                    const badge = getTaskCalendarBadge(t);
+                    return (
+                      <div
+                        key={t.id}
+                        onClick={() => handleToggleTask(t)}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer group transition-all ${
+                          t.completed
+                            ? 'bg-emerald-950/30 border-emerald-800/60 text-emerald-300'
+                            : 'bg-zinc-900/90 hover:bg-zinc-850 border-zinc-800 hover:border-zinc-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <button
+                            type="button"
+                            className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+                              t.completed
+                                ? 'bg-emerald-600 border-emerald-500 text-white'
+                                : 'border-zinc-700 text-transparent group-hover:border-emerald-500'
+                            }`}
+                          >
+                            <Check className="w-3 h-3 stroke-[2.5]" />
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <span className={`text-xs block truncate ${t.completed ? 'line-through text-emerald-400/70 font-normal' : 'text-zinc-200 font-medium'}`}>
+                              {t.title}
+                            </span>
+                            {(t.due_time || t.priority) && (
+                              <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-mono mt-0.5">
+                                {t.due_time && <span>@ {t.due_time}</span>}
+                                {t.priority && (
+                                  <span className={`px-1 rounded text-[9px] font-bold ${
+                                    t.priority === 'High' ? 'text-rose-400 bg-rose-950/60' : t.priority === 'Medium' ? 'text-amber-400 bg-amber-950/60' : 'text-zinc-400'
+                                  }`}>
+                                    {t.priority}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                          t.completed ? 'bg-emerald-950 text-emerald-400' : 'bg-zinc-800 text-zinc-400'
+                        }`}>
+                          {t.completed ? 'Done' : 'Active'}
                         </span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -944,20 +1010,19 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                         );
                       })}
 
-                      {dayTasks.map((t) => (
-                        <div
-                          key={t.id}
-                          onClick={(e) => handleToggleTask(t, e)}
-                          className={`p-2 rounded-lg border shadow-sm transition-colors hover:border-zinc-200 cursor-pointer ${
-                            t.completed
-                              ? 'bg-zinc-900 border-zinc-800 text-zinc-600'
-                              : 'bg-emerald-950 border-emerald-600 text-emerald-300'
-                          }`}
-                          title={`⚡ [Action Step] ${t.title}`}
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                        </div>
-                      ))}
+                      {dayTasks.map((t) => {
+                        const badge = getTaskCalendarBadge(t);
+                        return (
+                          <div
+                            key={t.id}
+                            onClick={(e) => handleToggleTask(t, e)}
+                            className={`p-2 rounded-lg border transition-all hover:scale-105 active:scale-95 cursor-pointer ${badge.style}`}
+                            title={badge.title}
+                          >
+                            <CheckCircle2 className={`w-4 h-4 ${badge.iconColor}`} />
+                          </div>
+                        );
+                      })}
 
                       {dayNotes.map((n) => (
                         <div

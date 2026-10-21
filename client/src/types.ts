@@ -69,6 +69,9 @@ export interface Project {
   isOverdue?: boolean;
 }
 
+export type TaskPriority = 'Low' | 'Medium' | 'High';
+export type TaskReminderType = 'same_day' | '1_hour_before' | '1_day_before' | 'custom' | 'none';
+
 export interface Task {
   id: string;
   title: string;
@@ -77,6 +80,12 @@ export interface Task {
   category_id?: string | null;
   stage?: string | null;
   due_date?: string | null;
+  due_time?: string | null;
+  priority?: TaskPriority;
+  description?: string;
+  reminder_type?: TaskReminderType;
+  reminder_time?: string | null;
+  reminder_date?: string | null;
   completed: boolean;
   completed_at?: string | null;
   order_index: number;

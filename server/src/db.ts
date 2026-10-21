@@ -70,6 +70,12 @@ export interface Task {
   category_id?: string | null;
   stage?: string | null;
   due_date?: string | null;
+  due_time?: string | null;
+  priority?: 'Low' | 'Medium' | 'High';
+  description?: string;
+  reminder_type?: 'same_day' | '1_hour_before' | '1_day_before' | 'custom' | 'none';
+  reminder_time?: string | null;
+  reminder_date?: string | null;
   completed: boolean;
   completed_at?: string | null;
   order_index: number;

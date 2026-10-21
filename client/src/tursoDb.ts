@@ -127,6 +127,12 @@ export async function initTursoTables() {
         project_id TEXT,
         title TEXT NOT NULL,
         due_date TEXT,
+        due_time TEXT,
+        priority TEXT,
+        description TEXT,
+        reminder_type TEXT,
+        reminder_time TEXT,
+        reminder_date TEXT,
         completed INTEGER,
         stage TEXT,
         order_index INTEGER,
@@ -175,6 +181,24 @@ export async function initTursoTables() {
     } catch {}
     try {
       await queryTurso('ALTER TABLE notes ADD COLUMN pinned_at TEXT;');
+    } catch {}
+    try {
+      await queryTurso('ALTER TABLE tasks ADD COLUMN due_time TEXT;');
+    } catch {}
+    try {
+      await queryTurso('ALTER TABLE tasks ADD COLUMN priority TEXT;');
+    } catch {}
+    try {
+      await queryTurso('ALTER TABLE tasks ADD COLUMN description TEXT;');
+    } catch {}
+    try {
+      await queryTurso('ALTER TABLE tasks ADD COLUMN reminder_type TEXT;');
+    } catch {}
+    try {
+      await queryTurso('ALTER TABLE tasks ADD COLUMN reminder_time TEXT;');
+    } catch {}
+    try {
+      await queryTurso('ALTER TABLE tasks ADD COLUMN reminder_date TEXT;');
     } catch {}
 
     isInitialized = true;
@@ -569,6 +593,12 @@ export const tursoApi = {
       project_id: taskData.project_id || null,
       title: taskData.title || 'Untitled Task',
       due_date: taskData.due_date || '',
+      due_time: taskData.due_time || '',
+      priority: taskData.priority || 'Medium',
+      description: taskData.description || '',
+      reminder_type: taskData.reminder_type || 'same_day',
+      reminder_time: taskData.reminder_time || '',
+      reminder_date: taskData.reminder_date || '',
       completed: !!taskData.completed,
       stage: taskData.stage || 'Editing',
       order_index: taskData.order_index || 0,
@@ -581,13 +611,19 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `INSERT INTO tasks (id, project_id, title, due_date, completed, stage, order_index, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO tasks (id, project_id, title, due_date, due_time, priority, description, reminder_type, reminder_time, reminder_date, completed, stage, order_index, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         newTask.id,
         newTask.project_id || null,
         newTask.title,
         newTask.due_date || '',
+        newTask.due_time || '',
+        newTask.priority || 'Medium',
+        newTask.description || '',
+        newTask.reminder_type || 'same_day',
+        newTask.reminder_time || '',
+        newTask.reminder_date || '',
         newTask.completed ? 1 : 0,
         newTask.stage || 'Editing',
         newTask.order_index || 0,
@@ -608,12 +644,18 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `UPDATE tasks SET project_id = ?, title = ?, due_date = ?, completed = ?, stage = ?, order_index = ?
+      `UPDATE tasks SET project_id = ?, title = ?, due_date = ?, due_time = ?, priority = ?, description = ?, reminder_type = ?, reminder_time = ?, reminder_date = ?, completed = ?, stage = ?, order_index = ?
        WHERE id = ?;`,
       [
         updated.project_id || null,
         updated.title,
         updated.due_date || '',
+        updated.due_time || '',
+        updated.priority || 'Medium',
+        updated.description || '',
+        updated.reminder_type || 'same_day',
+        updated.reminder_time || '',
+        updated.reminder_date || '',
         updated.completed ? 1 : 0,
         updated.stage || 'Editing',
         updated.order_index || 0,
@@ -1238,6 +1280,12 @@ function mapTaskRow(row: any): Task {
     project_id: row.project_id && row.project_id !== 'null' ? String(row.project_id) : null,
     title: String(row.title || ''),
     due_date: row.due_date && row.due_date !== 'null' ? String(row.due_date) : '',
+    due_time: row.due_time && row.due_time !== 'null' ? String(row.due_time) : '',
+    priority: (row.priority as any) || 'Medium',
+    description: String(row.description || ''),
+    reminder_type: (row.reminder_type as any) || 'same_day',
+    reminder_time: row.reminder_time && row.reminder_time !== 'null' ? String(row.reminder_time) : '',
+    reminder_date: row.reminder_date && row.reminder_date !== 'null' ? String(row.reminder_date) : '',
     completed: Boolean(row.completed === 1 || row.completed === '1' || row.completed === true),
     stage: row.stage ? (row.stage as any) : 'Editing',
     order_index: Number(row.order_index || 0),

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Clock,
   StickyNote,
+  CheckSquare,
   X
 } from 'lucide-react';
 
@@ -196,6 +197,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
           </div>
+
+          {/* Tasks & Standalone Deadlines */}
+          <button
+            onClick={() => handleTabClick('tasks')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all font-medium ${
+              currentTab === 'tasks'
+                ? 'bg-blue-600/15 border border-blue-500/40 text-blue-300 font-semibold shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <CheckSquare className={`w-4 h-4 ${currentTab === 'tasks' ? 'text-blue-400' : 'text-zinc-400'}`} />
+              <span>Tasks</span>
+            </div>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
+              To-Do
+            </span>
+          </button>
 
           {/* Deadlines */}
           <button
