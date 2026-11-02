@@ -17,7 +17,11 @@ import {
   Volume2,
   MessageSquare,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Send,
+  Smartphone,
+  ExternalLink,
+  Info
 } from 'lucide-react';
 import {
   isNotificationSupported,
@@ -26,6 +30,13 @@ import {
   playNotificationSound,
   showTaskNotification
 } from '../utils/notifications';
+import {
+  getTelegramConfig,
+  saveTelegramConfig,
+  testTelegramConnection,
+  sendTaskToTelegram,
+  TelegramConfig
+} from '../utils/telegram';
 
 interface TasksPageProps {
   onOpenProject?: (projectId: string) => void;
@@ -57,6 +68,15 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
 
   // Notification Permission State
   const [notificationPerm, setNotificationPerm] = useState<NotificationPermission>(getNotificationPermission());
+
+  // Telegram Modal & Config State
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState<boolean>(false);
+  const [telegramConfig, setTelegramConfig] = useState<TelegramConfig>(getTelegramConfig());
+  const [tgBotToken, setTgBotToken] = useState<string>(telegramConfig.botToken);
+  const [tgChatId, setTgChatId] = useState<string>(telegramConfig.chatId);
+  const [tgEnabled, setTgEnabled] = useState<boolean>(telegramConfig.isEnabled);
+  const [tgTestStatus, setTgTestStatus] = useState<{ loading: boolean; success?: boolean; message?: string } | null>(null);
+  const [sendingTaskId, setSendingTaskId] = useState<string | null>(null);
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -202,6 +222,57 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
     }
   };
 
+  // Telegram Config Handlers
+  const handleSaveTelegram = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newCfg: TelegramConfig = {
+      botToken: tgBotToken.trim(),
+      chatId: tgChatId.trim(),
+      isEnabled: tgEnabled
+    };
+    saveTelegramConfig(newCfg);
+    setTelegramConfig(newCfg);
+    setTgTestStatus({ success: true, loading: false, message: 'კონფიგურაცია წარმატებით შეინახა!' });
+    setTimeout(() => {
+      setIsTelegramModalOpen(false);
+      setTgTestStatus(null);
+    }, 1500);
+  };
+
+  const handleTestTelegram = async () => {
+    if (!tgBotToken.trim() || !tgChatId.trim()) {
+      setTgTestStatus({ success: false, loading: false, message: 'შეიყვანეთ Bot Token და Chat ID!' });
+      return;
+    }
+    setTgTestStatus({ loading: true });
+    const res = await testTelegramConnection(tgBotToken, tgChatId);
+    if (res.success) {
+      setTgTestStatus({
+        loading: false,
+        success: true,
+        message: 'ტესტური მესიჯი წარმატებით გაიგზავნა ტელეგრამში! შეამოწმეთ ტელეფონი. 📲'
+      });
+    } else {
+      setTgTestStatus({
+        loading: false,
+        success: false,
+        message: `შეცდომა: ${res.error || 'შეტყობინება ვერ გაიგზავნა'}. დარწმუნდით რომ ბოტში დააჭირეთ /start.`
+      });
+    }
+  };
+
+  const handleSendSingleTaskToTelegram = async (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSendingTaskId(task.id);
+    const res = await sendTaskToTelegram(task, 'გაგზავნილია ხელით საიტიდან');
+    setSendingTaskId(null);
+    if (res.success) {
+      alert(`✅ ტასკი "${task.title}" წარმატებით გაიგზავნა ტელეგრამში!`);
+    } else {
+      alert(`⚠️ შეცდომა: ${res.error}\nგახსენით "Telegram" ღილაკი და შეამოწმეთ კონფიგურაცია.`);
+    }
+  };
+
   // Stats
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -328,11 +399,25 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
               </h1>
             </div>
             <p className="text-xs text-zinc-400 mt-1">
-              მართე ცალკე დამოუკიდებელი დავალებები დედლაინებითა და კომენტარებით. ყველა დავალება ავტომატურად აისახება კალენდარში.
+              მართე ცალკე დამოუკიდებელი დავალებები დედლაინებითა და კომენტარებით. შეტყობინებები მოდის პირდაპირ თქვენს ტელეფონზე (Telegram) და კალენდარში.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Telegram Bot Setup Button */}
+            <button
+              onClick={() => setIsTelegramModalOpen(true)}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
+                telegramConfig.isEnabled && telegramConfig.botToken && telegramConfig.chatId
+                  ? 'bg-sky-500/15 border border-sky-500/40 text-sky-300 hover:bg-sky-500/25'
+                  : 'bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white border border-zinc-800'
+              }`}
+              title="ტელეფონზე (Telegram) შეტყობინებების მართვა"
+            >
+              <Send className="w-3.5 h-3.5 text-sky-400" />
+              <span>{telegramConfig.isEnabled ? '📱 Telegram ჩართულია' : '📱 Telegram-ის მიბმა'}</span>
+            </button>
+
             {/* Notification Permission Indicator */}
             {notificationPerm !== 'granted' && isNotificationSupported() && (
               <button
@@ -341,7 +426,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 title="ჩართე ბრაუზერის შეტყობინებები დედლაინის შეხსენებისთვის"
               >
                 <Bell className="w-3.5 h-3.5" />
-                <span>Enable Alerts</span>
+                <span>Browser Alerts</span>
               </button>
             )}
 
@@ -349,10 +434,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
               <button
                 onClick={handleTestNotification}
                 className="px-2.5 py-2 rounded-xl text-xs font-medium bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 transition-colors flex items-center gap-1.5"
-                title="გატესტე შეტყობინების ხმა და ფანჯარა"
+                title="გატესტე ბრაუზერის შეტყობინების ხმა და ფანჯარა"
               >
                 <Volume2 className="w-3.5 h-3.5 text-blue-400" />
-                <span className="hidden sm:inline">Test Alert</span>
+                <span className="hidden sm:inline">Test Sound</span>
               </button>
             )}
 
@@ -366,20 +451,21 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
           </div>
         </div>
 
-        {/* Notification Status Banner if not granted */}
-        {notificationPerm === 'default' && isNotificationSupported() && (
-          <div className="p-3 bg-amber-950/30 border border-amber-800/50 rounded-xl flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-amber-300">
-              <Bell className="w-4 h-4 shrink-0 text-amber-400 animate-pulse" />
+        {/* Telegram Prompt Banner if not configured yet */}
+        {(!telegramConfig.isEnabled || !telegramConfig.botToken || !telegramConfig.chatId) && (
+          <div className="p-3 bg-sky-950/30 border border-sky-800/50 rounded-xl flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-sky-300">
+              <Smartphone className="w-4 h-4 shrink-0 text-sky-400" />
               <span>
-                გსურთ მიიღოთ შეტყობინებები დავალების დედლაინის დროს? დააჭირეთ ჩართვას.
+                გსურთ ტასკების დედლაინის შეტყობინებები პირდაპირ <strong>ტელეფონში (Telegram)</strong> მოგდიოდეთ?
               </span>
             </div>
             <button
-              onClick={handleRequestPermission}
-              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-lg text-xs shrink-0"
+              onClick={() => setIsTelegramModalOpen(true)}
+              className="px-3 py-1 bg-sky-500 hover:bg-sky-400 text-zinc-950 font-bold rounded-lg text-xs shrink-0 flex items-center gap-1"
             >
-              ჩართვა
+              <Send className="w-3 h-3" />
+              <span>ჩართვა</span>
             </button>
           </div>
         )}
@@ -623,8 +709,21 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                       {task.title}
                     </h3>
 
-                    {/* Action buttons (Calendar Jump, Edit, Delete) */}
+                    {/* Action buttons (Telegram Push, Calendar Jump, Edit, Delete) */}
                     <div className="flex items-center gap-1 shrink-0 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      {/* Send to Telegram Quick Action */}
+                      {telegramConfig.isEnabled && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleSendSingleTaskToTelegram(task, e)}
+                          disabled={sendingTaskId === task.id}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-sky-300 hover:bg-sky-950/40 transition-colors"
+                          title="გაგზავნე ტელეგრამში ტელეფონზე"
+                        >
+                          <Send className={`w-3.5 h-3.5 ${sendingTaskId === task.id ? 'animate-bounce text-sky-400' : ''}`} />
+                        </button>
+                      )}
+
                       {task.due_date && onNavigateToCalendar && (
                         <button
                           type="button"
@@ -918,6 +1017,144 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 >
                   {editingTask ? 'შენახვა' : 'დამატება'}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. MODAL FOR TELEGRAM BOT CONFIGURATION */}
+      {isTelegramModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 my-8"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400">
+                  <Send className="w-4 h-4" />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-white">Telegram ბოტის ინტეგრაცია</h2>
+                  <p className="text-[11px] text-zinc-400">მიიღეთ დედლაინის შეტყობინებები პირდაპირ ტელეფონზე</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsTelegramModalOpen(false)}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-850 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick 3-step Instructions */}
+            <div className="p-3 bg-zinc-900/60 border border-zinc-850 rounded-xl space-y-2 text-xs text-zinc-300">
+              <div className="font-bold text-sky-300 flex items-center gap-1.5 text-xs">
+                <Info className="w-3.5 h-3.5 text-sky-400" />
+                <span>როგორ შევქმნათ ბოტი 1 წუთში:</span>
+              </div>
+              <ol className="list-decimal list-inside space-y-1 text-[11px] text-zinc-400 leading-relaxed">
+                <li>
+                  Telegram-ში მოძებნეთ <code className="text-sky-300 bg-sky-950/80 px-1 py-0.5 rounded font-mono">@BotFather</code> და გააგზავნეთ <code className="text-zinc-200">/newbot</code>.
+                </li>
+                <li>
+                  დაარქვით სახელი (მაგ. <span className="text-zinc-200">EditorOSTaskBot</span>) და მიიღებთ <strong>API Token</strong>-ს.
+                </li>
+                <li>
+                  გახსენით თქვენი ახალი ბოტი და აუცილებლად დააჭირეთ <strong>START</strong> (<code className="text-zinc-200">/start</code>).
+                </li>
+                <li>
+                  თქვენი <strong>Chat ID</strong>-ის გასაგებად Telegram-ში ჩაწერეთ <code className="text-sky-300 bg-sky-950/80 px-1 py-0.5 rounded font-mono">@userinfobot</code>.
+                </li>
+              </ol>
+            </div>
+
+            <form onSubmit={handleSaveTelegram} className="space-y-3.5">
+              {/* Bot Token */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
+                  Bot Token <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="მაგ: 7123456789:AAHq_7xYz..."
+                  value={tgBotToken}
+                  onChange={(e) => setTgBotToken(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              {/* Chat ID */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
+                  Telegram Chat ID <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="მაგ: 987654321"
+                  value={tgChatId}
+                  onChange={(e) => setTgChatId(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              {/* Enable Switch */}
+              <div className="flex items-center justify-between p-3 bg-zinc-900/40 border border-zinc-850 rounded-xl">
+                <div>
+                  <span className="text-xs font-bold text-zinc-200 block">ტელეგრამ შეტყობინებების ჩართვა</span>
+                  <span className="text-[10px] text-zinc-500">დედლაინის დადგომისას შეტყობინება გამოიგზავნება ტელეფონზე</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={tgEnabled}
+                  onChange={(e) => setTgEnabled(e.target.checked)}
+                  className="w-4 h-4 accent-sky-500 rounded cursor-pointer"
+                />
+              </div>
+
+              {/* Status Message */}
+              {tgTestStatus && (
+                <div
+                  className={`p-2.5 rounded-xl text-xs font-medium ${
+                    tgTestStatus.success
+                      ? 'bg-emerald-950/60 border border-emerald-800/80 text-emerald-300'
+                      : 'bg-rose-950/60 border border-rose-800/80 text-rose-300'
+                  }`}
+                >
+                  {tgTestStatus.message}
+                </div>
+              )}
+
+              {/* Actions: Test Button & Save */}
+              <div className="flex items-center justify-between pt-3 border-t border-zinc-850">
+                <button
+                  type="button"
+                  onClick={handleTestTelegram}
+                  disabled={tgTestStatus?.loading}
+                  className="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-850 text-sky-400 border border-zinc-800 hover:border-sky-500/50 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Send className={`w-3.5 h-3.5 ${tgTestStatus?.loading ? 'animate-spin' : ''}`} />
+                  <span>{tgTestStatus?.loading ? 'იგზავნება...' : '🚀 ტესტი ტელეფონზე'}</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsTelegramModalOpen(false)}
+                    className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    დახურვა
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-sky-950"
+                  >
+                    შენახვა
+                  </button>
+                </div>
               </div>
             </form>
           </div>

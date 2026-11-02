@@ -1,4 +1,5 @@
 import { Task } from '../types';
+import { sendTaskToTelegram } from './telegram';
 
 const NOTIFIED_STORAGE_KEY = 'editor_os_notified_reminders';
 
@@ -79,6 +80,11 @@ export function showTaskNotification(task: Task) {
       console.warn('Native notification failed, in-app notification will handle it:', e);
     }
   }
+
+  // Also send directly to Telegram on mobile if configured
+  sendTaskToTelegram(task).catch((err) => {
+    console.warn('Telegram task notification failed:', err);
+  });
 
   // Dispatch custom in-app event for Toast / Banner
   window.dispatchEvent(
