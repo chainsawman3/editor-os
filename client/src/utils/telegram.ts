@@ -55,7 +55,8 @@ export async function sendTelegramRawMessage(
       body: JSON.stringify({
         chat_id: cleanChatId,
         text,
-        parse_mode: 'HTML'
+        parse_mode: 'HTML',
+        disable_notification: false
       })
     });
 
