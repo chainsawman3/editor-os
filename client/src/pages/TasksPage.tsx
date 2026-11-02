@@ -20,8 +20,10 @@ import {
   ArrowRight,
   Send,
   Smartphone,
-  ExternalLink,
-  Info
+  Info,
+  Zap,
+  Repeat,
+  Flame
 } from 'lucide-react';
 import {
   isNotificationSupported,
@@ -48,7 +50,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
   const [loading, setLoading] = useState<boolean>(true);
 
   // Filters & Search
-  const [activeTab, setActiveTab] = useState<'all' | 'today' | 'upcoming' | 'overdue' | 'completed'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'today' | 'wip' | 'upcoming' | 'overdue' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
@@ -62,9 +64,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
   const [formDueDate, setFormDueDate] = useState('');
   const [formDueTime, setFormDueTime] = useState('18:00');
   const [formPriority, setFormPriority] = useState<TaskPriority>('Medium');
-  const [formReminderType, setFormReminderType] = useState<TaskReminderType>('same_day');
   const [formReminderDate, setFormReminderDate] = useState('');
-  const [formReminderTime, setFormReminderTime] = useState('09:00');
+  const [formReminderTime, setFormReminderTime] = useState('12:00');
+  const [formRepeat5Min, setFormRepeat5Min] = useState<boolean>(false);
+  const [formStage, setFormStage] = useState<'Todo' | 'WIP' | 'Done'>('Todo');
 
   // Notification Permission State
   const [notificationPerm, setNotificationPerm] = useState<NotificationPermission>(getNotificationPermission());
@@ -128,9 +131,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
     setFormDueDate(presetDate || todayStr);
     setFormDueTime('18:00');
     setFormPriority('Medium');
-    setFormReminderType('same_day');
     setFormReminderDate(presetDate || todayStr);
-    setFormReminderTime('09:00');
+    setFormReminderTime('12:00');
+    setFormRepeat5Min(false);
+    setFormStage('Todo');
     setIsModalOpen(true);
   };
 
@@ -141,15 +145,19 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
     setFormDueDate(task.due_date || '');
     setFormDueTime(task.due_time || '18:00');
     setFormPriority(task.priority || 'Medium');
-    setFormReminderType(task.reminder_type || 'same_day');
-    setFormReminderDate(task.reminder_date || task.due_date || '');
-    setFormReminderTime(task.reminder_time || '09:00');
+    setFormReminderDate(task.reminder_date || task.due_date || todayStr);
+    setFormReminderTime(task.reminder_time || '12:00');
+    setFormRepeat5Min(task.reminder_type === 'repeat_5min' || task.reminder_type === 'custom_repeat_5min');
+    setFormStage(task.completed ? 'Done' : (task.stage as any) === 'WIP' ? 'WIP' : 'Todo');
     setIsModalOpen(true);
   };
 
   const handleSaveTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) return;
+
+    const reminderType: TaskReminderType = formRepeat5Min ? 'repeat_5min' : 'custom';
+    const isCompleted = formStage === 'Done';
 
     if (editingTask) {
       const updates: Partial<Task> = {
@@ -158,10 +166,13 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
         due_date: formDueDate || null,
         due_time: formDueTime || null,
         priority: formPriority,
-        reminder_type: formReminderType,
+        reminder_type: reminderType,
         reminder_date: formReminderDate || null,
         reminder_time: formReminderTime || null,
-        project_id: null // strictly standalone
+        stage: formStage,
+        completed: isCompleted,
+        completed_at: isCompleted ? new Date().toISOString() : null,
+        project_id: null
       };
 
       setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? { ...t, ...updates } : t)));
@@ -174,12 +185,12 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
         due_date: formDueDate || null,
         due_time: formDueTime || null,
         priority: formPriority,
-        reminder_type: formReminderType,
+        reminder_type: reminderType,
         reminder_date: formReminderDate || null,
         reminder_time: formReminderTime || null,
-        project_id: null, // strictly standalone
-        completed: false,
-        stage: 'Editing',
+        project_id: null,
+        stage: formStage,
+        completed: isCompleted,
         order_index: 0
       };
 
@@ -194,14 +205,31 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
     if (updatedStatus) {
       playNotificationSound();
     }
+    const newStage = updatedStatus ? 'Done' : 'Todo';
     setTasks((prev) =>
       prev.map((t) =>
         t.id === task.id
-          ? { ...t, completed: updatedStatus, completed_at: updatedStatus ? new Date().toISOString() : null }
+          ? { ...t, completed: updatedStatus, stage: newStage, completed_at: updatedStatus ? new Date().toISOString() : null }
           : t
       )
     );
-    await api.updateTask(task.id, { completed: updatedStatus });
+    await api.updateTask(task.id, { completed: updatedStatus, stage: newStage });
+  };
+
+  // Quick toggle WIP status
+  const handleToggleWIP = async (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStage = task.stage === 'WIP' ? 'Todo' : 'WIP';
+    setTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...t, stage: newStage, completed: false } : t))
+    );
+    // If setting to WIP, clean up repeating interval storage
+    if (newStage === 'WIP') {
+      try {
+        localStorage.removeItem(`editor_os_last_repeat_${task.id}`);
+      } catch {}
+    }
+    await api.updateTask(task.id, { stage: newStage, completed: false });
   };
 
   const handleDeleteTask = async (id: string, e: React.MouseEvent) => {
@@ -212,12 +240,12 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
   };
 
   // Helper for quick date button
-  const setQuickDate = (daysFromToday: number) => {
+  const setQuickDueDate = (daysFromToday: number) => {
     const target = new Date();
     target.setDate(target.getDate() + daysFromToday);
     const dateStr = target.toISOString().split('T')[0];
     setFormDueDate(dateStr);
-    if (formReminderType === 'same_day' || formReminderType === 'custom') {
+    if (!formReminderDate || formReminderDate === formDueDate) {
       setFormReminderDate(dateStr);
     }
   };
@@ -277,11 +305,12 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
   const stats = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter((t) => t.completed).length;
+    const wipCount = tasks.filter((t) => !t.completed && t.stage === 'WIP').length;
     const today = tasks.filter((t) => !t.completed && t.due_date === todayStr).length;
     const overdue = tasks.filter((t) => !t.completed && t.due_date && t.due_date < todayStr).length;
     const upcoming = tasks.filter((t) => !t.completed && t.due_date && t.due_date > todayStr).length;
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, today, overdue, upcoming, percent };
+    return { total, completed, wipCount, today, overdue, upcoming, percent };
   }, [tasks, todayStr]);
 
   // Filtered Tasks
@@ -289,6 +318,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
     return tasks.filter((task) => {
       // Tab filter
       if (activeTab === 'completed' && !task.completed) return false;
+      if (activeTab === 'wip' && (task.completed || task.stage !== 'WIP')) return false;
       if (activeTab === 'today') {
         if (task.completed || task.due_date !== todayStr) return false;
       }
@@ -314,7 +344,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
     });
   }, [tasks, activeTab, priorityFilter, searchQuery, todayStr]);
 
-  // Sort: Overdue first, then by due_date ASC, then priority
+  // Sort: Overdue first, then WIP, then by due_date ASC
   const sortedTasks = useMemo(() => {
     const priorityWeights: Record<string, number> = { High: 3, Medium: 2, Low: 1 };
     return [...filteredTasks].sort((a, b) => {
@@ -326,10 +356,13 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
       const bOverdue = !b.completed && b.due_date && b.due_date < todayStr;
       if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
 
+      // WIP at the top among active
+      if (a.stage === 'WIP' && b.stage !== 'WIP') return -1;
+      if (a.stage !== 'WIP' && b.stage === 'WIP') return 1;
+
       // Due date ASC
       if (a.due_date && b.due_date) {
         if (a.due_date !== b.due_date) return a.due_date.localeCompare(b.due_date);
-        // Time ASC
         const aTime = a.due_time || '23:59';
         const bTime = b.due_time || '23:59';
         if (aTime !== bTime) return aTime.localeCompare(bTime);
@@ -399,7 +432,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
               </h1>
             </div>
             <p className="text-xs text-zinc-400 mt-1">
-              მართე ცალკე დამოუკიდებელი დავალებები დედლაინებითა და კომენტარებით. შეტყობინებები მოდის პირდაპირ თქვენს ტელეფონზე (Telegram) და კალენდარში.
+              მიუთითეთ ზუსტი დღე და საათი შეტყობინებისთვის. 5-წუთიანი განგაშის გამეორება ავტომატურად ჩერდება, როცა ტასკს <strong>WIP</strong>-ზე გადაიყვანთ.
             </p>
           </div>
 
@@ -451,27 +484,8 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
           </div>
         </div>
 
-        {/* Telegram Prompt Banner if not configured yet */}
-        {(!telegramConfig.isEnabled || !telegramConfig.botToken || !telegramConfig.chatId) && (
-          <div className="p-3 bg-sky-950/30 border border-sky-800/50 rounded-xl flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-sky-300">
-              <Smartphone className="w-4 h-4 shrink-0 text-sky-400" />
-              <span>
-                გსურთ ტასკების დედლაინის შეტყობინებები პირდაპირ <strong>ტელეფონში (Telegram)</strong> მოგდიოდეთ?
-              </span>
-            </div>
-            <button
-              onClick={() => setIsTelegramModalOpen(true)}
-              className="px-3 py-1 bg-sky-500 hover:bg-sky-400 text-zinc-950 font-bold rounded-lg text-xs shrink-0 flex items-center gap-1"
-            >
-              <Send className="w-3 h-3" />
-              <span>ჩართვა</span>
-            </button>
-          </div>
-        )}
-
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3 pt-1">
           <div
             onClick={() => setActiveTab('all')}
             className={`p-3 rounded-xl border cursor-pointer transition-all ${
@@ -484,6 +498,23 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
             <div className="flex items-baseline justify-between mt-1">
               <span className="text-xl font-bold font-mono text-zinc-100">{stats.total}</span>
               <span className="text-[10px] text-zinc-500">{stats.percent}% done</span>
+            </div>
+          </div>
+
+          <div
+            onClick={() => setActiveTab('wip')}
+            className={`p-3 rounded-xl border cursor-pointer transition-all ${
+              activeTab === 'wip'
+                ? 'bg-amber-950/60 border-amber-500/80 shadow-sm'
+                : 'bg-zinc-900/40 border-zinc-850 hover:bg-zinc-900/70'
+            }`}
+          >
+            <span className="text-[11px] font-medium text-amber-400 flex items-center gap-1">
+              <Zap className="w-3 h-3 text-amber-400" /> WIP (მუშაობაში)
+            </span>
+            <div className="flex items-baseline justify-between mt-1">
+              <span className="text-xl font-bold font-mono text-amber-200">{stats.wipCount}</span>
+              <span className="text-[10px] text-zinc-500">In Progress</span>
             </div>
           </div>
 
@@ -554,6 +585,17 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
               }`}
             >
               ყველა ({tasks.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('wip')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 ${
+                activeTab === 'wip'
+                  ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
+                  : 'text-amber-400 hover:text-amber-300'
+              }`}
+            >
+              <Zap className="w-3 h-3" />
+              <span>WIP ({stats.wipCount})</span>
             </button>
             <button
               onClick={() => setActiveTab('today')}
@@ -649,6 +691,8 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
               <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
                 {activeTab === 'completed'
                   ? 'დასრულებული ტასკები ჯერ არ არის.'
+                  : activeTab === 'wip'
+                  ? 'WIP-ში მყოფი დავალებები არ არის.'
                   : 'შექმენით ახალი დამოუკიდებელი ტასკი, მიუთითეთ დედლაინი და კომენტარი.'}
               </p>
             </div>
@@ -664,6 +708,8 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
           sortedTasks.map((task) => {
             const deadline = formatDeadlineDisplay(task.due_date, task.due_time);
             const priorityBadge = getPriorityBadge(task.priority);
+            const isWIP = task.stage === 'WIP';
+            const isRepeating = task.reminder_type === 'repeat_5min' || task.reminder_type === 'custom_repeat_5min';
 
             return (
               <div
@@ -672,6 +718,8 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 className={`group p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer flex items-start gap-3 sm:gap-4 select-none ${
                   task.completed
                     ? 'bg-zinc-950/50 border-zinc-850/60 opacity-75 hover:opacity-100'
+                    : isWIP
+                    ? 'bg-amber-950/20 hover:bg-amber-950/30 border-amber-600/60 hover:border-amber-500 ring-1 ring-amber-500/20'
                     : deadline.isOverdue
                     ? 'bg-rose-950/20 hover:bg-rose-950/30 border-rose-900/40 hover:border-rose-700/60'
                     : deadline.isToday
@@ -699,18 +747,45 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 {/* Body Content */}
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <h3
-                      className={`text-xs sm:text-sm font-semibold transition-colors break-words leading-tight ${
-                        task.completed
-                          ? 'line-through text-zinc-500 font-normal'
-                          : 'text-zinc-100 group-hover:text-white'
-                      }`}
-                    >
-                      {task.title}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3
+                        className={`text-xs sm:text-sm font-semibold transition-colors break-words leading-tight ${
+                          task.completed
+                            ? 'line-through text-zinc-500 font-normal'
+                            : 'text-zinc-100 group-hover:text-white'
+                        }`}
+                      >
+                        {task.title}
+                      </h3>
 
-                    {/* Action buttons (Telegram Push, Calendar Jump, Edit, Delete) */}
-                    <div className="flex items-center gap-1 shrink-0 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      {/* WIP Pill Indicator */}
+                      {isWIP && !task.completed && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-zinc-950 shadow-sm animate-pulse">
+                          <Zap className="w-3 h-3 fill-current" />
+                          <span>WIP • მუშაობაში (შეხსენება გათიშულია)</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Action buttons (WIP Toggle, Telegram Push, Calendar Jump, Edit, Delete) */}
+                    <div className="flex items-center gap-1 shrink-0 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      {/* One-click WIP Toggle Button */}
+                      {!task.completed && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleWIP(task, e)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all ${
+                            isWIP
+                              ? 'bg-amber-500/20 border border-amber-500 text-amber-300 hover:bg-amber-500/30'
+                              : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-amber-300 hover:border-amber-500/50 hover:bg-amber-950/20'
+                          }`}
+                          title={isWIP ? 'WIP-ის გაუქმება (შეხსენება აღდგება)' : 'დაიწყე მუშაობა (WIP - აჩერებს შეხსენებებს)'}
+                        >
+                          <Zap className={`w-3 h-3 ${isWIP ? 'text-amber-400 fill-amber-400' : 'text-zinc-400'}`} />
+                          <span>{isWIP ? 'WIP Active' : 'Start WIP'}</span>
+                        </button>
+                      )}
+
                       {/* Send to Telegram Quick Action */}
                       {telegramConfig.isEnabled && (
                         <button
@@ -790,19 +865,23 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                       </span>
                     )}
 
-                    {/* Reminder Badge */}
-                    {task.reminder_type && task.reminder_type !== 'none' && !task.completed && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-purple-950/60 text-purple-300 border border-purple-800/60">
+                    {/* Exact Alert / Reminder Scheduled Time Badge */}
+                    {task.reminder_date && !task.completed && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-purple-950/60 text-purple-300 border border-purple-800/60">
                         <Bell className="w-3 h-3 text-purple-400" />
-                        <span>
-                          {task.reminder_type === 'same_day'
-                            ? 'დედლაინის დღეს'
-                            : task.reminder_type === '1_hour_before'
-                            ? '1 სთ ადრე'
-                            : task.reminder_type === '1_day_before'
-                            ? '1 დღით ადრე'
-                            : `${task.reminder_date || ''} ${task.reminder_time || ''}`}
-                        </span>
+                        <span>შეტყობინება: {task.reminder_date} @ {task.reminder_time || '12:00'}</span>
+                      </span>
+                    )}
+
+                    {/* Repeating Alert Badge */}
+                    {isRepeating && !task.completed && (
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                        isWIP
+                          ? 'bg-zinc-900 text-zinc-400 border-zinc-800 line-through'
+                          : 'bg-amber-950/70 text-amber-300 border-amber-700/80 animate-pulse'
+                      }`}>
+                        <Repeat className="w-3 h-3 text-amber-400" />
+                        <span>{isWIP ? '5-წთ განგაში (შეჩერებულია WIP-ით)' : 'განგაში ყოველ 5 წთ-ში'}</span>
                       </span>
                     )}
 
@@ -811,11 +890,6 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                       className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${priorityBadge.style}`}
                     >
                       {priorityBadge.label}
-                    </span>
-
-                    {/* Standalone Identifier Badge */}
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium text-zinc-500 bg-zinc-900 border border-zinc-800/80">
-                      დამოუკიდებელი
                     </span>
                   </div>
                 </div>
@@ -839,7 +913,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                   <span>{editingTask ? 'ტასკის რედაქტირება' : 'ახალი დამოუკიდებელი ტასკი'}</span>
                 </h2>
                 <p className="text-[11px] text-zinc-400 mt-0.5">
-                  დავალება დედლაინითა და კომენტარით (ავტომატურად აისახება კალენდარში)
+                  დავალება დედლაინით, ზუსტი შეტყობინების დროითა და განგაშით
                 </p>
               </div>
               <button
@@ -859,7 +933,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 <input
                   type="text"
                   required
-                  placeholder="მაგ: კლიენტთან შეხვედრა / ანგარიშის ჩაბარება"
+                  placeholder="მაგ: ვიდეოს ატვირთვა და კლიენტთან გაგზავნა"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
@@ -875,28 +949,28 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                   <div className="flex items-center gap-1 font-normal font-sans">
                     <button
                       type="button"
-                      onClick={() => setQuickDate(0)}
+                      onClick={() => setQuickDueDate(0)}
                       className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300 transition-colors"
                     >
                       დღეს
                     </button>
                     <button
                       type="button"
-                      onClick={() => setQuickDate(1)}
+                      onClick={() => setQuickDueDate(1)}
                       className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300 transition-colors"
                     >
                       ხვალ
                     </button>
                     <button
                       type="button"
-                      onClick={() => setQuickDate(3)}
+                      onClick={() => setQuickDueDate(3)}
                       className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300 transition-colors"
                     >
                       +3 დღე
                     </button>
                     <button
                       type="button"
-                      onClick={() => setQuickDate(7)}
+                      onClick={() => setQuickDueDate(7)}
                       className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300 transition-colors"
                     >
                       +1 კვირა
@@ -905,28 +979,127 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 </label>
 
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="relative">
+                  <input
+                    type="date"
+                    value={formDueDate}
+                    onChange={(e) => {
+                      setFormDueDate(e.target.value);
+                      if (!formReminderDate || formReminderDate === formDueDate) {
+                        setFormReminderDate(e.target.value);
+                      }
+                    }}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                  <input
+                    type="time"
+                    value={formDueTime}
+                    onChange={(e) => setFormDueTime(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Exact Notification Schedule (Date & Time) */}
+              <div className="space-y-2 p-3 bg-zinc-900/60 border border-zinc-800 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-sky-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Bell className="w-3.5 h-3.5" />
+                    <span>როდის მოვიდეს შეტყობინება?</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (formDueDate) setFormReminderDate(formDueDate);
+                      if (formDueTime) setFormReminderTime(formDueTime);
+                    }}
+                    className="text-[10px] text-sky-400 hover:text-sky-300 bg-sky-950/60 border border-sky-800/60 px-2 py-0.5 rounded transition-colors"
+                  >
+                    დედლაინის დროს
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-1">
+                  <div>
+                    <span className="text-[10px] text-zinc-400 block mb-1">თარიღი (დღე):</span>
                     <input
                       type="date"
-                      value={formDueDate}
-                      onChange={(e) => {
-                        setFormDueDate(e.target.value);
-                        if (formReminderType === 'same_day') {
-                          setFormReminderDate(e.target.value);
-                        }
-                      }}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
+                      value={formReminderDate}
+                      onChange={(e) => setFormReminderDate(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 font-mono focus:border-sky-500"
                     />
                   </div>
-
-                  <div className="relative">
+                  <div>
+                    <span className="text-[10px] text-zinc-400 block mb-1">დრო (საათი):</span>
                     <input
                       type="time"
-                      value={formDueTime}
-                      onChange={(e) => setFormDueTime(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
+                      value={formReminderTime}
+                      onChange={(e) => setFormReminderTime(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 font-mono focus:border-sky-500"
                     />
                   </div>
+                </div>
+
+                {/* 5-minute Repeating Alert Checkbox */}
+                <div className="pt-2 border-t border-zinc-850/80 mt-2">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={formRepeat5Min}
+                      onChange={(e) => setFormRepeat5Min(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-amber-300 block">
+                        🔁 განმეორდეს ყოველ 5 წუთში (შეჩერდება, როცა WIP-ს მიუთითებთ)
+                      </span>
+                      <span className="text-[10px] text-zinc-400 block mt-0.5 leading-relaxed">
+                        დედლაინის/შეტყობინების დადგომისას ბოტი ყოველ 5 წუთში მოგწერთ შეხსენებას, სანამ საიტზე არ დააჭერთ <strong>WIP</strong>-ს ან არ დაასრულებთ.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Status / Stage Selection */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
+                  სტატუსი / Status
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormStage('Todo')}
+                    className={`py-2 px-2 rounded-xl text-xs font-semibold border transition-all text-center ${
+                      formStage === 'Todo'
+                        ? 'bg-zinc-800 border-zinc-600 text-white shadow-sm'
+                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    ⏳ Todo (დასაწყები)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormStage('WIP')}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all text-center flex items-center justify-center gap-1 ${
+                      formStage === 'WIP'
+                        ? 'bg-amber-500 text-zinc-950 border-amber-400 shadow-sm shadow-amber-950'
+                        : 'bg-zinc-900 border-zinc-800 text-amber-400 hover:bg-amber-950/30'
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>WIP (დაწყებულია)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormStage('Done')}
+                    className={`py-2 px-2 rounded-xl text-xs font-semibold border transition-all text-center ${
+                      formStage === 'Done'
+                        ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
+                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-emerald-400'
+                    }`}
+                  >
+                    ✅ Done (შესრულდა)
+                  </button>
                 </div>
               </div>
 
@@ -944,63 +1117,21 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 />
               </div>
 
-              {/* Priority & Reminder Settings */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
-                    პრიორიტეტი / Priority
-                  </label>
-                  <select
-                    value={formPriority}
-                    onChange={(e) => setFormPriority(e.target.value as TaskPriority)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="High">🔴 მაღალი (High)</option>
-                    <option value="Medium">🟡 საშუალო (Medium)</option>
-                    <option value="Low">🟢 დაბალი (Low)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
-                    შეტყობინება / Alert
-                  </label>
-                  <select
-                    value={formReminderType}
-                    onChange={(e) => setFormReminderType(e.target.value as TaskReminderType)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="same_day">🔔 იმავე დღეს (Same Day)</option>
-                    <option value="1_hour_before">⏰ 1 საათით ადრე</option>
-                    <option value="1_day_before">📅 1 დღით ადრე</option>
-                    <option value="custom">⚙️ მითითებულ დროს</option>
-                    <option value="none">🚫 შეტყობინების გარეშე</option>
-                  </select>
-                </div>
+              {/* Priority */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
+                  პრიორიტეტი / Priority
+                </label>
+                <select
+                  value={formPriority}
+                  onChange={(e) => setFormPriority(e.target.value as TaskPriority)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
+                >
+                  <option value="High">🔴 მაღალი (High)</option>
+                  <option value="Medium">🟡 საშუალო (Medium)</option>
+                  <option value="Low">🟢 დაბალი (Low)</option>
+                </select>
               </div>
-
-              {/* Custom Reminder Date/Time if selected */}
-              {formReminderType === 'custom' && (
-                <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-xl space-y-2">
-                  <span className="text-[11px] font-bold text-purple-400 block">
-                    ზუსტი შეხსენების დრო / Custom Reminder:
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="date"
-                      value={formReminderDate}
-                      onChange={(e) => setFormReminderDate(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 font-mono"
-                    />
-                    <input
-                      type="time"
-                      value={formReminderTime}
-                      onChange={(e) => setFormReminderTime(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 font-mono"
-                    />
-                  </div>
-                </div>
-              )}
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-850">
@@ -1059,7 +1190,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                   Telegram-ში მოძებნეთ <code className="text-sky-300 bg-sky-950/80 px-1 py-0.5 rounded font-mono">@BotFather</code> და გააგზავნეთ <code className="text-zinc-200">/newbot</code>.
                 </li>
                 <li>
-                  დაარქვით სახელი (მაგ. <span className="text-zinc-200">EditorOSTaskBot</span>) და მიიღებთ <strong>API Token</strong>-ს.
+                  დაარქვით სახელი და მიიღებთ <strong>API Token</strong>-ს (მაგ: <code className="text-zinc-200">123456789:AAG...</code> მთლიანად).
                 </li>
                 <li>
                   გახსენით თქვენი ახალი ბოტი და აუცილებლად დააჭირეთ <strong>START</strong> (<code className="text-zinc-200">/start</code>).
@@ -1079,7 +1210,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 <input
                   type="text"
                   required
-                  placeholder="მაგ: 7123456789:AAHq_7xYz..."
+                  placeholder="მაგ: 8635727434:AAGy5e6NzY..."
                   value={tgBotToken}
                   onChange={(e) => setTgBotToken(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-sky-500"
@@ -1094,7 +1225,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 <input
                   type="text"
                   required
-                  placeholder="მაგ: 987654321"
+                  placeholder="მაგ: 8635727434"
                   value={tgChatId}
                   onChange={(e) => setTgChatId(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-sky-500"

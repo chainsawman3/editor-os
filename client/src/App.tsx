@@ -50,7 +50,7 @@ export function App() {
     };
 
     runCheck();
-    const interval = setInterval(runCheck, 60000);
+    const interval = setInterval(runCheck, 20000);
     return () => clearInterval(interval);
   }, []);
 

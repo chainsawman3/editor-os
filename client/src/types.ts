@@ -70,7 +70,14 @@ export interface Project {
 }
 
 export type TaskPriority = 'Low' | 'Medium' | 'High';
-export type TaskReminderType = 'same_day' | '1_hour_before' | '1_day_before' | 'custom' | 'none';
+export type TaskReminderType =
+  | 'same_day'
+  | '1_hour_before'
+  | '1_day_before'
+  | 'custom'
+  | 'repeat_5min'
+  | 'custom_repeat_5min'
+  | 'none';
 
 export interface Task {
   id: string;

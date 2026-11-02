@@ -23,7 +23,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   }
 }
 
-// Gentle pleasant audio chime using browser Web Audio API (no external mp3 files needed)
+// Gentle pleasant audio chime using browser Web Audio API
 export function playNotificationSound() {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -51,23 +51,27 @@ export function playNotificationSound() {
   }
 }
 
-export function showTaskNotification(task: Task) {
+export function showTaskNotification(task: Task, customNote?: string) {
   playNotificationSound();
 
   const dueDetails = [
-    task.due_date ? `Due: ${task.due_date}` : '',
+    task.due_date ? `Deadline: ${task.due_date}` : '',
     task.due_time ? `@ ${task.due_time}` : '',
     task.priority ? `[Priority: ${task.priority}]` : ''
   ].filter(Boolean).join(' ');
 
-  const body = task.description ? `${dueDetails}\n${task.description}` : (dueDetails || 'Task deadline reminder');
+  const body = [
+    dueDetails,
+    task.description ? `\nკომენტარი: ${task.description}` : '',
+    customNote ? `\n${customNote}` : ''
+  ].filter(Boolean).join('\n');
 
   if (isNotificationSupported() && Notification.permission === 'granted') {
     try {
-      const n = new Notification(`⏰ Task Reminder: ${task.title}`, {
+      const n = new Notification(`⏰ ${task.title}`, {
         body,
         icon: '/favicon.ico',
-        tag: `task_reminder_${task.id}`,
+        tag: `task_reminder_${task.id}_${Date.now()}`,
         requireInteraction: true
       });
 
@@ -77,19 +81,19 @@ export function showTaskNotification(task: Task) {
         n.close();
       };
     } catch (e) {
-      console.warn('Native notification failed, in-app notification will handle it:', e);
+      console.warn('Native notification failed:', e);
     }
   }
 
-  // Also send directly to Telegram on mobile if configured
-  sendTaskToTelegram(task).catch((err) => {
+  // Also send directly to Telegram on phone
+  sendTaskToTelegram(task, customNote).catch((err) => {
     console.warn('Telegram task notification failed:', err);
   });
 
-  // Dispatch custom in-app event for Toast / Banner
+  // Dispatch in-app event for Toast / Banner
   window.dispatchEvent(
     new CustomEvent('editor_os_task_reminder_toast', {
-      detail: { task, message: `⏰ Reminder: ${task.title}` }
+      detail: { task, message: customNote || `⏰ შეხსენება: ${task.title}` }
     })
   );
 }
@@ -113,46 +117,45 @@ function saveNotifiedSet(set: Set<string>) {
 }
 
 export function calculateReminderDate(task: Task): Date | null {
-  if (!task.due_date) return null;
+  const reminderType = task.reminder_type || 'custom';
+  if (reminderType === 'none') return null;
 
-  // Extract base date
+  // 1. Explicit reminder_date and reminder_time (User's custom alert schedule)
+  if (task.reminder_date && task.reminder_date.trim()) {
+    const [cy, cm, cd] = task.reminder_date.split('-').map((v) => parseInt(v, 10));
+    if (cy && cm && cd) {
+      let ch = 9;
+      let cmin = 0;
+      if (task.reminder_time && task.reminder_time.includes(':')) {
+        const [rh, rm] = task.reminder_time.split(':').map((v) => parseInt(v, 10));
+        if (!isNaN(rh)) ch = rh;
+        if (!isNaN(rm)) cmin = rm;
+      }
+      return new Date(cy, cm - 1, cd, ch, cmin, 0, 0);
+    }
+  }
+
+  // 2. Fallback to due_date if no explicit reminder_date
+  if (!task.due_date) return null;
   const [y, m, d] = task.due_date.split('-').map((v) => parseInt(v, 10));
   if (!y || !m || !d) return null;
 
-  let hours = 9;
+  let hours = 18;
   let minutes = 0;
   if (task.due_time && task.due_time.includes(':')) {
     const [hh, mm] = task.due_time.split(':').map((v) => parseInt(v, 10));
     if (!isNaN(hh)) hours = hh;
     if (!isNaN(mm)) minutes = mm;
   }
-
   const dueDate = new Date(y, m - 1, d, hours, minutes, 0, 0);
-
-  const reminderType = task.reminder_type || 'same_day';
-  if (reminderType === 'none') return null;
 
   if (reminderType === '1_hour_before') {
     return new Date(dueDate.getTime() - 60 * 60 * 1000);
   }
-
   if (reminderType === '1_day_before') {
     return new Date(dueDate.getTime() - 24 * 60 * 60 * 1000);
   }
 
-  if (reminderType === 'custom' && task.reminder_date) {
-    const [cy, cm, cd] = task.reminder_date.split('-').map((v) => parseInt(v, 10));
-    let ch = hours;
-    let cmin = minutes;
-    if (task.reminder_time && task.reminder_time.includes(':')) {
-      const [rh, rm] = task.reminder_time.split(':').map((v) => parseInt(v, 10));
-      if (!isNaN(rh)) ch = rh;
-      if (!isNaN(rm)) cmin = rm;
-    }
-    return new Date(cy, cm - 1, cd, ch, cmin, 0, 0);
-  }
-
-  // same_day default
   return dueDate;
 }
 
@@ -165,25 +168,60 @@ export function checkTaskReminders(tasks: Task[]) {
   let updated = false;
 
   for (const task of tasks) {
-    if (task.completed) continue;
-    if (!task.due_date) continue;
+    // 1. If completed or in WIP, remove repeating tracker and STOP reminders completely!
+    if (task.completed || task.stage === 'WIP') {
+      try {
+        localStorage.removeItem(`editor_os_last_repeat_${task.id}`);
+      } catch {}
+      continue;
+    }
+
     if (task.reminder_type === 'none') continue;
 
     const reminderDate = calculateReminderDate(task);
     if (!reminderDate) continue;
 
     const remMs = reminderDate.getTime();
-    const reminderKey = `${task.id}_${task.due_date}_${task.due_time || '00:00'}_${task.reminder_type || 'same_day'}`;
+    const isRepeating =
+      task.reminder_type === 'repeat_5min' ||
+      task.reminder_type === 'custom_repeat_5min' ||
+      (typeof (task as any).repeat_every_5min === 'boolean' && (task as any).repeat_every_5min);
 
-    if (notified.has(reminderKey)) continue;
+    if (isRepeating) {
+      // 5-minute repeating reminder until marked as WIP or completed
+      if (nowMs >= remMs) {
+        const lastRepeatKey = `editor_os_last_repeat_${task.id}`;
+        let lastRepeatMs = 0;
+        try {
+          const val = localStorage.getItem(lastRepeatKey);
+          if (val) lastRepeatMs = parseInt(val, 10);
+        } catch {}
 
-    // Check if the reminder time has arrived:
-    // We allow triggering if current time is within 2 hours after reminder time (to prevent stale alerts from days ago)
-    const twoHoursMs = 2 * 60 * 60 * 1000;
-    if (nowMs >= remMs && nowMs - remMs <= twoHoursMs) {
-      showTaskNotification(task);
-      notified.add(reminderKey);
-      updated = true;
+        const fiveMinutesMs = 5 * 60 * 1000;
+        if (!lastRepeatMs || nowMs - lastRepeatMs >= fiveMinutesMs) {
+          const isFirstTime = !lastRepeatMs;
+          showTaskNotification(
+            task,
+            isFirstTime
+              ? '🚨 შეხსენება (მეორდება ყოველ 5 წუთში, სანამ WIP-ს არ მიუთითებთ)'
+              : '🚨 განმეორებითი შეხსენება (5 წთ) • შეაჩერეთ საიტზე "WIP"-ზე დაჭერით!'
+          );
+          try {
+            localStorage.setItem(lastRepeatKey, String(nowMs));
+          } catch {}
+        }
+      }
+    } else {
+      // Standard one-time reminder
+      const reminderKey = `${task.id}_${task.reminder_date || task.due_date}_${task.reminder_time || task.due_time || '00:00'}_${task.reminder_type || 'custom'}`;
+      if (notified.has(reminderKey)) continue;
+
+      const twoHoursMs = 2 * 60 * 60 * 1000;
+      if (nowMs >= remMs && nowMs - remMs <= twoHoursMs) {
+        showTaskNotification(task);
+        notified.add(reminderKey);
+        updated = true;
+      }
     }
   }
 
