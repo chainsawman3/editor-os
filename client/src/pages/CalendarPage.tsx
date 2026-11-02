@@ -823,6 +823,12 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             <span className={`text-xs block truncate ${t.completed ? 'line-through text-emerald-400/70 font-normal' : 'text-zinc-200 font-medium'}`}>
                               {t.title}
                             </span>
+                            {t.description && (
+                              <p className="text-[11px] text-zinc-400 mt-1 whitespace-pre-line bg-zinc-950/70 p-1.5 rounded-lg border border-zinc-850/80 leading-relaxed">
+                                <span className="text-zinc-500 font-semibold text-[10px] mr-1">კომენტარი:</span>
+                                {t.description}
+                              </p>
+                            )}
                             {(t.due_time || t.priority) && (
                               <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-mono mt-0.5">
                                 {t.due_time && <span>@ {t.due_time}</span>}

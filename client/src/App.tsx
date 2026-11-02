@@ -259,6 +259,15 @@ export function App() {
             onOpenProject={handleOpenProject}
           />
         );
+      case 'tasks':
+        return (
+          <TasksPage
+            onOpenProject={handleOpenProject}
+            onNavigateToCalendar={(dateStr) => {
+              setCurrentTab('calendar');
+            }}
+          />
+        );
       case 'deadlines':
         return <DeadlinesPage onOpenProject={handleOpenProject} />;
       case 'calendar':

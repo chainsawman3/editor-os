@@ -1,28 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../api';
-import { Task, Project, TaskPriority, TaskReminderType } from '../types';
+import { Task, TaskPriority, TaskReminderType } from '../types';
 import {
   CheckCircle2,
-  Circle,
   Plus,
   Calendar,
   Clock,
   Bell,
-  BellOff,
   AlertTriangle,
   Search,
-  Filter,
   Trash2,
   Edit2,
-  ArrowRight,
-  Flame,
   Check,
   X,
-  Sparkles,
   CalendarDays,
-  Tag,
-  Folder,
-  Volume2
+  Volume2,
+  MessageSquare,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import {
   isNotificationSupported,
@@ -37,16 +32,14 @@ interface TasksPageProps {
   onNavigateToCalendar?: (dateStr: string) => void;
 }
 
-export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateToCalendar }) => {
+export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Filters & Search
   const [activeTab, setActiveTab] = useState<'all' | 'today' | 'upcoming' | 'overdue' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [projectFilter, setProjectFilter] = useState<string>('all');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -61,7 +54,6 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
   const [formReminderType, setFormReminderType] = useState<TaskReminderType>('same_day');
   const [formReminderDate, setFormReminderDate] = useState('');
   const [formReminderTime, setFormReminderTime] = useState('09:00');
-  const [formProjectId, setFormProjectId] = useState<string>('');
 
   // Notification Permission State
   const [notificationPerm, setNotificationPerm] = useState<NotificationPermission>(getNotificationPermission());
@@ -71,11 +63,12 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
   const loadData = async () => {
     try {
       setLoading(true);
-      const [t, p] = await Promise.all([api.getTasks(), api.getProjects()]);
-      setTasks(t || []);
-      setProjects(p || []);
+      const allTasks = await api.getTasks();
+      // Filter strictly for independent / standalone tasks (tasks not attached to projects)
+      const standalone = (allTasks || []).filter((t) => !t.project_id || t.project_id.trim() === '');
+      setTasks(standalone);
     } catch (err) {
-      console.error('Failed to load tasks:', err);
+      console.error('Failed to load standalone tasks:', err);
     } finally {
       setLoading(false);
     }
@@ -98,7 +91,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
     showTaskNotification({
       id: 'test_notification',
       title: 'ტესტური შეტყობინება / Test Alert',
-      description: 'შეტყობინებების სისტემა წარმატებით ჩაირთო! შეხსენებები იმუშავებს დედლაინის დროს.',
+      description: 'შეტყობინებების სისტემა წარმატებით ჩაირთო! დედლაინის შეხსენებები აქტიურია.',
       due_date: todayStr,
       due_time: '18:00',
       priority: 'High',
@@ -118,7 +111,6 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
     setFormReminderType('same_day');
     setFormReminderDate(presetDate || todayStr);
     setFormReminderTime('09:00');
-    setFormProjectId('');
     setIsModalOpen(true);
   };
 
@@ -132,7 +124,6 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
     setFormReminderType(task.reminder_type || 'same_day');
     setFormReminderDate(task.reminder_date || task.due_date || '');
     setFormReminderTime(task.reminder_time || '09:00');
-    setFormProjectId(task.project_id || '');
     setIsModalOpen(true);
   };
 
@@ -150,7 +141,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
         reminder_type: formReminderType,
         reminder_date: formReminderDate || null,
         reminder_time: formReminderTime || null,
-        project_id: formProjectId || null
+        project_id: null // strictly standalone
       };
 
       setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? { ...t, ...updates } : t)));
@@ -166,7 +157,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
         reminder_type: formReminderType,
         reminder_date: formReminderDate || null,
         reminder_time: formReminderTime || null,
-        project_id: formProjectId || null,
+        project_id: null, // strictly standalone
         completed: false,
         stage: 'Editing',
         order_index: 0
@@ -240,10 +231,6 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
       // Priority filter
       if (priorityFilter !== 'all' && (task.priority || 'Medium') !== priorityFilter) return false;
 
-      // Project filter
-      if (projectFilter === 'standalone' && task.project_id) return false;
-      if (projectFilter !== 'all' && projectFilter !== 'standalone' && task.project_id !== projectFilter) return false;
-
       // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -254,7 +241,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
 
       return true;
     });
-  }, [tasks, activeTab, priorityFilter, projectFilter, searchQuery, todayStr]);
+  }, [tasks, activeTab, priorityFilter, searchQuery, todayStr]);
 
   // Sort: Overdue first, then by due_date ASC, then priority
   const sortedTasks = useMemo(() => {
@@ -319,7 +306,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
     try {
       const parts = dueDate.split('-');
       const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-      const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const formatted = d.toLocaleDateString('ka-GE', { month: 'short', day: 'numeric' });
       return { label: `${formatted}${timeStr}`, isOverdue, isToday: false };
     } catch {
       return { label: `${dueDate}${timeStr}`, isOverdue, isToday: false };
@@ -337,11 +324,11 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                 <CheckCircle2 className="w-5 h-5" />
               </span>
               <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                Tasks & To-Dos
+                დამოუკიდებელი ტასკები / Standalone Tasks
               </h1>
             </div>
             <p className="text-xs text-zinc-400 mt-1">
-              მართე დამოუკიდებელი დავალებები, მიუთითე დედლაინები და მიიღე შეტყობინებები ზუსტ დროს.
+              მართე ცალკე დამოუკიდებელი დავალებები დედლაინებითა და კომენტარებით. ყველა დავალება ავტომატურად აისახება კალენდარში.
             </p>
           </div>
 
@@ -374,7 +361,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
               className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all flex items-center gap-1.5 shadow-sm shadow-blue-900/30 active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>New Task</span>
+              <span>ახალი ტასკი</span>
             </button>
           </div>
         </div>
@@ -407,7 +394,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                 : 'bg-zinc-900/40 border-zinc-850 hover:bg-zinc-900/70'
             }`}
           >
-            <span className="text-[11px] font-medium text-zinc-400 block">Total Tasks</span>
+            <span className="text-[11px] font-medium text-zinc-400 block">სულ ტასკები</span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="text-xl font-bold font-mono text-zinc-100">{stats.total}</span>
               <span className="text-[10px] text-zinc-500">{stats.percent}% done</span>
@@ -423,7 +410,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
             }`}
           >
             <span className="text-[11px] font-medium text-blue-400 flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Due Today
+              <Clock className="w-3 h-3" /> დღეს შესასრულებელი
             </span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="text-xl font-bold font-mono text-blue-200">{stats.today}</span>
@@ -440,7 +427,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
             }`}
           >
             <span className="text-[11px] font-medium text-rose-400 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" /> Overdue
+              <AlertTriangle className="w-3 h-3" /> ვადაგადაცილებული
             </span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="text-xl font-bold font-mono text-rose-300">{stats.overdue}</span>
@@ -457,7 +444,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
             }`}
           >
             <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1">
-              <Check className="w-3 h-3" /> Completed
+              <Check className="w-3 h-3" /> შესრულებული
             </span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="text-xl font-bold font-mono text-emerald-300">{stats.completed}</span>
@@ -480,7 +467,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              All ({tasks.length})
+              ყველა ({tasks.length})
             </button>
             <button
               onClick={() => setActiveTab('today')}
@@ -490,7 +477,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                   : 'text-zinc-400 hover:text-blue-300'
               }`}
             >
-              Today ({stats.today})
+              დღეს ({stats.today})
             </button>
             <button
               onClick={() => setActiveTab('upcoming')}
@@ -500,7 +487,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                   : 'text-zinc-400 hover:text-purple-300'
               }`}
             >
-              Upcoming ({stats.upcoming})
+              მომავალი ({stats.upcoming})
             </button>
             <button
               onClick={() => setActiveTab('overdue')}
@@ -510,7 +497,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                   : 'text-zinc-400 hover:text-rose-300'
               }`}
             >
-              Overdue ({stats.overdue})
+              ვადაგადაცილებული ({stats.overdue})
             </button>
             <button
               onClick={() => setActiveTab('completed')}
@@ -520,17 +507,17 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                   : 'text-zinc-400 hover:text-emerald-300'
               }`}
             >
-              Done ({stats.completed})
+              შესრულებული ({stats.completed})
             </button>
           </div>
 
-          {/* Search & Dropdown Filters */}
+          {/* Search & Priority Filter */}
           <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-48">
+            <div className="relative flex-1 sm:w-56">
               <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search tasks..."
+                placeholder="ძიება სათაურით ან კომენტარით..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-8 pr-7 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-blue-500/60"
@@ -550,10 +537,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
               onChange={(e) => setPriorityFilter(e.target.value)}
               className="bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700"
             >
-              <option value="all">All Priorities</option>
-              <option value="High">🔴 High Priority</option>
-              <option value="Medium">🟡 Medium Priority</option>
-              <option value="Low">🟢 Low Priority</option>
+              <option value="all">ყველა პრიორიტეტი</option>
+              <option value="High">🔴 მაღალი (High)</option>
+              <option value="Medium">🟡 საშუალო (Medium)</option>
+              <option value="Low">🟢 დაბალი (Low)</option>
             </select>
           </div>
         </div>
@@ -572,11 +559,11 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-zinc-200">დავალებები არ მოიძებნა</h3>
+              <h3 className="text-sm font-bold text-zinc-200">დამოუკიდებელი ტასკები არ მოიძებნა</h3>
               <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
                 {activeTab === 'completed'
-                  ? 'დასრულებული დავალებები ჯერ არ არის.'
-                  : 'შექმენით ახალი დამოუკიდებელი დავალება და მიუთითეთ დედლაინი.'}
+                  ? 'დასრულებული ტასკები ჯერ არ არის.'
+                  : 'შექმენით ახალი დამოუკიდებელი ტასკი, მიუთითეთ დედლაინი და კომენტარი.'}
               </p>
             </div>
             <button
@@ -584,14 +571,13 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl inline-flex items-center gap-1.5 shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              <span>დაამატე დავალება</span>
+              <span>დაამატე ახალი ტასკი</span>
             </button>
           </div>
         ) : (
           sortedTasks.map((task) => {
             const deadline = formatDeadlineDisplay(task.due_date, task.due_time);
             const priorityBadge = getPriorityBadge(task.priority);
-            const linkedProject = projects.find((p) => p.id === task.project_id);
 
             return (
               <div
@@ -599,7 +585,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                 onClick={() => handleToggleTask(task)}
                 className={`group p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer flex items-start gap-3 sm:gap-4 select-none ${
                   task.completed
-                    ? 'bg-zinc-950/50 border-zinc-850/60 opacity-70 hover:opacity-100'
+                    ? 'bg-zinc-950/50 border-zinc-850/60 opacity-75 hover:opacity-100'
                     : deadline.isOverdue
                     ? 'bg-rose-950/20 hover:bg-rose-950/30 border-rose-900/40 hover:border-rose-700/60'
                     : deadline.isToday
@@ -607,7 +593,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                     : 'bg-zinc-950 hover:bg-zinc-900/80 border-zinc-850 hover:border-zinc-750'
                 }`}
               >
-                {/* Custom Checkbox */}
+                {/* Custom Checkbox (Turns emerald green when completed) */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -619,15 +605,16 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                       ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm shadow-emerald-950'
                       : 'border-zinc-700 hover:border-emerald-500 bg-zinc-900 text-transparent hover:text-emerald-400'
                   }`}
+                  title={task.completed ? 'მონიშნე შეუსრულებლად' : 'მონიშნე შესრულებულად'}
                 >
                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
 
                 {/* Body Content */}
-                <div className="flex-1 min-w-0 space-y-1.5">
+                <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <h3
-                      className={`text-xs sm:text-sm font-semibold transition-colors break-words ${
+                      className={`text-xs sm:text-sm font-semibold transition-colors break-words leading-tight ${
                         task.completed
                           ? 'line-through text-zinc-500 font-normal'
                           : 'text-zinc-100 group-hover:text-white'
@@ -636,7 +623,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                       {task.title}
                     </h3>
 
-                    {/* Action buttons (Edit, Delete, Calendar Jump) */}
+                    {/* Action buttons (Calendar Jump, Edit, Delete) */}
                     <div className="flex items-center gap-1 shrink-0 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       {task.due_date && onNavigateToCalendar && (
                         <button
@@ -673,20 +660,25 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                     </div>
                   </div>
 
+                  {/* Comment / Notes Block */}
                   {task.description && (
-                    <p className="text-[11px] text-zinc-400 leading-relaxed font-normal whitespace-pre-line line-clamp-2">
-                      {task.description}
-                    </p>
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-[11px] text-zinc-300 leading-relaxed font-normal whitespace-pre-line flex items-start gap-2">
+                      <span className="text-[10px] uppercase font-bold text-zinc-500 shrink-0 pt-0.5 flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3 text-zinc-400" />
+                        კომენტარი:
+                      </span>
+                      <span className="flex-1 text-zinc-300 font-sans">{task.description}</span>
+                    </div>
                   )}
 
-                  {/* Metadata Tags */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {/* Metadata Badges */}
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
                     {/* Deadline Badge */}
                     {task.due_date && (
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${
                           task.completed
-                            ? 'bg-zinc-900 text-zinc-500 border-zinc-800'
+                            ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/60'
                             : deadline.isOverdue
                             ? 'bg-rose-950/80 text-rose-300 border-rose-800/80'
                             : deadline.isToday
@@ -705,11 +697,11 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                         <Bell className="w-3 h-3 text-purple-400" />
                         <span>
                           {task.reminder_type === 'same_day'
-                            ? 'On deadline'
+                            ? 'დედლაინის დღეს'
                             : task.reminder_type === '1_hour_before'
-                            ? '1h before'
+                            ? '1 სთ ადრე'
                             : task.reminder_type === '1_day_before'
-                            ? '1d before'
+                            ? '1 დღით ადრე'
                             : `${task.reminder_date || ''} ${task.reminder_time || ''}`}
                         </span>
                       </span>
@@ -722,22 +714,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                       {priorityBadge.label}
                     </span>
 
-                    {/* Linked Project or Standalone */}
-                    {linkedProject ? (
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenProject && onOpenProject(linkedProject.id);
-                        }}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 hover:border-zinc-700 transition-colors"
-                        title="გადადი პროექტზე"
-                      >
-                        <Folder className="w-3 h-3 text-blue-400" />
-                        <span className="truncate max-w-[120px]">{linkedProject.name}</span>
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-zinc-500 font-mono">Independent</span>
-                    )}
+                    {/* Standalone Identifier Badge */}
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium text-zinc-500 bg-zinc-900 border border-zinc-800/80">
+                      დამოუკიდებელი
+                    </span>
                   </div>
                 </div>
               </div>
@@ -754,10 +734,15 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
             className="w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 my-8"
           >
             <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-blue-400" />
-                <span>{editingTask ? 'დავალების რედაქტირება' : 'ახალი დავალების დამატება'}</span>
-              </h2>
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-blue-400" />
+                  <span>{editingTask ? 'ტასკის რედაქტირება' : 'ახალი დამოუკიდებელი ტასკი'}</span>
+                </h2>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  დავალება დედლაინითა და კომენტარით (ავტომატურად აისახება კალენდარში)
+                </p>
+              </div>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-850 transition-colors"
@@ -775,7 +760,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                 <input
                   type="text"
                   required
-                  placeholder="მაგ: ვიდეოს ხმის გაწმენდა & მასტერინგი"
+                  placeholder="მაგ: კლიენტთან შეხვედრა / ანგარიშის ჩაბარება"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
@@ -783,46 +768,39 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                 />
               </div>
 
-              {/* Description */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
-                  დეტალები / Description
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="დამატებითი შენიშვნები ან ნაბიჯები..."
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
               {/* Deadline Date & Time */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider flex items-center justify-between">
-                  <span>დედლაინი / Deadline</span>
+                  <span>შესრულების დედლაინი / Deadline</span>
                   {/* Quick Preset Buttons */}
                   <div className="flex items-center gap-1 font-normal font-sans">
                     <button
                       type="button"
                       onClick={() => setQuickDate(0)}
-                      className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300"
+                      className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300 transition-colors"
                     >
                       დღეს
                     </button>
                     <button
                       type="button"
                       onClick={() => setQuickDate(1)}
-                      className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300"
+                      className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300 transition-colors"
                     >
                       ხვალ
                     </button>
                     <button
                       type="button"
                       onClick={() => setQuickDate(3)}
-                      className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300"
+                      className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300 transition-colors"
                     >
                       +3 დღე
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuickDate(7)}
+                      className="px-2 py-0.5 rounded bg-zinc-850 hover:bg-zinc-800 text-[10px] text-zinc-300 transition-colors"
+                    >
+                      +1 კვირა
                     </button>
                   </div>
                 </label>
@@ -851,6 +829,20 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Comment / Description */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
+                  კომენტარი / Comment (დეტალები, შენიშვნები)
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="დაწერეთ კომენტარი, დეტალები ან შენიშვნები..."
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 leading-relaxed"
+                />
               </div>
 
               {/* Priority & Reminder Settings */}
@@ -892,7 +884,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
               {formReminderType === 'custom' && (
                 <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-xl space-y-2">
                   <span className="text-[11px] font-bold text-purple-400 block">
-                    ზუსტი შეხსენების დრო / Custom Reminder Date & Time:
+                    ზუსტი შეხსენების დრო / Custom Reminder:
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -910,25 +902,6 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onOpenProject, onNavigateT
                   </div>
                 </div>
               )}
-
-              {/* Optional Project Association */}
-              <div className="space-y-1.5 pt-1">
-                <label className="text-xs font-bold uppercase text-zinc-400 tracking-wider">
-                  პროექტი (სურვილისამებრ)
-                </label>
-                <select
-                  value={formProjectId}
-                  onChange={(e) => setFormProjectId(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">დამოუკიდებელი დავალება (No Project)</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      🎬 {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-850">
