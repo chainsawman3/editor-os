@@ -1,4 +1,5 @@
 import { Task } from '../types';
+import { queryTurso } from '../tursoDb';
 
 export interface TelegramConfig {
   botToken: string;
@@ -30,6 +31,48 @@ export function saveTelegramConfig(config: TelegramConfig) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
   } catch (err) {
     console.error('Failed to save Telegram config to localStorage:', err);
+  }
+}
+
+// 24/7 Cloud Sync: Syncs configuration with Turso Cloud so server workers can send alerts even when site is closed!
+export async function syncTelegramConfigFromCloud(): Promise<TelegramConfig> {
+  try {
+    const rows = await queryTurso('SELECT * FROM telegram_config WHERE id = ? LIMIT 1;', ['default']);
+    if (rows && rows.length > 0) {
+      const row: any = rows[0];
+      const cloudCfg: TelegramConfig = {
+        botToken: row.bot_token || '',
+        chatId: row.chat_id || '',
+        isEnabled: Number(row.is_enabled) === 1
+      };
+      if (cloudCfg.botToken && cloudCfg.chatId) {
+        saveTelegramConfig(cloudCfg);
+        return cloudCfg;
+      }
+    }
+
+    // If cloud is empty but local has config, push local to cloud!
+    const local = getTelegramConfig();
+    if (local.botToken && local.chatId) {
+      await saveTelegramConfigToCloud(local);
+    }
+    return local;
+  } catch (err) {
+    console.warn('Cloud telegram config sync fallback to local:', err);
+    return getTelegramConfig();
+  }
+}
+
+export async function saveTelegramConfigToCloud(config: TelegramConfig): Promise<void> {
+  saveTelegramConfig(config);
+  try {
+    await queryTurso(
+      `INSERT OR REPLACE INTO telegram_config (id, bot_token, chat_id, is_enabled, updated_at)
+       VALUES (?, ?, ?, ?, ?);`,
+      ['default', config.botToken.trim(), config.chatId.trim(), config.isEnabled ? 1 : 0, new Date().toISOString()]
+    );
+  } catch (err) {
+    console.error('Failed to save telegram config to cloud:', err);
   }
 }
 
@@ -80,7 +123,12 @@ export async function testTelegramConnection(
   chatId: string
 ): Promise<{ success: boolean; error?: string }> {
   const testMsg = `🚀 <b>Editor OS • ტესტური შეტყობინება</b>\n\nთქვენი ტელეგრამ ბოტი წარმატებით დაუკავშირდა <b>Editor OS</b>-ს!\nახლა ყველა ტასკის დედლაინი და შეხსენება მოგივათ პირდაპირ აქ, ტელეფონზე. 📲\n\n⏰ <i>დრო: ${new Date().toLocaleTimeString('ka-GE')}</i>`;
-  return sendTelegramRawMessage(botToken, chatId, testMsg);
+  const res = await sendTelegramRawMessage(botToken, chatId, testMsg);
+  if (res.success) {
+    // Save to cloud on successful test
+    await saveTelegramConfigToCloud({ botToken, chatId, isEnabled: true });
+  }
+  return res;
 }
 
 export async function sendTaskToTelegram(

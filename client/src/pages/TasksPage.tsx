@@ -37,6 +37,8 @@ import {
   saveTelegramConfig,
   testTelegramConnection,
   sendTaskToTelegram,
+  syncTelegramConfigFromCloud,
+  saveTelegramConfigToCloud,
   TelegramConfig
 } from '../utils/telegram';
 
@@ -99,6 +101,12 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
 
   useEffect(() => {
     loadData();
+    syncTelegramConfigFromCloud().then((cfg) => {
+      setTelegramConfig(cfg);
+      setTgBotToken(cfg.botToken);
+      setTgChatId(cfg.chatId);
+      setTgEnabled(cfg.isEnabled);
+    });
   }, []);
 
   const handleRequestPermission = async () => {
@@ -251,16 +259,16 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
   };
 
   // Telegram Config Handlers
-  const handleSaveTelegram = (e: React.FormEvent) => {
+  const handleSaveTelegram = async (e: React.FormEvent) => {
     e.preventDefault();
     const newCfg: TelegramConfig = {
       botToken: tgBotToken.trim(),
       chatId: tgChatId.trim(),
       isEnabled: tgEnabled
     };
-    saveTelegramConfig(newCfg);
+    await saveTelegramConfigToCloud(newCfg);
     setTelegramConfig(newCfg);
-    setTgTestStatus({ success: true, loading: false, message: 'კონფიგურაცია წარმატებით შეინახა!' });
+    setTgTestStatus({ success: true, loading: false, message: 'კონფიგურაცია წარმატებით შეინახა Cloud ბაზაში (24/7 აქტიურია)!' });
     setTimeout(() => {
       setIsTelegramModalOpen(false);
       setTgTestStatus(null);

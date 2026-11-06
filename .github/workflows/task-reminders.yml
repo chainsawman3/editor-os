@@ -1,0 +1,31 @@
+name: 24/7 Cloud Task Reminders
+
+on:
+  schedule:
+    # Run every 5 minutes 24/7/365 (in UTC)
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: task-reminders-cron
+  cancel-in-progress: true
+
+jobs:
+  check-and-notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run 24/7 Cloud Reminders Check
+        run: node scripts/cron_reminders.js
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL || 'https://editor-os-db-chainsawman3.aws-eu-west-1.turso.io/v2/pipeline' }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODcyNTg3MjYsImlkIjoiMDFhMDIwZTktMzgwMS03YTVkLTg1OTgtOGZlMTNhMzczNGVjIiwia2lkIjoiUUMzNkxQZVdoN2ppWXl3VmxQNlkxV09GaTB1RXJmRTd5WU1rWmlfNWpQOCIsInJpZCI6IjBmMWY2MjIzLTgyNjMtNDQyYS1hMGVlLTgzNjIyMjkxYTMyNyJ9.G5egcvRrEbXEe4f0L2QM2Qbb6QX3WMYIWRGp0QAArB4W8ANktoVE_J3Mf4VtMaAIHcCc2EGibrvrMDCzYuD1Dg' }}

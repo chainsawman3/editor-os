@@ -216,9 +216,9 @@ export function checkTaskReminders(tasks: Task[]) {
       const reminderKey = `${task.id}_${task.reminder_date || task.due_date}_${task.reminder_time || task.due_time || '00:00'}_${task.reminder_type || 'custom'}`;
       if (notified.has(reminderKey)) continue;
 
-      const twoHoursMs = 2 * 60 * 60 * 1000;
-      if (nowMs >= remMs && nowMs - remMs <= twoHoursMs) {
-        showTaskNotification(task);
+      if (nowMs >= remMs) {
+        const isLate = nowMs - remMs > 2 * 60 * 60 * 1000;
+        showTaskNotification(task, isLate ? '⚠️ შეხსენება (გამოტოვებული შეტყობინება)' : undefined);
         notified.add(reminderKey);
         updated = true;
       }
