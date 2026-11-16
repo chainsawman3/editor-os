@@ -244,9 +244,17 @@ export const tursoApi = {
         queryTurso('SELECT * FROM tasks;')
       ]);
 
-      const projects = projectsRows.length > 0 ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
-      const goals = goalsRows.length > 0 ? goalsRows.map(mapGoalRow) : getLocalDb().goals;
-      const tasks = tasksRows.length > 0 ? tasksRows.map(mapTaskRow) : getLocalDb().tasks;
+      const projects = Array.isArray(projectsRows) ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
+      const goals = Array.isArray(goalsRows) ? goalsRows.map(mapGoalRow) : getLocalDb().goals;
+      const tasks = Array.isArray(tasksRows) ? tasksRows.map(mapTaskRow) : getLocalDb().tasks;
+
+      if (Array.isArray(projectsRows) && Array.isArray(goalsRows) && Array.isArray(tasksRows)) {
+        const db = getLocalDb();
+        db.projects = projects;
+        db.goals = goals;
+        db.tasks = tasks;
+        saveLocalDb(db);
+      }
 
       const activeProjects = projects.filter((p) => p.status !== 'Posted');
       const today = new Date();
@@ -327,7 +335,7 @@ export const tursoApi = {
         ? await queryTurso('SELECT * FROM goals WHERE section = ? ORDER BY created_at DESC;', [section])
         : await queryTurso('SELECT * FROM goals ORDER BY created_at DESC;');
 
-      if (rows && rows.length > 0) {
+      if (Array.isArray(rows)) {
         const goals = rows.map(mapGoalRow);
         const db = getLocalDb();
         db.goals = goals;
@@ -431,7 +439,7 @@ export const tursoApi = {
         ? await queryTurso('SELECT * FROM projects WHERE section = ? ORDER BY created_at DESC;', [section])
         : await queryTurso('SELECT * FROM projects ORDER BY created_at DESC;');
 
-      if (rows && rows.length > 0) {
+      if (Array.isArray(rows)) {
         const projects = rows.map(mapProjectRow);
         const db = getLocalDb();
         db.projects = projects;
@@ -573,7 +581,7 @@ export const tursoApi = {
         ? await queryTurso('SELECT * FROM tasks WHERE project_id = ? ORDER BY order_index ASC, created_at ASC;', [projectId])
         : await queryTurso('SELECT * FROM tasks ORDER BY created_at DESC;');
 
-      if (rows && rows.length > 0) {
+      if (Array.isArray(rows)) {
         const tasks = rows.map(mapTaskRow);
         const db = getLocalDb();
         db.tasks = tasks;
@@ -682,7 +690,7 @@ export const tursoApi = {
     try {
       await initTursoTables();
       const rows = await queryTurso('SELECT * FROM clients ORDER BY created_at DESC;');
-      if (rows && rows.length > 0) {
+      if (Array.isArray(rows)) {
         const clients = rows.map(mapClientRow);
         const db = getLocalDb();
         db.clients = clients;
@@ -776,7 +784,7 @@ export const tursoApi = {
     try {
       await initTursoTables();
       const rows = await queryTurso('SELECT * FROM quick_ideas ORDER BY created_at DESC;');
-      if (rows && rows.length > 0) {
+      if (Array.isArray(rows)) {
         const ideas = rows.map(mapQuickIdeaRow);
         return setCached('quick_ideas', ideas);
       }
@@ -827,7 +835,7 @@ export const tursoApi = {
     try {
       await initTursoTables();
       const rows = await queryTurso('SELECT * FROM notes ORDER BY is_pinned DESC, updated_at DESC;');
-      if (rows && rows.length > 0) {
+      if (Array.isArray(rows)) {
         const notes = rows.map(mapNoteRow);
         return setCached('notes', notes);
       }
@@ -940,9 +948,9 @@ export const tursoApi = {
         queryTurso('SELECT * FROM clients;')
       ]);
 
-      const projects = projectsRows && projectsRows.length > 0 ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
-      const tasks = tasksRows && tasksRows.length > 0 ? tasksRows.map(mapTaskRow) : getLocalDb().tasks;
-      const clients = clientsRows && clientsRows.length > 0 ? clientsRows.map(mapClientRow) : getLocalDb().clients;
+      const projects = Array.isArray(projectsRows) ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
+      const tasks = Array.isArray(tasksRows) ? tasksRows.map(mapTaskRow) : getLocalDb().tasks;
+      const clients = Array.isArray(clientsRows) ? clientsRows.map(mapClientRow) : getLocalDb().clients;
 
       // Global Task Stats
       const totalTasks = tasks.length;
@@ -1123,11 +1131,11 @@ export const tursoApi = {
         queryTurso('SELECT * FROM quick_ideas;')
       ]);
 
-      const projects = projectsRows && projectsRows.length > 0 ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
-      const goals = goalsRows && goalsRows.length > 0 ? goalsRows.map(mapGoalRow) : getLocalDb().goals;
-      const tasks = tasksRows && tasksRows.length > 0 ? tasksRows.map(mapTaskRow) : getLocalDb().tasks;
-      const clients = clientsRows && clientsRows.length > 0 ? clientsRows.map(mapClientRow) : getLocalDb().clients;
-      const quick_ideas = ideasRows && ideasRows.length > 0 ? ideasRows.map(mapQuickIdeaRow) : getLocalDb().quick_ideas;
+      const projects = Array.isArray(projectsRows) ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
+      const goals = Array.isArray(goalsRows) ? goalsRows.map(mapGoalRow) : getLocalDb().goals;
+      const tasks = Array.isArray(tasksRows) ? tasksRows.map(mapTaskRow) : getLocalDb().tasks;
+      const clients = Array.isArray(clientsRows) ? clientsRows.map(mapClientRow) : getLocalDb().clients;
+      const quick_ideas = Array.isArray(ideasRows) ? ideasRows.map(mapQuickIdeaRow) : getLocalDb().quick_ideas;
       const settings = getLocalDb().settings;
 
       return {
