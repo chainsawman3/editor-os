@@ -62,7 +62,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
 
   // New Task Form
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskStage, setNewTaskStage] = useState('Editing');
+  const [newTaskStage, setNewTaskStage] = useState('Planning');
   const [newTaskDue, setNewTaskDue] = useState('');
 
   const loadProjectData = async () => {
@@ -382,7 +382,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
             }`}
           >
             <FileText className={`w-3.5 h-3.5 ${activeTab === 'script' ? 'text-blue-400' : 'text-zinc-500'}`} />
-            <span>Script & Teleprompter</span>
+            <span>Document & Notes</span>
           </button>
 
           <button
@@ -394,7 +394,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
             }`}
           >
             <Layers className={`w-3.5 h-3.5 ${activeTab === 'references' ? 'text-cyan-400' : 'text-zinc-500'}`} />
-            <span>References & Assets</span>
+            <span>References & Resources</span>
             <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-zinc-900 text-zinc-400 border border-zinc-800 font-mono">
               {project.references?.length || 0}
             </span>
@@ -409,7 +409,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
             }`}
           >
             <Sparkles className={`w-3.5 h-3.5 ${activeTab === 'ideas' ? 'text-amber-400' : 'text-zinc-500'}`} />
-            <span>Creative Ideas</span>
+            <span>Ideas & Brainstorming</span>
             <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-zinc-900 text-zinc-400 border border-zinc-800 font-mono">
               {project.creative_ideas?.length || 0}
             </span>
@@ -605,7 +605,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
                 required
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
-                placeholder="e.g. Cut rough sequence & remove pauses..."
+                placeholder="e.g. Prepare initial draft, review assets..."
                 className="sm:col-span-6 bg-zinc-900 border border-zinc-750 focus:border-emerald-500 rounded-xl p-2.5 text-xs text-zinc-100 outline-none"
               />
               <select
@@ -614,10 +614,9 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
                 className="sm:col-span-3 bg-zinc-900 border border-zinc-750 focus:border-emerald-500 rounded-xl p-2.5 text-xs text-zinc-200 outline-none font-medium"
               >
                 <option value="Planning">Planning</option>
-                <option value="Editing">Editing</option>
-                <option value="Sound Design">Sound Design</option>
-                <option value="Color Grading">Color Grading</option>
-                <option value="Export">Export</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Review">Review</option>
+                <option value="Done">Done</option>
               </select>
               <input
                 type="date"

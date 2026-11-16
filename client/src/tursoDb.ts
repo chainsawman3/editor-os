@@ -1141,7 +1141,7 @@ export const tursoApi = {
       return {
         version: '2.0.0',
         exported_at: new Date().toISOString(),
-        system: 'Editor OS',
+        system: 'Flow OS',
         goals,
         projects,
         tasks,

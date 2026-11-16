@@ -313,10 +313,10 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
           <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
             <div className="flex items-center gap-2.5">
               <span className="p-2 rounded-lg bg-blue-950/80 border border-blue-800 text-blue-400">
-                <Video className="w-4 h-4" />
+                <Layers className="w-4 h-4" />
               </span>
               <div>
-                <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Video Editing Craft Analytics</h2>
+                <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Core Projects Analytics</h2>
                 <p className="text-[11px] text-zinc-400">Click any stage bar below to open filtered projects</p>
               </div>
             </div>
@@ -331,7 +331,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
           {/* Video Projects By Stage Chart */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span>Production Pipeline Stages</span>
+              <span>Projects Pipeline Stages</span>
               <span className="font-mono text-zinc-300">{videoEditing?.totalProjects || 0} Total Projects</span>
             </div>
             <div className="h-56">

@@ -10,6 +10,8 @@ import {
   Plus,
   Video,
   Clapperboard,
+  FolderKanban,
+  Layers,
   Calendar,
   Sparkles,
   Briefcase,
@@ -29,7 +31,6 @@ import {
   Filter,
   SlidersHorizontal,
   X,
-  Layers,
   ChevronRight
 } from 'lucide-react';
 
@@ -454,11 +455,11 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
             }`}
           >
             <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'video_editing' ? 'bg-blue-950/80 border-blue-800 text-blue-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
-              <Clapperboard className="w-4 h-4" />
+              <Layers className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Video Editing</div>
-              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Portfolio & Client Edits</div>
+              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Core Projects</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Key Objectives & Deliverables</div>
             </div>
           </button>
 
@@ -477,8 +478,8 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               <Megaphone className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Marketing & Content</div>
-              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Instagram, TikTok, YouTube</div>
+              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Marketing & Growth</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Outreach, Social & Brand</div>
             </div>
           </button>
 
@@ -497,8 +498,8 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               <Briefcase className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Client CRM & Leads</div>
-              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Outreach & Pipeline</div>
+              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Clients & CRM</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Partners, Leads & Pipeline</div>
             </div>
           </button>
 
@@ -517,8 +518,8 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               <GraduationCap className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Skills & VFX Mastery</div>
-              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Techniques & Learning</div>
+              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Skills & Learning</div>
+              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Education & Growth</div>
             </div>
           </button>
         </div>
@@ -579,7 +580,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                <Video className="w-3.5 h-3.5 text-blue-400" />
+                <FolderKanban className="w-3.5 h-3.5 text-blue-400" />
                 <span>Projects Only ({filteredProjects.length})</span>
               </button>
             </div>
@@ -777,7 +778,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-                  <Video className="w-4 h-4 text-cyan-400" /> Production Projects Workspace ({filteredProjects.length})
+                  <FolderKanban className="w-4 h-4 text-cyan-400" /> Projects Workspace ({filteredProjects.length})
                 </h2>
                 <button
                   onClick={() => setShowProjectModal(true)}
@@ -1244,7 +1245,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
           <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-                <Video className="w-4 h-4 text-blue-400" /> Create Production Project
+                <FolderKanban className="w-4 h-4 text-blue-400" /> Create Project
               </h3>
               <button onClick={() => setShowProjectModal(false)} className="text-zinc-500 hover:text-zinc-200">
                 <X className="w-4 h-4" />

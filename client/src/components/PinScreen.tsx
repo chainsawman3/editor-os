@@ -58,7 +58,7 @@ export const PinScreen: React.FC<PinScreenProps> = ({ onSuccess }) => {
         
         <div className="text-center space-y-2">
           <h1 className="text-xl font-bold text-zinc-100">Enter PIN</h1>
-          <p className="text-sm text-zinc-400">Please enter your PIN to access Editor OS</p>
+          <p className="text-sm text-zinc-400">Please enter your PIN to access Flow OS</p>
         </div>
 
         <div className="flex items-center gap-4">

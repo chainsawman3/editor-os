@@ -4,6 +4,7 @@ import { Goal, Project, Task, SectionType } from '../types';
 import {
   ChevronLeft,
   Target,
+  FolderKanban,
   Video,
   Calendar,
   Sparkles,
@@ -189,7 +190,7 @@ export const GoalDetailPage: React.FC<GoalDetailPageProps> = ({ goalId, onBack, 
         return { label: 'Freelance & Revenue', icon: Briefcase, color: 'text-purple-300 bg-purple-950/70 border-purple-800/70' };
       case 'video_editing':
       default:
-        return { label: 'Video Production', icon: Video, color: 'text-blue-300 bg-blue-950/70 border-blue-800/70' };
+        return { label: 'Core Projects', icon: Layers, color: 'text-blue-300 bg-blue-950/70 border-blue-800/70' };
     }
   };
 
@@ -382,10 +383,10 @@ export const GoalDetailPage: React.FC<GoalDetailPageProps> = ({ goalId, onBack, 
         <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
           <div>
             <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-              <Video className="w-4 h-4 text-blue-400" /> Attached Production Projects ({projects.length})
+              <FolderKanban className="w-4 h-4 text-blue-400" /> Attached Projects ({projects.length})
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5 font-medium">
-              Individual video deliverables, content pieces, and milestones powering this main objective
+              Individual deliverables, milestones, and work streams powering this main objective
             </p>
           </div>
 
@@ -400,8 +401,8 @@ export const GoalDetailPage: React.FC<GoalDetailPageProps> = ({ goalId, onBack, 
 
         {projects.length === 0 ? (
           <div className="py-12 text-center space-y-3 bg-zinc-900/30 border border-zinc-850 rounded-xl">
-            <Video className="w-8 h-8 text-zinc-600 mx-auto" />
-            <p className="text-xs text-zinc-400 font-medium">No production projects attached to this objective yet.</p>
+            <FolderKanban className="w-8 h-8 text-zinc-600 mx-auto" />
+            <p className="text-xs text-zinc-400 font-medium">No projects attached to this objective yet.</p>
             <button
               onClick={() => setShowAddProjectModal(true)}
               className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 rounded-xl text-xs font-semibold"

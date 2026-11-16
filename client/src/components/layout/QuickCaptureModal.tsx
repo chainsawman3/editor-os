@@ -78,7 +78,7 @@ export const QuickCaptureModal: React.FC<QuickCaptureModalProps> = ({
               rows={3}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Jot down a sudden video concept, client outreach idea, technique to learn..."
+              placeholder="Jot down a sudden project idea, task, client note, or insight..."
               className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 font-sans"
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {

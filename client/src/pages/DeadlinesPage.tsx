@@ -14,6 +14,7 @@ import {
   ArrowUpDown,
   Sparkles,
   Layers,
+  FolderKanban,
   Video,
   Megaphone,
   Briefcase,
@@ -286,9 +287,9 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
 
   const categories = [
     { id: 'all', label: 'All Categories', icon: Layers },
-    { id: 'video_editing', label: 'Video Editing', icon: Video },
-    { id: 'marketing', label: 'Marketing', icon: Megaphone },
-    { id: 'freelance', label: 'Freelance & Clients', icon: Briefcase },
+    { id: 'video_editing', label: 'Core Projects', icon: FolderKanban },
+    { id: 'marketing', label: 'Marketing & Growth', icon: Megaphone },
+    { id: 'freelance', label: 'Clients & CRM', icon: Briefcase },
     { id: 'skills', label: 'Skills & Learning', icon: GraduationCap }
   ];
 

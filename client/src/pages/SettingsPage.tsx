@@ -453,7 +453,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="font-mono text-zinc-400 block mb-1">Editor Name / Profile</label>
+            <label className="font-mono text-zinc-400 block mb-1">User Name / Profile</label>
             <input
               type="text"
               value={userName}
@@ -491,7 +491,7 @@ export const SettingsPage: React.FC = () => {
           Template Reset
         </h3>
         <p className="text-zinc-500">
-          Reset all databases to the default fresh Editor OS v2.0 structure. A safety backup will automatically be saved before resetting.
+          Reset all databases to the default clean Flow OS structure. A safety backup will automatically be saved before resetting.
         </p>
 
         <button

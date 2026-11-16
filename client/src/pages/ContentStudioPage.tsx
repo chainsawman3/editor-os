@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { api } from '../api';
 import { Project, Task, Goal, ProjectStatus, ProjectPriority, SectionType } from '../types';
 import {
-  Clapperboard,
+  FolderKanban,
   CheckCircle2,
   Circle,
   Calendar as CalendarIcon,
@@ -180,10 +180,10 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
 
   // Kanban Columns
   const kanbanColumns: Array<{ id: ProjectStatus; title: string; color: string; desc: string }> = [
-    { id: 'Planning', title: 'Planning / Outline', color: 'border-zinc-700', desc: 'Concept & Scripting' },
-    { id: 'In Progress', title: 'In Production / Edit', color: 'border-blue-500', desc: 'Active Timeline' },
-    { id: 'Ready', title: 'Ready / Polish', color: 'border-amber-500', desc: 'Sound & Color Review' },
-    { id: 'Posted', title: 'Posted / Delivered', color: 'border-emerald-500', desc: 'Completed & Live' }
+    { id: 'Planning', title: 'Planning & Concept', color: 'border-zinc-700', desc: 'Preparation & Scope' },
+    { id: 'In Progress', title: 'In Progress', color: 'border-blue-500', desc: 'Active Execution' },
+    { id: 'Ready', title: 'Review & Polish', color: 'border-amber-500', desc: 'Quality Check & Final Review' },
+    { id: 'Posted', title: 'Completed', color: 'border-emerald-500', desc: 'Delivered & Done' }
   ];
 
   const getPriorityColor = (p?: string) => {
@@ -210,10 +210,10 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <span className="p-2 sm:p-2.5 rounded-xl bg-blue-950/60 border border-blue-800/80 text-blue-400 shadow-inner shrink-0">
-              <Clapperboard className="w-4 h-4 sm:w-5 sm:h-5" />
+              <FolderKanban className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
             <div>
-              <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">CONTENT STUDIO & RADAR</h1>
+              <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">PROJECTS PIPELINE & RADAR</h1>
               <p className="text-xs text-zinc-400 font-medium mt-0.5 hidden sm:block">
                 Visual Kanban Pipeline, Stage Distribution, and Dynamic Action Steps
               </p>
@@ -271,7 +271,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
                     : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
                 }`}
               >
-                {sec === 'all' ? 'All' : sec === 'video_editing' ? 'Video' : sec === 'marketing' ? 'Marketing' : 'Skills'}
+                {sec === 'all' ? 'All' : sec === 'video_editing' ? 'Core Projects' : sec === 'marketing' ? 'Marketing' : 'Skills'}
               </button>
             ))}
           </div>
@@ -547,7 +547,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
                     rows={2}
                     value={projDesc}
                     onChange={(e) => setProjDesc(e.target.value)}
-                    placeholder="Key concepts, pacing, music style..."
+                    placeholder="Key concepts, goals, deliverables..."
                     className="w-full p-2.5 bg-zinc-900 border border-zinc-750 rounded-xl text-zinc-100 outline-none focus:border-blue-500"
                   />
                 </div>
@@ -560,10 +560,10 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
                       onChange={(e: any) => setProjSection(e.target.value)}
                       className="w-full p-2 bg-zinc-900 border border-zinc-750 rounded-xl text-zinc-100 outline-none"
                     >
-                      <option value="video_editing">Video Editing</option>
-                      <option value="marketing">Marketing & Content</option>
-                      <option value="skills">Skills & VFX</option>
-                      <option value="freelance">Client Freelance</option>
+                      <option value="video_editing">Core Projects</option>
+                      <option value="marketing">Marketing & Growth</option>
+                      <option value="skills">Skills & Learning</option>
+                      <option value="freelance">Clients & CRM</option>
                     </select>
                   </div>
 

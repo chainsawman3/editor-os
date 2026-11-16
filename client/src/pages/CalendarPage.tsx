@@ -112,8 +112,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
 
     if (sec === 'video_editing') {
       return {
-        icon: Video,
-        label: 'Video Editing',
+        icon: Layers,
+        label: 'Core Project',
         style: 'bg-blue-950/90 border-blue-600/80 text-blue-300 hover:bg-blue-900 shadow-blue-950/40'
       };
     }
@@ -542,10 +542,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               className="px-2 py-1 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-xl text-[11px] sm:text-xs outline-none focus:border-zinc-600 font-medium"
             >
               <option value="all">All Categories</option>
-              <option value="video_editing">Video Editing</option>
-              <option value="marketing">Marketing & Content</option>
-              <option value="skills">Skills & Mastery</option>
-              <option value="freelance">Freelance</option>
+              <option value="video_editing">Core Projects</option>
+              <option value="marketing">Marketing & Growth</option>
+              <option value="skills">Skills & Learning</option>
+              <option value="freelance">Clients & CRM</option>
             </select>
 
             {/* Quick Search */}

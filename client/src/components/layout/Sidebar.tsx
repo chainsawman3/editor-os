@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Clapperboard,
+  FolderKanban,
   Target,
   Calendar,
   BarChart3,
@@ -8,7 +8,7 @@ import {
   Settings,
   Flame,
   Sparkles,
-  Video,
+  Layers,
   Megaphone,
   Briefcase,
   GraduationCap,
@@ -49,9 +49,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const goalSubSections = [
-    { id: 'video_editing', label: 'Video Editing', icon: Video },
-    { id: 'marketing', label: 'Marketing', icon: Megaphone },
-    { id: 'freelance', label: 'Freelance & Clients', icon: Briefcase },
+    { id: 'video_editing', label: 'Core Projects', icon: Layers },
+    { id: 'marketing', label: 'Marketing & Growth', icon: Megaphone },
+    { id: 'freelance', label: 'Clients & CRM', icon: Briefcase },
     { id: 'skills', label: 'Skills & Learning', icon: GraduationCap }
   ];
 
@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div>
               <h1 className="font-bold text-sm text-zinc-100 tracking-tight group-hover:text-white transition-colors">
-                Editor OS
+                Flow OS
               </h1>
               <p className="text-[11px] text-zinc-400 font-medium group-hover:text-purple-400 transition-colors">
                 Goals & Projects Hub ↗
@@ -130,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Menu */}
         <nav className="px-2.5 py-1.5 space-y-1 overflow-y-auto max-h-[calc(100vh-270px)]">
-          {/* Main Landing: Content Studio */}
+          {/* Main Landing: Projects Pipeline */}
           <button
             onClick={() => handleTabClick('content')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
@@ -139,8 +139,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 : 'text-zinc-300 hover:text-white hover:bg-zinc-900 border border-transparent'
             }`}
           >
-            <Clapperboard className={`w-4 h-4 ${isContentActive ? 'text-blue-400' : 'text-zinc-400'}`} />
-            <span>Content Studio</span>
+            <FolderKanban className={`w-4 h-4 ${isContentActive ? 'text-blue-400' : 'text-zinc-400'}`} />
+            <span>Projects Pipeline</span>
           </button>
 
           {/* Goals Hub (Expandable) */}

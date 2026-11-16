@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Clapperboard,
+  FolderKanban,
   Target,
   CheckSquare,
   Calendar,
@@ -27,8 +27,8 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({
   const navItems = [
     {
       id: 'content',
-      label: 'Studio',
-      icon: Clapperboard,
+      label: 'Pipeline',
+      icon: FolderKanban,
       isActive: isStudioActive,
       onClick: () => onSelectTab('content')
     },

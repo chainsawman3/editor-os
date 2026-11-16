@@ -122,7 +122,7 @@ export async function testTelegramConnection(
   botToken: string,
   chatId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const testMsg = `🚀 <b>Editor OS • ტესტური შეტყობინება</b>\n\nთქვენი ტელეგრამ ბოტი წარმატებით დაუკავშირდა <b>Editor OS</b>-ს!\nახლა ყველა ტასკის დედლაინი და შეხსენება მოგივათ პირდაპირ აქ, ტელეფონზე. 📲\n\n⏰ <i>დრო: ${new Date().toLocaleTimeString('ka-GE')}</i>`;
+  const testMsg = `🚀 <b>Flow OS • ტესტური შეტყობინება</b>\n\nთქვენი ტელეგრამ ბოტი წარმატებით დაუკავშირდა <b>Flow OS</b>-ს!\nახლა ყველა ტასკის დედლაინი და შეხსენება მოგივათ პირდაპირ აქ, ტელეფონზე. 📲\n\n⏰ <i>დრო: ${new Date().toLocaleTimeString('ka-GE')}</i>`;
   const res = await sendTelegramRawMessage(botToken, chatId, testMsg);
   if (res.success) {
     // Save to cloud on successful test
@@ -158,7 +158,7 @@ export async function sendTaskToTelegram(
     message += `\nℹ️ <i>${customNote}</i>\n`;
   }
 
-  message += `\n<i>Editor OS • Tasks System</i>`;
+  message += `\n<i>Flow OS • Tasks System</i>`;
 
   return sendTelegramRawMessage(config.botToken, config.chatId, message);
 }

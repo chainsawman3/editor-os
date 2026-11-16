@@ -1,14 +1,14 @@
 {
-  "name": "Editor OS - Creator & Video Workspace",
-  "short_name": "Editor OS",
-  "description": "The ultimate production tracking and creative workspace for video editors and digital creators.",
+  "name": "Flow OS - Goals & Projects Workspace",
+  "short_name": "Flow OS",
+  "description": "The ultimate production tracking and goal workspace for creators, professionals, and teams.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#09090b",
   "theme_color": "#09090b",
-  "categories": ["productivity", "utilities", "video"],
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "/icons/icon.svg",

@@ -140,7 +140,7 @@ export const CategoriesPage: React.FC<CategoriesPageProps> = ({
   const getCategoryIcon = (id: string) => {
     switch (id) {
       case 'cat_video_editing':
-        return <Clapperboard className="w-4 h-4 text-zinc-200" />;
+        return <Layers className="w-4 h-4 text-zinc-200" />;
       case 'cat_marketing':
         return <Megaphone className="w-4 h-4 text-zinc-200" />;
       case 'cat_freelance':

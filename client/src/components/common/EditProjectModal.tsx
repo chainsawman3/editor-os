@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Project, ProjectPriority, ProjectStatus, Goal } from '../../types';
-import { X, Video, Calendar, Sparkles, User, Check, Target, Layers } from 'lucide-react';
+import { X, Calendar, Sparkles, User, Check, Target, Layers, FolderKanban } from 'lucide-react';
 
 interface EditProjectModalProps {
   isOpen: boolean;
@@ -75,7 +75,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
-              <Video className="w-4 h-4" />
+              <FolderKanban className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-base font-bold text-zinc-100">Edit Project Details</h2>
@@ -102,7 +102,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Split Screen Before/After Reel"
+              placeholder="e.g. Website Launch, Client Deliverable..."
               className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium"
             />
           </div>
@@ -114,7 +114,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief summary of creative direction, assets, or client requirements..."
+              placeholder="Summary of project goals, deliverables, or requirements..."
               className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs sm:text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none leading-relaxed"
             />
           </div>
@@ -162,7 +162,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 <option value="Planning" className="bg-zinc-950 text-blue-300">Planning</option>
                 <option value="In Progress" className="bg-zinc-950 text-amber-300">In Progress</option>
                 <option value="Ready" className="bg-zinc-950 text-emerald-300">Ready for Review</option>
-                <option value="Posted" className="bg-zinc-950 text-purple-300">Posted / Published</option>
+                <option value="Posted" className="bg-zinc-950 text-purple-300">Delivered / Completed</option>
                 <option value="Paused" className="bg-zinc-950 text-zinc-400">Paused</option>
               </select>
             </div>
@@ -176,7 +176,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 type="text"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                placeholder="e.g. Apex Media, Sarah M."
+                placeholder="e.g. Acme Corp, Sarah M."
                 className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-blue-500 transition-all font-medium"
               />
             </div>

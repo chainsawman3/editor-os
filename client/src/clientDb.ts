@@ -56,7 +56,7 @@ export const initialDefaultDatabase: LocalDatabaseSchema = {
       cycle_start_date: todayStr,
       cycle_duration_days: 90,
       streak_days: 12,
-      user_name: 'Alex (Video Editor)',
+      user_name: 'Alex',
       created_at: new Date().toISOString()
     }
   ],
@@ -226,7 +226,7 @@ export function getLocalSummary(): DashboardSummaryResponse {
     cycle_start_date: todayStr,
     cycle_duration_days: 90,
     streak_days: 0,
-    user_name: 'Alex (Video Editor)',
+    user_name: 'Alex',
     created_at: today.toISOString()
   };
 
@@ -240,10 +240,10 @@ export function getLocalSummary(): DashboardSummaryResponse {
   const overdueTasks = allTasks.filter((t) => !t.completed && t.due_date && t.due_date < todayStr);
 
   const primaryCategories = [
-    { id: 'video_editing', name: 'Video Editing', icon: 'Clapperboard' },
-    { id: 'marketing', name: 'Marketing', icon: 'Megaphone' },
-    { id: 'freelance', name: 'Freelance / Clients', icon: 'Briefcase' },
-    { id: 'skills', name: 'Skills / Learning', icon: 'GraduationCap' }
+    { id: 'video_editing', name: 'Core Projects', icon: 'Layers' },
+    { id: 'marketing', name: 'Marketing & Growth', icon: 'Megaphone' },
+    { id: 'freelance', name: 'Clients & CRM', icon: 'Briefcase' },
+    { id: 'skills', name: 'Skills & Learning', icon: 'GraduationCap' }
   ];
 
   const categoryProgress = primaryCategories.map((cat) => {
