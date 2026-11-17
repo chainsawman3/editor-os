@@ -436,8 +436,8 @@ export const tursoApi = {
     try {
       await initTursoTables();
       const rows = section
-        ? await queryTurso('SELECT * FROM projects WHERE section = ? ORDER BY created_at DESC;', [section])
-        : await queryTurso('SELECT * FROM projects ORDER BY created_at DESC;');
+        ? await queryTurso('SELECT * FROM projects WHERE section = ? ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at ASC;', [section])
+        : await queryTurso('SELECT * FROM projects ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at ASC;');
 
       if (Array.isArray(rows)) {
         const projects = rows.map(mapProjectRow);

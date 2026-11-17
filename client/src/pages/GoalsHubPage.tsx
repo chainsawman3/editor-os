@@ -350,6 +350,11 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
       );
     }
     return true;
+  }).sort((a, b) => {
+    if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+    if (a.deadline) return -1;
+    if (b.deadline) return 1;
+    return (a.created_at || '').localeCompare(b.created_at || '');
   });
 
   // Filtered Clients logic

@@ -78,7 +78,14 @@ export const GoalDetailPage: React.FC<GoalDetailPageProps> = ({ goalId, onBack, 
         setEditNextAction(foundGoal.next_action || '');
         setEditNotes(foundGoal.notes || '');
 
-        const linked = allProjects.filter((p) => p.goal_id === goalId);
+        const linked = allProjects
+          .filter((p) => p.goal_id === goalId)
+          .sort((a, b) => {
+            if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+            if (a.deadline) return -1;
+            if (b.deadline) return 1;
+            return (a.created_at || '').localeCompare(b.created_at || '');
+          });
         setProjects(linked);
       }
       setAllTasks(tasksList);
