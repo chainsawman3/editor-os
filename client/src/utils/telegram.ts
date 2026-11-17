@@ -1,4 +1,4 @@
-import { Task } from '../types';
+import { Task, Project } from '../types';
 import { queryTurso } from '../tursoDb';
 
 export interface TelegramConfig {
@@ -159,6 +159,43 @@ export async function sendTaskToTelegram(
   }
 
   message += `\n<i>Flow OS • Tasks System</i>`;
+
+  return sendTelegramRawMessage(config.botToken, config.chatId, message);
+}
+
+export async function sendProjectToTelegram(
+  project: Project,
+  customNote?: string
+): Promise<{ success: boolean; error?: string }> {
+  const config = getTelegramConfig();
+  if (!config.isEnabled || !config.botToken || !config.chatId) {
+    return { success: false, error: 'Telegram შეტყობინებები გათიშულია ან კონფიგურაცია არასრულია.' };
+  }
+
+  const priorityEmoji =
+    project.priority === 'High' || project.priority === 'Extreme' || project.priority === 'Hard'
+      ? '🔴 მაღალი'
+      : project.priority === 'Low' || project.priority === 'Easy'
+      ? '🟢 დაბალი'
+      : '🟡 საშუალო';
+
+  let message = `🎯 <b>პროექტის შეხსენება / Project Deadline Alert</b>\n\n`;
+  message += `📂 <b>პროექტი:</b> ${project.name}\n`;
+  if (project.deadline) {
+    message += `📅 <b>დედლაინი:</b> ${project.deadline} @ 20:00 (დღეს საღამოს)\n`;
+  }
+  message += `⚡ <b>პრიორიტეტი:</b> ${priorityEmoji}\n`;
+  message += `📊 <b>სტატუსი:</b> ${project.status}\n`;
+
+  if (project.description && project.description.trim()) {
+    message += `\n💬 <b>აღწერა:</b>\n${project.description.trim()}\n`;
+  }
+
+  if (customNote) {
+    message += `\nℹ️ <i>${customNote}</i>\n`;
+  }
+
+  message += `\n<i>Flow OS • Projects Pipeline</i>`;
 
   return sendTelegramRawMessage(config.botToken, config.chatId, message);
 }

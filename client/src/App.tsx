@@ -6,7 +6,7 @@ import { MobileNavBar } from './components/layout/MobileNavBar';
 import { QuickCaptureModal } from './components/layout/QuickCaptureModal';
 import { SectionType } from './types';
 import { PinScreen } from './components/PinScreen';
-import { checkTaskReminders } from './utils/notifications';
+import { checkTaskReminders, checkProjectReminders } from './utils/notifications';
 import { Bell, X as XIcon, CheckCircle2 } from 'lucide-react';
 
 // Dynamic code-split page imports for minimal bandwidth usage
@@ -36,13 +36,19 @@ export function App() {
   const [previousTab, setPreviousTab] = useState<string>('goals');
   const [reminderToast, setReminderToast] = useState<{ task: any; message: string } | null>(null);
 
-  // Background Task Reminder Scanner (Runs on mount and every 60 seconds)
+  // Background Task & Project Reminder Scanner (Runs on mount and every 20 seconds)
   useEffect(() => {
     const runCheck = async () => {
       try {
-        const tasks = await api.getTasks();
+        const [tasks, projects] = await Promise.all([
+          api.getTasks(),
+          api.getProjects()
+        ]);
         if (tasks && tasks.length > 0) {
           checkTaskReminders(tasks);
+        }
+        if (projects && projects.length > 0) {
+          checkProjectReminders(projects);
         }
       } catch (e) {
         // Silent error handling for background scanner
@@ -54,7 +60,7 @@ export function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Listen to in-app task reminder toasts & desktop click events
+  // Listen to in-app task/project reminder toasts & desktop click events
   useEffect(() => {
     const handleToast = (e: any) => {
       if (e.detail) {
@@ -67,11 +73,20 @@ export function App() {
       setCurrentTab('tasks');
     };
 
+    const handleOpenProject = (e: any) => {
+      if (e.detail?.projectId) {
+        setSelectedProjectId(e.detail.projectId);
+        setCurrentTab('content');
+      }
+    };
+
     window.addEventListener('editor_os_task_reminder_toast', handleToast);
     window.addEventListener('editor_os_open_tasks', handleOpenTasks);
+    window.addEventListener('editor_os_open_project', handleOpenProject);
     return () => {
       window.removeEventListener('editor_os_task_reminder_toast', handleToast);
       window.removeEventListener('editor_os_open_tasks', handleOpenTasks);
+      window.removeEventListener('editor_os_open_project', handleOpenProject);
     };
   }, []);
   const [navFilterOptions, setNavFilterOptions] = useState<{

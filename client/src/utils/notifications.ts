@@ -1,5 +1,5 @@
-import { Task } from '../types';
-import { sendTaskToTelegram } from './telegram';
+import { Task, Project } from '../types';
+import { sendTaskToTelegram, sendProjectToTelegram } from './telegram';
 
 const NOTIFIED_STORAGE_KEY = 'editor_os_notified_reminders';
 
@@ -124,7 +124,7 @@ export function calculateReminderDate(task: Task): Date | null {
   if (task.reminder_date && task.reminder_date.trim()) {
     const [cy, cm, cd] = task.reminder_date.split('-').map((v) => parseInt(v, 10));
     if (cy && cm && cd) {
-      let ch = 9;
+      let ch = 20; // Default 8:00 PM (20:00) when returning from work
       let cmin = 0;
       if (task.reminder_time && task.reminder_time.includes(':')) {
         const [rh, rm] = task.reminder_time.split(':').map((v) => parseInt(v, 10));
@@ -140,7 +140,7 @@ export function calculateReminderDate(task: Task): Date | null {
   const [y, m, d] = task.due_date.split('-').map((v) => parseInt(v, 10));
   if (!y || !m || !d) return null;
 
-  let hours = 18;
+  let hours = 20; // Default 8:00 PM (20:00)
   let minutes = 0;
   if (task.due_time && task.due_time.includes(':')) {
     const [hh, mm] = task.due_time.split(':').map((v) => parseInt(v, 10));
@@ -222,6 +222,94 @@ export function checkTaskReminders(tasks: Task[]) {
         notified.add(reminderKey);
         updated = true;
       }
+    }
+  }
+
+  if (updated) {
+    saveNotifiedSet(notified);
+  }
+}
+
+export function showProjectNotification(project: Project, customNote?: string) {
+  playNotificationSound();
+
+  const body = [
+    project.deadline ? `დედლაინი: ${project.deadline} @ 20:00 (დღეს საღამოს)` : '',
+    project.priority ? `პრიორიტეტი: ${project.priority}` : '',
+    project.description ? `\nაღწერა: ${project.description}` : '',
+    customNote ? `\n${customNote}` : ''
+  ].filter(Boolean).join('\n');
+
+  if (isNotificationSupported() && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(`🎯 პროექტი: ${project.name}`, {
+        body,
+        icon: '/favicon.ico',
+        tag: `proj_reminder_${project.id}_${Date.now()}`,
+        requireInteraction: true
+      });
+
+      n.onclick = () => {
+        window.focus();
+        window.dispatchEvent(new CustomEvent('editor_os_open_project', { detail: { projectId: project.id } }));
+        n.close();
+      };
+    } catch (e) {
+      console.warn('Native notification failed:', e);
+    }
+  }
+
+  // Also send directly to Telegram
+  sendProjectToTelegram(project, customNote).catch((err) => {
+    console.warn('Telegram project notification failed:', err);
+  });
+
+  // Dispatch in-app event for Toast
+  window.dispatchEvent(
+    new CustomEvent('editor_os_task_reminder_toast', {
+      detail: {
+        task: {
+          id: project.id,
+          title: `🎯 ${project.name}`,
+          due_date: project.deadline,
+          due_time: '20:00'
+        },
+        message: customNote || `⏰ პროექტის შეხსენება (20:00): ${project.name}`
+      }
+    })
+  );
+}
+
+export function checkProjectReminders(projects: Project[]) {
+  if (!Array.isArray(projects) || projects.length === 0) return;
+
+  const now = new Date();
+  const nowMs = now.getTime();
+  const notified = getNotifiedSet();
+  let updated = false;
+
+  for (const project of projects) {
+    // Skip finished projects
+    if (project.status === 'Completed' || project.status === 'Posted') continue;
+    if (!project.deadline) continue;
+
+    const [y, m, d] = project.deadline.split('-').map((v) => parseInt(v, 10));
+    if (!y || !m || !d) continue;
+
+    // Default trigger at 20:00 (8:00 PM) on the deadline day
+    const projectReminderDate = new Date(y, m - 1, d, 20, 0, 0, 0);
+    const remMs = projectReminderDate.getTime();
+
+    const reminderKey = `proj_${project.id}_${project.deadline}_20:00`;
+    if (notified.has(reminderKey)) continue;
+
+    if (nowMs >= remMs) {
+      showProjectNotification(
+        project,
+        '⏰ დროა შეუდგეთ პროექტზე მუშაობას სამსახურის შემდეგ!'
+      );
+      notified.add(reminderKey);
+      updated = true;
     }
   }
 

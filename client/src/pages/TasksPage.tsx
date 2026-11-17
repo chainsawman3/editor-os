@@ -64,10 +64,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formDueDate, setFormDueDate] = useState('');
-  const [formDueTime, setFormDueTime] = useState('18:00');
+  const [formDueTime, setFormDueTime] = useState('20:00');
   const [formPriority, setFormPriority] = useState<TaskPriority>('Medium');
   const [formReminderDate, setFormReminderDate] = useState('');
-  const [formReminderTime, setFormReminderTime] = useState('12:00');
+  const [formReminderTime, setFormReminderTime] = useState('20:00');
   const [formRepeat5Min, setFormRepeat5Min] = useState<boolean>(false);
   const [formStage, setFormStage] = useState<'Todo' | 'WIP' | 'Done'>('Todo');
 
@@ -124,7 +124,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
       title: 'ტესტური შეტყობინება / Test Alert',
       description: 'შეტყობინებების სისტემა წარმატებით ჩაირთო! დედლაინის შეხსენებები აქტიურია.',
       due_date: todayStr,
-      due_time: '18:00',
+      due_time: '20:00',
       priority: 'High',
       completed: false,
       order_index: 0,
@@ -137,10 +137,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
     setFormTitle('');
     setFormDescription('');
     setFormDueDate(presetDate || todayStr);
-    setFormDueTime('18:00');
+    setFormDueTime('20:00');
     setFormPriority('Medium');
     setFormReminderDate(presetDate || todayStr);
-    setFormReminderTime('12:00');
+    setFormReminderTime('20:00');
     setFormRepeat5Min(false);
     setFormStage('Todo');
     setIsModalOpen(true);
@@ -151,10 +151,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
     setFormTitle(task.title);
     setFormDescription(task.description || '');
     setFormDueDate(task.due_date || '');
-    setFormDueTime(task.due_time || '18:00');
+    setFormDueTime(task.due_time || '20:00');
     setFormPriority(task.priority || 'Medium');
     setFormReminderDate(task.reminder_date || task.due_date || todayStr);
-    setFormReminderTime(task.reminder_time || '12:00');
+    setFormReminderTime(task.reminder_time || '20:00');
     setFormRepeat5Min(task.reminder_type === 'repeat_5min' || task.reminder_type === 'custom_repeat_5min');
     setFormStage(task.completed ? 'Done' : (task.stage as any) === 'WIP' ? 'WIP' : 'Todo');
     setIsModalOpen(true);
@@ -877,7 +877,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                     {task.reminder_date && !task.completed && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-purple-950/60 text-purple-300 border border-purple-800/60">
                         <Bell className="w-3 h-3 text-purple-400" />
-                        <span>შეტყობინება: {task.reminder_date} @ {task.reminder_time || '12:00'}</span>
+                        <span>შეტყობინება: {task.reminder_date} @ {task.reminder_time || '20:00'}</span>
                       </span>
                     )}
 
