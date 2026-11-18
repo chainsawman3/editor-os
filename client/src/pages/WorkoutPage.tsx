@@ -187,13 +187,17 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   // Find today's workout day or default to Tuesday
   const todayScheduleItem = DEFAULT_SCHEDULE.find((d) => d.dayIndex === currentDayOfWeek) || DEFAULT_SCHEDULE[1];
 
+  // Active user scope
+  const activeUser = typeof window !== 'undefined' ? (localStorage.getItem('flow_os_active_user') || 'gigi') : 'gigi';
+  const workoutStorageKey = activeUser === 'gigi' ? 'flow_os_completed_workouts' : `flow_os_completed_workouts_${activeUser}`;
+
   // Selected day for detailed breakdown below
   const [selectedDayId, setSelectedDayId] = useState<string>(todayScheduleItem.id);
 
   // Persistence for weekly completed days
   const [completedDays, setCompletedDays] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem('flow_os_completed_workouts');
+      const saved = localStorage.getItem(workoutStorageKey);
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -209,7 +213,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   const toggleDayCompletion = (dayId: string) => {
     setCompletedDays((prev) => {
       const next = { ...prev, [dayId]: !prev[dayId] };
-      localStorage.setItem('flow_os_completed_workouts', JSON.stringify(next));
+      localStorage.setItem(workoutStorageKey, JSON.stringify(next));
       return next;
     });
   };
@@ -218,7 +222,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   const resetWeek = () => {
     if (window.confirm('გსურთ მიმდინარე კვირის ვარჯიშების სტატუსის განულება?')) {
       setCompletedDays({});
-      localStorage.removeItem('flow_os_completed_workouts');
+      localStorage.removeItem(workoutStorageKey);
     }
   };
 

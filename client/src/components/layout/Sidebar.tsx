@@ -19,7 +19,8 @@ import {
   CheckSquare,
   Dumbbell,
   Wallet,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -30,6 +31,8 @@ interface SidebarProps {
   cycleTotalDays: number;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
+  activeUser?: string;
+  onLogout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -39,7 +42,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   cycleDay,
   cycleTotalDays,
   isMobileOpen = false,
-  onCloseMobile
+  onCloseMobile,
+  activeUser = 'gigi',
+  onLogout
 }) => {
   const [isGoalsExpanded, setIsGoalsExpanded] = useState(true);
 
@@ -319,15 +324,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* 2. Footer / Cloud Sync Status */}
-      <div className="p-3.5 border-t border-zinc-850 bg-zinc-950 text-xs text-zinc-400 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-          <span className="text-zinc-200 font-medium truncate max-w-[130px]">Editor Workspace</span>
+      {/* 2. User Profile Card & Switch / Logout */}
+      <div className="border-t border-zinc-850 bg-zinc-950 flex flex-col">
+        <div className="p-3 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className={`w-8 h-8 rounded-xl bg-gradient-to-br ${
+                activeUser === 'ani' ? 'from-rose-500 to-pink-600 shadow-rose-950/50' : 'from-purple-600 to-indigo-600 shadow-purple-950/50'
+              } flex items-center justify-center font-black text-xs text-white shadow-md shrink-0`}
+            >
+              {activeUser === 'ani' ? 'A' : 'G'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-white truncate">
+                  {activeUser === 'ani' ? 'ანი' : 'გიგი'}
+                </span>
+                <span
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold leading-none ${
+                    activeUser === 'ani'
+                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                      : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                  }`}
+                >
+                  {activeUser === 'ani' ? 'Ani' : 'Gigi'}
+                </span>
+              </div>
+              <p className="text-[10px] text-zinc-400 truncate">
+                {activeUser === 'ani' ? 'Personal Workspace' : 'Core Workspace'}
+              </p>
+            </div>
+          </div>
+
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              title="პროფილის შეცვლა / გამოსვლა"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition-all shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
-        <span className="text-zinc-500 text-[10px] font-mono uppercase font-bold tracking-wider">
-          Turso Cloud
-        </span>
+
+        {/* Cloud Sync Status */}
+        <div className="px-3 pb-2.5 pt-0.5 text-xs text-zinc-500 flex items-center justify-between border-t border-zinc-900/60">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]" />
+            <span className="text-[10px] text-zinc-400 font-medium">Turso Cloud Synced</span>
+          </div>
+          <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-600">v2.1</span>
+        </div>
       </div>
     </div>
   );

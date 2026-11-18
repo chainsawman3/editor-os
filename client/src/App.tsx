@@ -26,6 +26,9 @@ const EconomyPage = lazy(() => import('./pages/EconomyPage').then((m) => ({ defa
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [activeUser, setActiveUser] = useState<string>(() => {
+    return localStorage.getItem('flow_os_active_user') || 'gigi';
+  });
   const [currentTab, setCurrentTab] = useState<string>('content');
   const [selectedSection, setSelectedSection] = useState<SectionType>('video_editing');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -136,13 +139,24 @@ export function App() {
     }
   }, []);
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = (userId: string = 'gigi') => {
     try {
       localStorage.setItem('editor_os_auth', Date.now().toString());
+      localStorage.setItem('flow_os_active_user', userId);
+      setActiveUser(userId);
     } catch (e) {
       console.warn('LocalStorage save error:', e);
     }
     setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('editor_os_auth');
+    } catch (e) {
+      console.warn('LocalStorage remove error:', e);
+    }
+    setIsAuthenticated(false);
   };
 
   if (!isAuthenticated) {
@@ -349,6 +363,8 @@ export function App() {
         cycleTotalDays={cycleTotalDays}
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        activeUser={activeUser}
+        onLogout={handleLogout}
       />
 
       {/* 2. Main Workspace Layout */}
@@ -362,7 +378,7 @@ export function App() {
         />
 
         <main className="flex-1 overflow-y-auto bg-zinc-950/60 pb-24 md:pb-12">
-          <div key={currentTab + (selectedProjectId || '')} className="page-transition min-h-full">
+          <div key={activeUser + currentTab + (selectedProjectId || '')} className="page-transition min-h-full">
             <Suspense
               fallback={
                 <div className="flex items-center justify-center min-h-[50vh]">

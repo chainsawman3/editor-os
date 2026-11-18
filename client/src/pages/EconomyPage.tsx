@@ -57,34 +57,41 @@ const DEFAULT_LOANS: LoanItem[] = [
 ];
 
 export const EconomyPage: React.FC = () => {
+  const activeUser = typeof window !== 'undefined' ? (localStorage.getItem('flow_os_active_user') || 'gigi') : 'gigi';
+  const getKey = (base: string) => (activeUser === 'gigi' ? base : `${base}_${activeUser}`);
+
   // 1. Persistent State
   const [salary, setSalary] = useState<number>(() => {
-    const saved = localStorage.getItem('flow_os_salary');
-    return saved ? parseFloat(saved) : 2200;
+    const saved = localStorage.getItem(getKey('flow_os_salary'));
+    if (saved) return parseFloat(saved);
+    return activeUser === 'ani' ? 1800 : 2200;
   });
 
   const [currentBalance, setCurrentBalance] = useState<number>(() => {
-    const saved = localStorage.getItem('flow_os_current_balance');
-    return saved ? parseFloat(saved) : 600;
+    const saved = localStorage.getItem(getKey('flow_os_current_balance'));
+    if (saved) return parseFloat(saved);
+    return activeUser === 'ani' ? 500 : 600;
   });
 
   const [weekendBudget, setWeekendBudget] = useState<number>(() => {
-    const saved = localStorage.getItem('flow_os_weekend_budget');
-    return saved ? parseFloat(saved) : 40;
+    const saved = localStorage.getItem(getKey('flow_os_weekend_budget'));
+    if (saved) return parseFloat(saved);
+    return activeUser === 'ani' ? 50 : 40;
   });
 
   const [loans, setLoans] = useState<LoanItem[]>(() => {
     try {
-      const saved = localStorage.getItem('flow_os_loans');
-      return saved ? JSON.parse(saved) : DEFAULT_LOANS;
+      const saved = localStorage.getItem(getKey('flow_os_loans'));
+      if (saved) return JSON.parse(saved);
+      return activeUser === 'ani' ? [] : DEFAULT_LOANS;
     } catch {
-      return DEFAULT_LOANS;
+      return activeUser === 'ani' ? [] : DEFAULT_LOANS;
     }
   });
 
   const [weeklyLogs, setWeeklyLogs] = useState<WeeklyLogItem[]>(() => {
     try {
-      const saved = localStorage.getItem('flow_os_weekly_logs');
+      const saved = localStorage.getItem(getKey('flow_os_weekly_logs'));
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -120,24 +127,24 @@ export const EconomyPage: React.FC = () => {
 
   // Save to LocalStorage
   useEffect(() => {
-    localStorage.setItem('flow_os_salary', String(salary));
-  }, [salary]);
+    localStorage.setItem(getKey('flow_os_salary'), String(salary));
+  }, [salary, activeUser]);
 
   useEffect(() => {
-    localStorage.setItem('flow_os_current_balance', String(currentBalance));
-  }, [currentBalance]);
+    localStorage.setItem(getKey('flow_os_current_balance'), String(currentBalance));
+  }, [currentBalance, activeUser]);
 
   useEffect(() => {
-    localStorage.setItem('flow_os_weekend_budget', String(weekendBudget));
-  }, [weekendBudget]);
+    localStorage.setItem(getKey('flow_os_weekend_budget'), String(weekendBudget));
+  }, [weekendBudget, activeUser]);
 
   useEffect(() => {
-    localStorage.setItem('flow_os_loans', JSON.stringify(loans));
-  }, [loans]);
+    localStorage.setItem(getKey('flow_os_loans'), JSON.stringify(loans));
+  }, [loans, activeUser]);
 
   useEffect(() => {
-    localStorage.setItem('flow_os_weekly_logs', JSON.stringify(weeklyLogs));
-  }, [weeklyLogs]);
+    localStorage.setItem(getKey('flow_os_weekly_logs'), JSON.stringify(weeklyLogs));
+  }, [weeklyLogs, activeUser]);
 
   const toggleLoan = (id: string) => {
     setLoans((prev) =>
@@ -301,7 +308,7 @@ export const EconomyPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                გიგის ფინანსური მართვის სისტემა: მიმდინარე ბალანსზე ({currentBalance} ₾) მორგებული დღიური ლიმიტი, კვირის საღამოს ფაქტობრივი ხარჯის აღრიცხვა და შემდეგი კვირის ავტომატური კორექტირება.
+                {activeUser === 'ani' ? 'ანის' : 'გიგის'} ფინანსური მართვის სისტემა: მიმდინარე ბალანსზე ({currentBalance} ₾) მორგებული დღიური ლიმიტი, კვირის საღამოს ფაქტობრივი ხარჯის აღრიცხვა და შემდეგი კვირის ავტომატური კორექტირება.
               </p>
             </div>
           </div>

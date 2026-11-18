@@ -7,7 +7,9 @@ import {
   QuickIdea,
   NoteItem
 } from './types';
-import { initialDefaultDatabase, getLocalDb, saveLocalDb, getLocalSummary } from './clientDb';
+import { initialDefaultDatabase, getLocalDb, saveLocalDb, getLocalSummary, getActiveUserId } from './clientDb';
+
+export { getActiveUserId };
 
 const TURSO_URL =
   import.meta.env.VITE_TURSO_DATABASE_URL ||
@@ -200,6 +202,24 @@ export async function initTursoTables() {
     try {
       await queryTurso('ALTER TABLE tasks ADD COLUMN reminder_date TEXT;');
     } catch {}
+    try {
+      await queryTurso("ALTER TABLE goals ADD COLUMN user_id TEXT DEFAULT 'gigi';");
+    } catch {}
+    try {
+      await queryTurso("ALTER TABLE projects ADD COLUMN user_id TEXT DEFAULT 'gigi';");
+    } catch {}
+    try {
+      await queryTurso("ALTER TABLE tasks ADD COLUMN user_id TEXT DEFAULT 'gigi';");
+    } catch {}
+    try {
+      await queryTurso("ALTER TABLE clients ADD COLUMN user_id TEXT DEFAULT 'gigi';");
+    } catch {}
+    try {
+      await queryTurso("ALTER TABLE quick_ideas ADD COLUMN user_id TEXT DEFAULT 'gigi';");
+    } catch {}
+    try {
+      await queryTurso("ALTER TABLE notes ADD COLUMN user_id TEXT DEFAULT 'gigi';");
+    } catch {}
 
     isInitialized = true;
   } catch (err) {
@@ -233,15 +253,17 @@ function setCached<T>(key: string, data: T): T {
 // 2. High Level Turso Cloud API Operations
 export const tursoApi = {
   getSummary: async (): Promise<DashboardSummaryResponse> => {
-    const cached = getCached<DashboardSummaryResponse>('summary');
+    const user = getActiveUserId();
+    const cacheKey = `summary_${user}`;
+    const cached = getCached<DashboardSummaryResponse>(cacheKey);
     if (cached) return cached;
 
     try {
       await initTursoTables();
       const [goalsRows, projectsRows, tasksRows] = await Promise.all([
-        queryTurso('SELECT * FROM goals;'),
-        queryTurso('SELECT * FROM projects;'),
-        queryTurso('SELECT * FROM tasks;')
+        queryTurso("SELECT * FROM goals WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi'));", [user, user]),
+        queryTurso("SELECT * FROM projects WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi'));", [user, user]),
+        queryTurso("SELECT * FROM tasks WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi'));", [user, user])
       ]);
 
       const projects = Array.isArray(projectsRows) ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
@@ -318,22 +340,23 @@ export const tursoApi = {
         recentActivities: []
       };
 
-      return setCached('summary', summaryResult);
+      return setCached(cacheKey, summaryResult);
     } catch {
       return getLocalSummary();
     }
   },
 
   getGoals: async (section?: string): Promise<Goal[]> => {
-    const cacheKey = `goals_${section || 'all'}`;
+    const user = getActiveUserId();
+    const cacheKey = `goals_${user}_${section || 'all'}`;
     const cached = getCached<Goal[]>(cacheKey);
     if (cached) return cached;
 
     try {
       await initTursoTables();
       const rows = section
-        ? await queryTurso('SELECT * FROM goals WHERE section = ? ORDER BY created_at DESC;', [section])
-        : await queryTurso('SELECT * FROM goals ORDER BY created_at DESC;');
+        ? await queryTurso("SELECT * FROM goals WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) AND section = ? ORDER BY created_at DESC;", [user, user, section])
+        : await queryTurso("SELECT * FROM goals WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) ORDER BY created_at DESC;", [user, user]);
 
       if (Array.isArray(rows)) {
         const goals = rows.map(mapGoalRow);
@@ -349,6 +372,7 @@ export const tursoApi = {
   },
 
   createGoal: async (goalData: Partial<Goal>): Promise<Goal> => {
+    const user = getActiveUserId();
     const id = goalData.id || `goal_${Date.now()}`;
     const newGoal: Goal = {
       id,
@@ -370,10 +394,11 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `INSERT INTO goals (id, section, sub_section, title, description, target_date, priority, status, next_action, notes, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO goals (id, user_id, section, sub_section, title, description, target_date, priority, status, next_action, notes, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         newGoal.id,
+        user,
         newGoal.section || '',
         newGoal.sub_section || null,
         newGoal.title,
@@ -429,15 +454,16 @@ export const tursoApi = {
   },
 
   getProjects: async (section?: string): Promise<Project[]> => {
-    const cacheKey = `projects_${section || 'all'}`;
+    const user = getActiveUserId();
+    const cacheKey = `projects_${user}_${section || 'all'}`;
     const cached = getCached<Project[]>(cacheKey);
     if (cached) return cached;
 
     try {
       await initTursoTables();
       const rows = section
-        ? await queryTurso('SELECT * FROM projects WHERE section = ? ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at ASC;', [section])
-        : await queryTurso('SELECT * FROM projects ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at ASC;');
+        ? await queryTurso("SELECT * FROM projects WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) AND section = ? ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at ASC;", [user, user, section])
+        : await queryTurso("SELECT * FROM projects WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at ASC;", [user, user]);
 
       if (Array.isArray(rows)) {
         const projects = rows.map(mapProjectRow);
@@ -476,6 +502,7 @@ export const tursoApi = {
   },
 
   createProject: async (projData: Partial<Project>): Promise<Project> => {
+    const user = getActiveUserId();
     const id = projData.id || `proj_${Date.now()}`;
     const newProj: Project = {
       id,
@@ -502,10 +529,11 @@ export const tursoApi = {
     invalidateTursoCache();
     // 2. Await Cloud Turso Sync
     await queryTurso(
-      `INSERT INTO projects (id, goal_id, name, description, status, priority, deadline, section, sub_section, client_name, script_content, creative_ideas, references_json, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO projects (id, user_id, goal_id, name, description, status, priority, deadline, section, sub_section, client_name, script_content, creative_ideas, references_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         newProj.id,
+        user,
         newProj.goal_id || null,
         newProj.name,
         newProj.description || '',
@@ -571,15 +599,16 @@ export const tursoApi = {
   },
 
   getTasks: async (projectId?: string): Promise<Task[]> => {
-    const cacheKey = `tasks_${projectId || 'all'}`;
+    const user = getActiveUserId();
+    const cacheKey = `tasks_${user}_${projectId || 'all'}`;
     const cached = getCached<Task[]>(cacheKey);
     if (cached) return cached;
 
     try {
       await initTursoTables();
       const rows = projectId
-        ? await queryTurso('SELECT * FROM tasks WHERE project_id = ? ORDER BY order_index ASC, created_at ASC;', [projectId])
-        : await queryTurso('SELECT * FROM tasks ORDER BY created_at DESC;');
+        ? await queryTurso("SELECT * FROM tasks WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) AND project_id = ? ORDER BY order_index ASC, created_at ASC;", [user, user, projectId])
+        : await queryTurso("SELECT * FROM tasks WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) ORDER BY created_at DESC;", [user, user]);
 
       if (Array.isArray(rows)) {
         const tasks = rows.map(mapTaskRow);
@@ -595,6 +624,7 @@ export const tursoApi = {
   },
 
   createTask: async (taskData: Partial<Task>): Promise<Task> => {
+    const user = getActiveUserId();
     const id = taskData.id || `task_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const newTask: Task = {
       id,
@@ -619,10 +649,11 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `INSERT INTO tasks (id, project_id, title, due_date, due_time, priority, description, reminder_type, reminder_time, reminder_date, completed, stage, order_index, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO tasks (id, user_id, project_id, title, due_date, due_time, priority, description, reminder_type, reminder_time, reminder_date, completed, stage, order_index, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         newTask.id,
+        user,
         newTask.project_id || null,
         newTask.title,
         newTask.due_date || '',
@@ -684,26 +715,29 @@ export const tursoApi = {
   },
 
   getClients: async (): Promise<Client[]> => {
-    const cached = getCached<Client[]>('clients');
+    const user = getActiveUserId();
+    const cacheKey = `clients_${user}`;
+    const cached = getCached<Client[]>(cacheKey);
     if (cached) return cached;
 
     try {
       await initTursoTables();
-      const rows = await queryTurso('SELECT * FROM clients ORDER BY created_at DESC;');
+      const rows = await queryTurso("SELECT * FROM clients WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) ORDER BY created_at DESC;", [user, user]);
       if (Array.isArray(rows)) {
         const clients = rows.map(mapClientRow);
         const db = getLocalDb();
         db.clients = clients;
         saveLocalDb(db);
-        return setCached('clients', clients);
+        return setCached(cacheKey, clients);
       }
-      return setCached('clients', getLocalDb().clients);
+      return setCached(cacheKey, getLocalDb().clients);
     } catch {
       return getLocalDb().clients;
     }
   },
 
   createClient: async (clientData: Partial<Client>): Promise<Client> => {
+    const user = getActiveUserId();
     const id = clientData.id || `client_${Date.now()}`;
     const newClient: Client = {
       id,
@@ -723,10 +757,11 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `INSERT INTO clients (id, name, status, priority, deadline, revenue, linked_project_id, notes, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO clients (id, user_id, name, status, priority, deadline, revenue, linked_project_id, notes, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         newClient.id,
+        user,
         newClient.name,
         newClient.status || 'Contacted',
         newClient.priority || 'Medium',
@@ -778,23 +813,26 @@ export const tursoApi = {
   },
 
   getQuickIdeas: async (): Promise<QuickIdea[]> => {
-    const cached = getCached<QuickIdea[]>('quick_ideas');
+    const user = getActiveUserId();
+    const cacheKey = `quick_ideas_${user}`;
+    const cached = getCached<QuickIdea[]>(cacheKey);
     if (cached) return cached;
 
     try {
       await initTursoTables();
-      const rows = await queryTurso('SELECT * FROM quick_ideas ORDER BY created_at DESC;');
+      const rows = await queryTurso("SELECT * FROM quick_ideas WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) ORDER BY created_at DESC;", [user, user]);
       if (Array.isArray(rows)) {
         const ideas = rows.map(mapQuickIdeaRow);
-        return setCached('quick_ideas', ideas);
+        return setCached(cacheKey, ideas);
       }
-      return setCached('quick_ideas', getLocalDb().quick_ideas);
+      return setCached(cacheKey, getLocalDb().quick_ideas);
     } catch {
       return getLocalDb().quick_ideas;
     }
   },
 
   createQuickIdea: async (text: string, category?: string): Promise<QuickIdea> => {
+    const user = getActiveUserId();
     const id = `idea_${Date.now()}`;
     const newIdea: QuickIdea = {
       id,
@@ -811,8 +849,8 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `INSERT INTO quick_ideas (id, text, target_category, triaged, created_at) VALUES (?, ?, ?, ?, ?);`,
-      [newIdea.id, newIdea.text, newIdea.target_category || 'General', 0, newIdea.created_at]
+      `INSERT INTO quick_ideas (id, user_id, text, target_category, triaged, created_at) VALUES (?, ?, ?, ?, ?, ?);`,
+      [newIdea.id, user, newIdea.text, newIdea.target_category || 'General', 0, newIdea.created_at]
     );
 
     return newIdea;
@@ -829,18 +867,20 @@ export const tursoApi = {
 
   // Notes & Daily Scratchpad (Completely isolated from analytics)
   getNotes: async (): Promise<NoteItem[]> => {
-    const cached = getCached<NoteItem[]>('notes');
+    const user = getActiveUserId();
+    const cacheKey = `notes_${user}`;
+    const cached = getCached<NoteItem[]>(cacheKey);
     if (cached) return cached;
 
     try {
       await initTursoTables();
-      const rows = await queryTurso('SELECT * FROM notes ORDER BY is_pinned DESC, updated_at DESC;');
+      const rows = await queryTurso("SELECT * FROM notes WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi')) ORDER BY is_pinned DESC, updated_at DESC;", [user, user]);
       if (Array.isArray(rows)) {
         const notes = rows.map(mapNoteRow);
-        return setCached('notes', notes);
+        return setCached(cacheKey, notes);
       }
       const localNotes = getLocalDb().notes || [];
-      return setCached('notes', localNotes);
+      return setCached(cacheKey, localNotes);
     } catch {
       return getLocalDb().notes || [];
     }
@@ -852,6 +892,7 @@ export const tursoApi = {
   },
 
   createNote: async (noteData: Partial<NoteItem>): Promise<NoteItem> => {
+    const user = getActiveUserId();
     const id = noteData.id || `note_${Date.now()}`;
     const newNote: NoteItem = {
       id,
@@ -873,10 +914,11 @@ export const tursoApi = {
 
     invalidateTursoCache();
     await queryTurso(
-      `INSERT INTO notes (id, title, folder, content, tags, is_pinned, pinned_at, date, color, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO notes (id, user_id, title, folder, content, tags, is_pinned, pinned_at, date, color, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         newNote.id,
+        user,
         newNote.title,
         newNote.folder || 'Daily Scratchpad',
         newNote.content,
@@ -937,15 +979,17 @@ export const tursoApi = {
   },
 
   getAnalytics: async () => {
-    const cached = getCached<any>('analytics');
+    const user = getActiveUserId();
+    const cacheKey = `analytics_${user}`;
+    const cached = getCached<any>(cacheKey);
     if (cached) return cached;
 
     try {
       await initTursoTables();
       const [projectsRows, tasksRows, clientsRows] = await Promise.all([
-        queryTurso('SELECT * FROM projects;'),
-        queryTurso('SELECT * FROM tasks;'),
-        queryTurso('SELECT * FROM clients;')
+        queryTurso("SELECT * FROM projects WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi'));", [user, user]),
+        queryTurso("SELECT * FROM tasks WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi'));", [user, user]),
+        queryTurso("SELECT * FROM clients WHERE (user_id = ? OR (user_id IS NULL AND ? = 'gigi'));", [user, user])
       ]);
 
       const projects = Array.isArray(projectsRows) ? projectsRows.map(mapProjectRow) : getLocalDb().projects;
@@ -1114,7 +1158,7 @@ export const tursoApi = {
         }
       };
 
-      return setCached('analytics', analyticsResult);
+      return setCached(cacheKey, analyticsResult);
     } catch {
       return getLocalDb();
     }

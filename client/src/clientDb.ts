@@ -42,6 +42,16 @@ export interface LocalDatabaseSchema {
 
 const STORAGE_KEY = 'editor_os_local_db_v3';
 
+export function getActiveUserId(): string {
+  if (typeof window === 'undefined') return 'gigi';
+  return localStorage.getItem('flow_os_active_user') || 'gigi';
+}
+
+export function getStorageKey(): string {
+  const user = getActiveUserId();
+  return user === 'gigi' ? 'editor_os_local_db_v3' : `editor_os_local_db_v3_${user}`;
+}
+
 const today = new Date();
 const todayStr = today.toISOString().split('T')[0];
 const in3DaysStr = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
@@ -187,15 +197,47 @@ export const initialDefaultDatabase: LocalDatabaseSchema = {
   ]
 };
 
+export const emptyUserDatabase: LocalDatabaseSchema = {
+  settings: [
+    {
+      id: 1,
+      cycle_start_date: todayStr,
+      cycle_duration_days: 90,
+      streak_days: 1,
+      user_name: 'ანი',
+      created_at: new Date().toISOString()
+    }
+  ],
+  categories: [],
+  goals: [],
+  projects: [],
+  tasks: [],
+  clients: [],
+  quick_ideas: [],
+  blockers: [],
+  time_logs: [],
+  before_after_entries: [],
+  content_items: [],
+  development_logs: [],
+  knowledge_entries: [],
+  reference_items: [],
+  wins: [],
+  reports: [],
+  comments: [],
+  notes: []
+};
+
 export function getLocalDb(): LocalDatabaseSchema {
   if (typeof window === 'undefined') return initialDefaultDatabase;
+  const user = getActiveUserId();
+  const key = getStorageKey();
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.projects && parsed.goals) {
         if (!parsed.notes || !Array.isArray(parsed.notes)) {
-          parsed.notes = initialDefaultDatabase.notes;
+          parsed.notes = user === 'ani' ? [] : initialDefaultDatabase.notes;
         }
         return parsed;
       }
@@ -203,14 +245,15 @@ export function getLocalDb(): LocalDatabaseSchema {
   } catch (e) {
     console.error('Error reading localStorage DB:', e);
   }
-  saveLocalDb(initialDefaultDatabase);
-  return initialDefaultDatabase;
+  const defaultDb = user === 'ani' ? emptyUserDatabase : initialDefaultDatabase;
+  saveLocalDb(defaultDb);
+  return defaultDb;
 }
 
 export function saveLocalDb(data: LocalDatabaseSchema) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(getStorageKey(), JSON.stringify(data));
   } catch (e) {
     console.error('Error saving to localStorage:', e);
   }
