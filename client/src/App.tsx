@@ -354,7 +354,7 @@ export function App() {
       {/* 2. Main Workspace Layout */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <Header
-          title={currentTab.replace('_', ' ').toUpperCase()}
+          title={currentTab === 'economy' ? 'BUDGET' : currentTab.replace('_', ' ').toUpperCase()}
           cycleDay={cycleDay}
           streakDays={12}
           onOpenQuickCapture={() => setIsQuickCaptureOpen(true)}
