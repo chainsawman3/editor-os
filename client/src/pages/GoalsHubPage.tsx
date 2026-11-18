@@ -308,8 +308,6 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
 
   // Filtered Goals & Projects logic
   const filteredGoals = goals.filter((g) => {
-    if (g.section !== activeSection) return false;
-    if (activeSection === 'marketing' && marketingPlatform !== 'all' && g.sub_section !== marketingPlatform) return false;
     if (priorityFilter !== 'all' && g.priority !== priorityFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -319,9 +317,6 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
   });
 
   const filteredProjects = projects.filter((p) => {
-    if (p.section !== activeSection) return false;
-    if (activeSection === 'marketing' && marketingPlatform !== 'all' && p.sub_section !== marketingPlatform) return false;
-    
     // Status Filter
     if (statusFilter !== 'all') {
       if (statusFilter === 'Done' || statusFilter === 'Ready / Done' || statusFilter === 'Ready') {
@@ -400,9 +395,9 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
 
   return (
     <div className="p-3 sm:p-6 space-y-3.5 sm:space-y-6 max-w-7xl mx-auto font-sans">
-      {/* 1. TOP HEADER & SUB-SECTION TABS */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-sm space-y-3.5 sm:space-y-5 font-sans">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-zinc-850 pb-3.5 sm:pb-5">
+      {/* 1. TOP HEADER */}
+      <div className="bg-zinc-950 border border-zinc-800 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-sm font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <span className="p-2 sm:p-2.5 rounded-xl bg-purple-950/50 border border-purple-800/60 text-purple-400 shadow-inner shrink-0">
               <Target className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -410,144 +405,28 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
             <div>
               <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">Goals & Objectives Hub</h1>
               <p className="text-xs text-zinc-400 font-medium mt-0.5 hidden sm:block">
-                Define high-level objectives, link production projects, and manage client pipeline
+                Define high-level objectives and link production projects
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            {activeSection !== 'freelance' && (
-              <>
-                <button
-                  onClick={() => setShowGoalModal(true)}
-                  className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>New Goal</span>
-                </button>
-                <button
-                  onClick={() => setShowProjectModal(true)}
-                  className="flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-900/20 shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>New Project</span>
-                </button>
-              </>
-            )}
-            {activeSection === 'freelance' && (
-              <button
-                onClick={() => setShowClientModal(true)}
-                className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-900/20"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Client / Lead</span>
-              </button>
-            )}
+            <button
+              onClick={() => setShowGoalModal(true)}
+              className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 text-zinc-400" />
+              <span>New Goal</span>
+            </button>
+            <button
+              onClick={() => setShowProjectModal(true)}
+              className="flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-900/20 shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Project</span>
+            </button>
           </div>
         </div>
-
-        {/* 4 PRIMARY SUB-SECTION SWITCHER */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-          <button
-            onClick={() => {
-              setActiveSection('video_editing');
-              resetFilters();
-            }}
-            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center gap-2.5 sm:gap-3 ${
-              activeSection === 'video_editing'
-                ? 'bg-zinc-900 border-blue-500/50 text-white shadow-md ring-1 ring-blue-500/20'
-                : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'video_editing' ? 'bg-blue-950/80 border-blue-800 text-blue-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
-              <Layers className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Core Projects</div>
-              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Key Objectives & Deliverables</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveSection('marketing');
-              resetFilters();
-            }}
-            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center gap-2.5 sm:gap-3 ${
-              activeSection === 'marketing'
-                ? 'bg-zinc-900 border-emerald-500/50 text-white shadow-md ring-1 ring-emerald-500/20'
-                : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'marketing' ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
-              <Megaphone className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Marketing & Growth</div>
-              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Outreach, Social & Brand</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveSection('freelance');
-              resetClientFilters();
-            }}
-            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center gap-2.5 sm:gap-3 ${
-              activeSection === 'freelance'
-                ? 'bg-zinc-900 border-purple-500/50 text-white shadow-md ring-1 ring-purple-500/20'
-                : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'freelance' ? 'bg-purple-950/80 border-purple-800 text-purple-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
-              <Briefcase className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Clients & CRM</div>
-              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Partners, Leads & Pipeline</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveSection('skills');
-              resetFilters();
-            }}
-            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center gap-2.5 sm:gap-3 ${
-              activeSection === 'skills'
-                ? 'bg-zinc-900 border-amber-500/50 text-white shadow-md ring-1 ring-amber-500/20'
-                : 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <div className={`p-1.5 sm:p-2 rounded-lg border shrink-0 ${activeSection === 'skills' ? 'bg-amber-950/80 border-amber-800 text-amber-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
-              <GraduationCap className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] sm:text-xs font-bold text-zinc-100 truncate">Skills & Learning</div>
-              <div className="text-[10px] sm:text-[11px] text-zinc-400 font-normal truncate">Education & Growth</div>
-            </div>
-          </button>
-        </div>
-
-        {/* MARKETING PLATFORMS SUB-PILLS */}
-        {activeSection === 'marketing' && (
-          <div className="flex items-center gap-1.5 pt-3 border-t border-zinc-850 overflow-x-auto scrollbar-none">
-            <span className="text-[10px] sm:text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mr-1 shrink-0">Platforms:</span>
-            {(['all', 'instagram', 'tiktok', 'youtube', 'linkedin', 'fiverr'] as const).map((plat) => (
-              <button
-                key={plat}
-                onClick={() => setMarketingPlatform(plat)}
-                className={`px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs rounded-lg uppercase font-semibold transition-all shrink-0 ${
-                  marketingPlatform === plat
-                    ? 'bg-emerald-950/80 border border-emerald-700 text-emerald-300 shadow-sm'
-                    : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
-                }`}
-              >
-                {plat}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* 2. DYNAMIC FILTER & VIEW TOOLBAR (FOR NON-FREELANCE SECTIONS) */}
@@ -1289,7 +1168,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
                   className="w-full p-2.5 bg-zinc-900 border border-zinc-750 rounded-xl text-zinc-100 outline-none"
                 >
                   <option value="">-- No Linked Goal (Independent Project) --</option>
-                  {goals.filter(g => g.section === activeSection).map((g) => (
+                  {goals.map((g) => (
                     <option key={g.id} value={g.id}>
                       🎯 {g.title}
                     </option>

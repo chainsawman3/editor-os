@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   FolderKanban,
   Target,
@@ -8,12 +8,6 @@ import {
   Settings,
   Flame,
   Sparkles,
-  Layers,
-  Megaphone,
-  Briefcase,
-  GraduationCap,
-  ChevronDown,
-  ChevronRight,
   Clock,
   StickyNote,
   CheckSquare,
@@ -46,21 +40,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeUser = 'gigi',
   onLogout
 }) => {
-  const [isGoalsExpanded, setIsGoalsExpanded] = useState(true);
-
   const handleTabClick = (tab: string, section?: string) => {
     onSelectTab(tab, section);
     if (onCloseMobile) {
       onCloseMobile();
     }
   };
-
-  const goalSubSections = [
-    { id: 'video_editing', label: 'Core Projects', icon: Layers },
-    { id: 'marketing', label: 'Marketing & Growth', icon: Megaphone },
-    { id: 'freelance', label: 'Clients & CRM', icon: Briefcase },
-    { id: 'skills', label: 'Skills & Learning', icon: GraduationCap }
-  ];
 
   const isContentActive = currentTab === 'content' || currentTab === 'dashboard';
 
@@ -150,60 +135,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Projects Pipeline</span>
           </button>
 
-          {/* Goals Hub (Expandable) */}
-          <div className="space-y-0.5 pt-1">
-            <div
-              onClick={() => {
-                handleTabClick('goals');
-                setIsGoalsExpanded(!isGoalsExpanded);
-              }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer font-medium ${
-                currentTab.startsWith('goal')
-                  ? 'bg-zinc-850 text-white font-semibold border border-zinc-750 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Target className={`w-4 h-4 ${currentTab.startsWith('goal') ? 'text-purple-400' : 'text-zinc-400'}`} />
-                <span>Goals Hub</span>
-              </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsGoalsExpanded(!isGoalsExpanded);
-                }}
-                className="p-1 text-zinc-500 hover:text-zinc-300"
-              >
-                {isGoalsExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-
-            {/* Sub-sections inside Goals */}
-            {isGoalsExpanded && (
-              <div className="pl-4 pr-1 py-1 space-y-0.5 border-l border-zinc-850 ml-4.5">
-                {goalSubSections.map((sub) => {
-                  const isSubActive =
-                    currentTab === `goal_${sub.id}` || (currentTab === 'goals' && sub.id === 'video_editing');
-                  const Icon = sub.icon;
-                  return (
-                    <button
-                      key={sub.id}
-                      onClick={() => handleTabClick(`goal_${sub.id}`, sub.id)}
-                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left font-medium ${
-                        isSubActive
-                          ? 'bg-zinc-800/90 text-zinc-100 font-semibold'
-                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
-                      }`}
-                    >
-                      <Icon className={`w-3.5 h-3.5 ${isSubActive ? 'text-purple-400' : 'text-zinc-500'}`} />
-                      <span>{sub.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          {/* Goals Hub */}
+          <button
+            onClick={() => handleTabClick('goals')}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors font-medium ${
+              currentTab.startsWith('goal')
+                ? 'bg-purple-600/15 border border-purple-500/40 text-purple-300 font-semibold shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border border-transparent'
+            }`}
+          >
+            <Target className={`w-4 h-4 ${currentTab.startsWith('goal') ? 'text-purple-400' : 'text-zinc-400'}`} />
+            <span>Goals Hub</span>
+          </button>
 
           {/* Tasks & Standalone Deadlines */}
           <button
