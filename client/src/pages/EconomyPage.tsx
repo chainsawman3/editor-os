@@ -22,7 +22,10 @@ import {
   Save,
   Check,
   History,
-  Info
+  Info,
+  CalendarDays,
+  Flame,
+  BadgeAlert
 } from 'lucide-react';
 
 interface LoanItem {
@@ -142,7 +145,7 @@ export const EconomyPage: React.FC = () => {
     );
   };
 
-  // Full Month (5th to 5th) Calculations
+  // Full Month (5th to 5th) Reference Calculations
   const totalLoans = loans.reduce((acc, l) => acc + l.amount, 0); // 513 ₾
   const totalFixedCosts = rent + utilities + totalLoans; // 1,073 ₾
   const remainingAfterFixed = Math.max(0, salary - totalFixedCosts); // 1,127 ₾
@@ -155,15 +158,71 @@ export const EconomyPage: React.FC = () => {
 
   const dailyFoodBudget = (monthlyFoodBudget / 30).toFixed(2); // ~25.23 ₾
   const weeklyFoodBudget = (parseFloat(dailyFoodBudget) * 7).toFixed(0); // ~176 ₾
-  const standardWeeklyTarget = (parseFloat(dailyFoodBudget) * 7 + cigaretteDaily * 7 + weekendBudget).toFixed(0); // ~265 ₾
 
-  // Live Recalculation for remaining days until 5th based on currentBalance
+  // ==========================================
+  // DYNAMIC RE-CALCULATION FOR REMAINING DAYS
+  // Dependent on REAL currentBalance (e.g. 600 ₾) & daysUntilNext5th (e.g. 17 days)
+  // ==========================================
   const remainingWeekends = Math.max(1, Math.ceil(daysUntilNext5th / 7));
-  const remainingCigarettesCost = cigaretteDaily * daysUntilNext5th;
-  const remainingWeekendCost = weekendBudget * remainingWeekends;
-  const liveFoodBudget = Math.max(0, currentBalance - remainingCigarettesCost - remainingWeekendCost);
-  const liveDailyFood = (liveFoodBudget / daysUntilNext5th).toFixed(2);
-  const liveWeeklyFood = (parseFloat(liveDailyFood) * 7).toFixed(0);
+  const remainingCigarettesCost = cigaretteDaily * daysUntilNext5th; // 17 x 7 = 119 ₾
+  const remainingWeekendCost = weekendBudget * remainingWeekends; // 2 x 40 = 80 ₾
+  const liveFoodBudget = Math.max(0, currentBalance - remainingCigarettesCost - remainingWeekendCost); // 401 ₾
+  const liveDailyFoodNum = parseFloat((liveFoodBudget / daysUntilNext5th).toFixed(2)); // ~23.59 ₾
+
+  // Calculate current week's dates (Monday to Sunday)
+  const getWeekDates = () => {
+    const now = new Date();
+    const currentDay = now.getDay(); // 0 is Sun, 1 is Mon...
+    const distanceToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + distanceToMonday);
+
+    const days = [];
+    const dayNames = ['ორშაბათი', 'სამშაბათი', 'ოთხშაბათი', 'ხუთშაბათი', 'პარასკევი', 'შაბათი', 'კვირა'];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const isToday = d.toDateString() === now.toDateString();
+      const isPast = !isToday && d.getTime() < new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const isWeekend = i >= 5;
+
+      // Planned spending for this specific day
+      const foodPart = liveDailyFoodNum;
+      const cigPart = cigaretteDaily;
+      const funPart = isWeekend ? weekendBudget / 2 : 0;
+      const dayTotal = parseFloat((foodPart + cigPart + funPart).toFixed(2));
+
+      days.push({
+        name: dayNames[i],
+        dateStr: d.toLocaleDateString('ka-GE', { month: 'short', day: 'numeric' }),
+        rawDate: d,
+        dayNumber: i + 1, // 1 to 7
+        isToday,
+        isPast,
+        isWeekend,
+        foodPart,
+        cigPart,
+        funPart,
+        dayTotal
+      });
+    }
+    return days;
+  };
+
+  const weekSchedule = getWeekDates();
+  const todayItem = weekSchedule.find((d) => d.isToday) || weekSchedule[2];
+
+  // How much should be spent in THIS CURRENT WEEK from today until Sunday
+  const daysLeftInThisWeek = weekSchedule.filter((d) => !d.isPast);
+  const thisWeekRemainingSpendTarget = daysLeftInThisWeek
+    .reduce((acc, d) => acc + d.dayTotal, 0)
+    .toFixed(0);
+
+  // Full 7-day week target
+  const fullWeekSpendTarget = weekSchedule
+    .reduce((acc, d) => acc + d.dayTotal, 0)
+    .toFixed(0);
 
   // Sunday Check-in Handler
   const handleSundayCheckIn = (e: React.FormEvent) => {
@@ -174,7 +233,7 @@ export const EconomyPage: React.FC = () => {
       return;
     }
 
-    const planned = parseFloat(standardWeeklyTarget);
+    const planned = parseFloat(thisWeekRemainingSpendTarget);
     const diff = planned - spent; // Positive means saved, negative means overspent
     const newBalance = Math.max(0, currentBalance - spent);
 
@@ -197,13 +256,14 @@ export const EconomyPage: React.FC = () => {
     setInputActualSpent('');
     setInputNote('');
 
+    // Recompute feedback
     if (diff >= 0) {
-      setLogSuccessMsg(`🎉 შესანიშნავია! დაზოგილია ${diff.toFixed(0)} ₾. ბიუჯეტი წარმატებით გადაითვალა!`);
+      setLogSuccessMsg(`🎉 შესანიშნავია! დაზოგე ${diff.toFixed(0)} ₾. შემდეგი კვირის დღიური საკვების ლიმიტი გაიზარდა! დარჩენილი ბალანსი: ${newBalance} ₾.`);
     } else {
-      setLogSuccessMsg(`⚠️ დაფიქსირდა ${Math.abs(diff).toFixed(0)} ₾ გადახარჯვა. დარჩენილი დღეების ლიმიტი დაკორექტირდა.`);
+      setLogSuccessMsg(`⚠️ გადახარჯვა: -${Math.abs(diff).toFixed(0)} ₾. სისტემამ შემდეგი კვირის დღიური ლიმიტი დაკორექტირა, რომ 5 რიცხვამდე უპრობლემოდ მიხვიდე! დარჩენილი ბალანსი: ${newBalance} ₾.`);
     }
 
-    setTimeout(() => setLogSuccessMsg(null), 6000);
+    setTimeout(() => setLogSuccessMsg(null), 8000);
   };
 
   const removeWeeklyLog = (logId: string) => {
@@ -230,23 +290,23 @@ export const EconomyPage: React.FC = () => {
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                  ეკონომიკის კონტროლი & ბიუჯეტი
+                  Budget & Expense Control
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-700/60 text-[11px] font-semibold text-amber-300">
                   ხელფასი 5 რიცხვში
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-[11px] font-semibold text-emerald-300 flex items-center gap-1">
                   <RefreshCw className="w-3 h-3" />
-                  კვირის საღამოს გადათვლა
+                  დინამიური გადათვლა
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                გიგის პერსონალური ფინანსური მართვა: სესხები (513 ₾), ქირა, კომუნალურები, სიგარეტი (7 ₾/დღე), კვირის საღამოს ფაქტობრივი ხარჯების აღრიცხვა და ბიუჯეტის დინამიური გადათვლა.
+                გიგის ფინანსური მართვის სისტემა: მიმდინარე ბალანსზე ({currentBalance} ₾) მორგებული დღიური ლიმიტი, კვირის საღამოს ფაქტობრივი ხარჯის აღრიცხვა და შემდეგი კვირის ავტომატური კორექტირება.
               </p>
             </div>
           </div>
 
-          {/* Current Remaining Capsule */}
+          {/* Current Remaining Balance Capsule (Directly Editable) */}
           <div className="flex items-center gap-3 bg-zinc-900/90 p-3 sm:p-3.5 rounded-xl border border-zinc-800 shrink-0">
             <div>
               <span className="text-[11px] text-zinc-400 font-medium block">
@@ -270,45 +330,175 @@ export const EconomyPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 Quick Stat Pills */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-          <div className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
-            <span className="text-[11px] text-zinc-500 font-medium block">სესხები (7 ცალი)</span>
-            <div className="text-base sm:text-lg font-bold font-mono text-rose-400">
-              {totalLoans} ₾
+        {/* 4 PROMINENT METRICS (Reflecting exact 600 GEL status) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+          {/* Today's Spend Limit */}
+          <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-950/30 to-zinc-900 border border-amber-500/50 space-y-1 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-amber-300 font-bold uppercase tracking-wider">
+                👉 დღეს დასახარჯი (დღეს)
+              </span>
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             </div>
+            <div className="text-xl sm:text-2xl font-black font-mono text-amber-400">
+              ~{todayItem.dayTotal.toFixed(2)} ₾
+            </div>
+            <span className="text-[10px] text-zinc-400 block">
+              საკვები {todayItem.foodPart} ₾ + სიგარეტი {todayItem.cigPart} ₾ {todayItem.funPart > 0 ? `+ გართობა ${todayItem.funPart} ₾` : ''}
+            </span>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
-            <span className="text-[11px] text-zinc-500 font-medium block">ქირა + კომუნალური</span>
-            <div className="text-base sm:text-lg font-bold font-mono text-purple-400">
-              {rent + utilities} ₾
+
+          {/* This Week Spend Target */}
+          <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-cyan-800/40 space-y-1">
+            <span className="text-[11px] text-cyan-400 font-semibold uppercase tracking-wider block">
+              ამ კვირაში დასახარჯი
+            </span>
+            <div className="text-xl sm:text-2xl font-black font-mono text-cyan-300">
+              ~{thisWeekRemainingSpendTarget} ₾
             </div>
+            <span className="text-[10px] text-zinc-500 block">
+              კვირის საღამომდე (დარჩენილ {daysLeftInThisWeek.length} დღეზე)
+            </span>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
-            <span className="text-[11px] text-zinc-500 font-medium block">სიგარეტი (7 ₾/დღე)</span>
-            <div className="text-base sm:text-lg font-bold font-mono text-amber-400">
-              {monthlyCigarettes} ₾ <span className="text-[10px] text-zinc-500 font-normal">/თვე</span>
+
+          {/* Daily Clean Food Budget */}
+          <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
+            <span className="text-[11px] text-zinc-400 font-medium block">
+              დღიური საკვების ლიმიტი
+            </span>
+            <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">
+              ~{liveDailyFoodNum.toFixed(2)} ₾
             </div>
+            <span className="text-[10px] text-zinc-500 block">
+              600 ₾-ის 17 დღეზე გაყოფით
+            </span>
           </div>
-          <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-800/40 space-y-1">
-            <span className="text-[11px] text-emerald-400 font-medium block">დღიური საკვების ლიმიტი</span>
-            <div className="text-base sm:text-lg font-bold font-mono text-emerald-300">
-              ~{liveDailyFood} ₾ <span className="text-[10px] text-emerald-400 font-normal">/დღე</span>
+
+          {/* Loans & Fixed Deductions */}
+          <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
+            <span className="text-[11px] text-zinc-400 font-medium block">
+              სესხები & ქირა (ამ თვეში)
+            </span>
+            <div className="text-xl sm:text-2xl font-bold font-mono text-purple-400">
+              გადახდილია ✅
             </div>
+            <span className="text-[10px] text-zinc-500 block">
+              სესხები (513 ₾) + ქირა (500 ₾)
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 2. SUNDAY EVENING EXPENSE CHECK-IN & RE-CALCULATION WIDGET */}
+      {/* 2. DYNAMIC 7-DAY WEEKLY SCHEDULE (TODAY HIGHLIGHTED & SPEND LIMITS) */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
+              მიმდინარე კვირის განრიგი (ორშაბათი – კვირა)
+            </h2>
+          </div>
+          <span className="text-xs text-zinc-400">
+            დღეს არის <strong className="text-amber-400 font-bold">{todayItem.name} ({todayItem.dateStr})</strong> · ლიმიტი: <strong className="text-emerald-400 font-mono font-bold">~{todayItem.dayTotal.toFixed(2)} ₾</strong>
+          </span>
+        </div>
+
+        {/* 7 Columns on Desktop: Every day has its own clean card */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3">
+          {weekSchedule.map((day) => {
+            return (
+              <div
+                key={day.name}
+                className={`relative rounded-2xl p-3.5 sm:p-4 border transition-all flex flex-col justify-between select-none ${
+                  day.isToday
+                    ? 'bg-gradient-to-b from-amber-950/40 via-zinc-900 to-zinc-950 border-amber-500 ring-2 ring-amber-500/50 shadow-xl shadow-amber-950/50'
+                    : day.isPast
+                    ? 'bg-zinc-950/40 border-zinc-850/60 opacity-60'
+                    : day.isWeekend
+                    ? 'bg-zinc-950 border-cyan-800/40 hover:border-cyan-600/70 hover:bg-zinc-900'
+                    : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'
+                }`}
+              >
+                <div>
+                  {/* Card Header: Day pill + Today Badge */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                        day.isToday
+                          ? 'bg-amber-500 text-black shadow-sm'
+                          : day.isWeekend
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                          : 'bg-zinc-800 text-zinc-300'
+                      }`}
+                    >
+                      {day.name}
+                    </span>
+
+                    {day.isToday && (
+                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 animate-pulse">
+                        დღეს ⭐
+                      </span>
+                    )}
+
+                    {day.isPast && (
+                      <span className="text-[10px] font-medium text-zinc-500">
+                        გასული
+                      </span>
+                    )}
+                  </div>
+
+                  <span className="text-[10px] font-mono text-zinc-500 block mb-2">
+                    {day.dateStr}
+                  </span>
+
+                  {/* Spend Target for this day */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-zinc-400 block font-medium">
+                      {day.isPast ? 'დაგეგმილი იყო:' : day.isToday ? '👉 დღეს დასახარჯი:' : 'დასახარჯი:'}
+                    </span>
+                    <div
+                      className={`text-xl font-black font-mono tracking-tight ${
+                        day.isToday ? 'text-amber-400 text-2xl' : day.isPast ? 'text-zinc-500' : 'text-white'
+                      }`}
+                    >
+                      {day.dayTotal.toFixed(0)} <span className="text-xs font-normal text-zinc-400 font-mono">₾</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Day Cost Breakdown Sub-tags */}
+                <div className="mt-3 pt-2.5 border-t border-zinc-850/80 space-y-1 text-[10px] text-zinc-400">
+                  <div className="flex justify-between">
+                    <span>საკვები:</span>
+                    <span className="font-mono text-zinc-300">{day.foodPart.toFixed(0)} ₾</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>სიგარეტი:</span>
+                    <span className="font-mono text-zinc-300">{day.cigPart} ₾</span>
+                  </div>
+                  {day.funPart > 0 && (
+                    <div className="flex justify-between text-cyan-400 font-bold">
+                      <span>გართობა:</span>
+                      <span className="font-mono">{day.funPart} ₾</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. SUNDAY EVENING EXPENSE CHECK-IN & RE-CALCULATION WIDGET */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-amber-950/20 border border-amber-600/40 p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 shrink-0">
-              <Calendar className="w-5 h-5" />
+              <RefreshCw className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider block">
-                კვირის საღამოს აღრიცხვა & გადათვლა
+                კვირის საღამოს შეჯამება & გადათვლა
               </span>
               <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                 რამდენი დახარჯე ამ კვირაში?
@@ -319,14 +509,14 @@ export const EconomyPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="text-xs text-zinc-400">კვირის გეგმიური ლიმიტი:</span>
             <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700">
-              ~{standardWeeklyTarget} ₾
+              ~{thisWeekRemainingSpendTarget} ₾ (დარჩენილ დღეებზე)
             </span>
           </div>
         </div>
 
         {logSuccessMsg && (
-          <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/60 text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-            <Sparkles className="w-4 h-4 shrink-0 text-emerald-400" />
+          <div className="p-3.5 rounded-xl bg-emerald-950/70 border border-emerald-500/60 text-emerald-300 text-xs font-semibold flex items-start gap-2.5 animate-in fade-in leading-relaxed">
+            <Sparkles className="w-5 h-5 shrink-0 text-emerald-400 mt-0.5" />
             <span>{logSuccessMsg}</span>
           </div>
         )}
@@ -334,16 +524,16 @@ export const EconomyPage: React.FC = () => {
         <form onSubmit={handleSundayCheckIn} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
           <div className="sm:col-span-4 space-y-1">
             <label className="text-[11px] font-semibold text-zinc-300 block">
-              კვირაში ფაქტობრივად დახარჯული (₾):
+              ამ კვირაში რეალურად დახარჯული (₾):
             </label>
             <div className="relative">
               <input
                 type="number"
                 step="1"
-                placeholder="მაგ. 240"
+                placeholder={`მაგ. ${thisWeekRemainingSpendTarget}`}
                 value={inputActualSpent}
                 onChange={(e) => setInputActualSpent(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-sm font-mono text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2.5 text-sm font-mono text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
               />
               <span className="absolute right-3 top-2.5 text-xs text-zinc-500 font-bold">₾</span>
             </div>
@@ -351,37 +541,40 @@ export const EconomyPage: React.FC = () => {
 
           <div className="sm:col-span-5 space-y-1">
             <label className="text-[11px] font-semibold text-zinc-300 block">
-              შენიშვნა (სურვილისამებრ):
+              შენიშვნა / კომენტარი (სურვილისამებრ):
             </label>
             <input
               type="text"
-              placeholder="მაგ. მარკეტი 180₾, სიგარეტი 49₾, შაბათს გასვლა"
+              placeholder="მაგ. პროდუქტები მარკეტში, სიგარეტი, შაბათს კაფე"
               value={inputNote}
               onChange={(e) => setInputNote(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+              className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <div className="sm:col-span-3">
             <button
               type="submit"
-              className="w-full py-2 px-3 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-950/40"
+              className="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-950/40"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>აღრიცხვა & გადათვლა</span>
+              <span>დაფიქსირება & გადათვლა</span>
             </button>
           </div>
         </form>
 
-        <p className="text-[11px] text-zinc-400 leading-relaxed">
-          💡 <strong>როგორ მუშაობს:</strong> როცა კვირის საღამოს ჩაწერთ რეალურ ხარჯს, სისტემა მას გამოაკლებს მიმდინარე ბალანსს და დარჩენილ {daysUntilNext5th} დღეზე <strong>ხელახლა გადაიანგარიშებს</strong> დღიურ საკვებ ბიუჯეტს. თუ დაზოგავთ — დღიური ლიმიტი გაიზრდება, თუ გადახარჯავთ — დარჩენილი დღეები ავტომატურად შემცირდება, რომ 5 რიცხვამდე უპრობლემოდ მიხვიდეთ.
-        </p>
+        <div className="text-xs text-zinc-400 bg-zinc-950/60 p-3 rounded-xl border border-zinc-850 flex items-start gap-2.5 leading-relaxed">
+          <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            <strong>ჭკვიანი ადაპტაცია:</strong> როცა კვირის ბოლოს ჩაწერთ რეალურ ხარჯს, სისტემა მას გამოაკლებს მიმდინარე ბალანსს და <strong>შემდეგ კვირას თავიდან შეადგენს</strong>. თუ მეტი დაგეხარჯათ — დარჩენილი დღეების დღიური საკვების ლიმიტი ავტომატურად შემცირდება, რომ 5 რიცხვამდე ფული გარანტირებულად გეყოთ. თუ დაზოგეთ — შემდეგი კვირის დღიური ბიუჯეტი ავტომატურად გაიზრდება!
+          </span>
+        </div>
 
         {/* Weekly Logs History Table if any */}
         {weeklyLogs.length > 0 && (
           <div className="pt-3 border-t border-zinc-850/80 space-y-2">
             <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block">
-              წინა კვირების ისტორია:
+              კვირების ხარჯების ისტორია:
             </span>
             <div className="space-y-1.5">
               {weeklyLogs.map((log) => {
@@ -391,7 +584,7 @@ export const EconomyPage: React.FC = () => {
                     key={log.id}
                     className="p-2.5 rounded-xl bg-zinc-950/70 border border-zinc-800/80 flex items-center justify-between text-xs"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <span className="font-mono text-zinc-400 font-bold shrink-0">{log.date}</span>
                       <span className="text-zinc-200 truncate">{log.note || 'კვირის დანახარჯი'}</span>
                     </div>
@@ -420,7 +613,7 @@ export const EconomyPage: React.FC = () => {
         )}
       </div>
 
-      {/* 3. 5-TH OF THE MONTH SALARY INPUT & REAL-TIME ALLOCATION CALCULATOR */}
+      {/* 4. 5-TH OF THE MONTH SALARY INPUT & REAL-TIME ALLOCATION CALCULATOR */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left 2 Columns: Salary Input + Full Monthly Allocation */}
         <div className="lg:col-span-2 bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-6 shadow-sm space-y-5">
@@ -452,7 +645,7 @@ export const EconomyPage: React.FC = () => {
           {/* Step-by-Step Waterfall Deduction Breakdown */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              ეტაპობრივი დაქვითვა და განაწილება:
+              ხელფასიდან ეტაპობრივი დაქვითვა და გადანაწილება:
             </h3>
 
             {/* 1. Fixed obligations */}
@@ -538,47 +731,6 @@ export const EconomyPage: React.FC = () => {
                   👉 ~{dailyFoodBudget} ₾ / დღეში
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* 1-Week Typical Schedule (ორშაბათი - კვირა) */}
-          <div className="space-y-3 pt-2 border-t border-zinc-850">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
-              <span>1 ტიპური კვირის ზუსტი გაწერა (ორშაბათი – კვირა)</span>
-              <span className="text-[11px] text-zinc-500 lowercase font-normal">კვირის საკვები: ~{weeklyFoodBudget} ₾</span>
-            </h3>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-xs">
-              {[
-                { day: 'ორშაბათი', food: dailyFoodBudget, cig: 7, fun: 0 },
-                { day: 'სამშაბათი', food: dailyFoodBudget, cig: 7, fun: 0 },
-                { day: 'ოთხშაბათი', food: dailyFoodBudget, cig: 7, fun: 0 },
-                { day: 'ხუთშაბათი', food: dailyFoodBudget, cig: 7, fun: 0 },
-                { day: 'პარასკევი', food: dailyFoodBudget, cig: 7, fun: 0 },
-                { day: 'შაბათი', food: dailyFoodBudget, cig: 7, fun: weekendBudget / 2 },
-                { day: 'კვირა', food: dailyFoodBudget, cig: 7, fun: weekendBudget / 2 }
-              ].map((d, i) => {
-                const totalDay = (parseFloat(d.food) + d.cig + d.fun).toFixed(0);
-                const isWeekend = i >= 5;
-                return (
-                  <div
-                    key={d.day}
-                    className={`p-2.5 rounded-xl border text-center space-y-1 ${
-                      isWeekend
-                        ? 'bg-cyan-950/20 border-cyan-800/40 text-cyan-300'
-                        : 'bg-zinc-900/60 border-zinc-800 text-zinc-300'
-                    }`}
-                  >
-                    <span className="text-[10px] font-bold block truncate">{d.day}</span>
-                    <div className="text-sm font-bold font-mono text-white">{totalDay} ₾</div>
-                    <div className="text-[9px] text-zinc-500 space-y-0.5">
-                      <div>საკვები: {parseFloat(d.food).toFixed(0)}₾</div>
-                      <div>სიგარეტი: {d.cig}₾</div>
-                      {d.fun > 0 && <div className="text-cyan-400 font-bold">გართობა: {d.fun}₾</div>}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>
