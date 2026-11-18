@@ -22,6 +22,7 @@ const NotesPage = lazy(() => import('./pages/NotesPage').then((m) => ({ default:
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 const TasksPage = lazy(() => import('./pages/TasksPage').then((m) => ({ default: m.TasksPage })));
 const WorkoutPage = lazy(() => import('./pages/WorkoutPage').then((m) => ({ default: m.WorkoutPage })));
+const EconomyPage = lazy(() => import('./pages/EconomyPage').then((m) => ({ default: m.EconomyPage })));
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -286,6 +287,8 @@ export function App() {
         );
       case 'workout':
         return <WorkoutPage onNavigate={handleNavigate} />;
+      case 'economy':
+        return <EconomyPage />;
       case 'deadlines':
         return <DeadlinesPage onOpenProject={handleOpenProject} />;
       case 'calendar':

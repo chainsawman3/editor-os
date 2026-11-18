@@ -18,6 +18,7 @@ import {
   StickyNote,
   CheckSquare,
   Dumbbell,
+  Wallet,
   X
 } from 'lucide-react';
 
@@ -232,6 +233,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-bold">
               3+1
+            </span>
+          </button>
+
+          {/* Economy & Budget Manager */}
+          <button
+            onClick={() => handleTabClick('economy')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all font-medium ${
+              currentTab === 'economy'
+                ? 'bg-amber-600/15 border border-amber-500/40 text-amber-300 font-semibold shadow-sm'
+                : 'text-zinc-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Wallet className={`w-4 h-4 ${currentTab === 'economy' ? 'text-amber-400' : 'text-zinc-400'}`} />
+              <span>ეკონომიკა & ბიუჯეტი</span>
+            </div>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-400 border border-amber-800/40 font-bold">
+              5-ში
             </span>
           </button>
 
