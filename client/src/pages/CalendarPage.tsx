@@ -26,7 +26,9 @@ import {
   Megaphone,
   Briefcase,
   GraduationCap,
-  StickyNote
+  StickyNote,
+  Dumbbell,
+  Waves
 } from 'lucide-react';
 import { CalendarSkeleton } from '../components/common/SkeletonLoader';
 
@@ -166,33 +168,88 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
     };
   };
 
+  // Helper for Workout / Pool task categorization
+  const getTaskType = (t: Task) => {
+    const titleLower = (t.title || '').toLowerCase();
+    const stageLower = (t.stage || '').toLowerCase();
+    const descLower = (t.description || '').toLowerCase();
+    
+    if (
+      titleLower.includes('აუზი') ||
+      titleLower.includes('pool') ||
+      titleLower.includes('swimming') ||
+      stageLower.includes('pool')
+    ) {
+      return 'pool';
+    }
+    if (
+      t.stage === 'Workout' ||
+      titleLower.includes('დარბაზი') ||
+      titleLower.includes('ვარჯიში') ||
+      titleLower.includes('push') ||
+      titleLower.includes('pull') ||
+      titleLower.includes('legs') ||
+      descLower.includes('დარბაზი')
+    ) {
+      return 'workout';
+    }
+    return 'default';
+  };
+
   // Helper for Task Badge color on Calendar (Changes color when completed and stays!)
   const getTaskCalendarBadge = (t: Task) => {
+    const taskType = getTaskType(t);
+
     if (t.completed) {
       return {
-        style: 'bg-emerald-950/90 hover:bg-emerald-900 border-emerald-500/80 text-emerald-400 shadow-sm shadow-emerald-950/50',
-        title: `✅ [Completed Task] ${t.title} (Click to reopen)`,
-        iconColor: 'text-emerald-400'
+        style: taskType === 'pool'
+          ? 'bg-cyan-950/90 hover:bg-cyan-900 border-cyan-500/80 text-cyan-400 shadow-sm shadow-cyan-950/50'
+          : 'bg-emerald-950/90 hover:bg-emerald-900 border-emerald-500/80 text-emerald-400 shadow-sm shadow-emerald-950/50',
+        title: `✅ [Completed] ${t.title} (Click to reopen)`,
+        iconColor: taskType === 'pool' ? 'text-cyan-400' : 'text-emerald-400',
+        taskType
       };
     }
+
+    if (taskType === 'pool') {
+      return {
+        style: 'bg-cyan-950/90 hover:bg-cyan-900 border-cyan-500/80 text-cyan-300 shadow-sm shadow-cyan-950/50 ring-1 ring-cyan-500/30',
+        title: `🏊‍♂️ [აუზის დღე / Pool] ${t.title} ${t.due_time ? `@ ${t.due_time}` : ''} (Click to complete)`,
+        iconColor: 'text-cyan-400',
+        taskType: 'pool'
+      };
+    }
+
+    if (taskType === 'workout') {
+      return {
+        style: 'bg-emerald-950/90 hover:bg-emerald-900 border-emerald-500/80 text-emerald-300 shadow-sm shadow-emerald-950/50 ring-1 ring-emerald-500/30',
+        title: `🏋️‍♂️ [დარბაზი / Workout] ${t.title} ${t.due_time ? `@ ${t.due_time}` : ''} (Click to complete)`,
+        iconColor: 'text-emerald-400',
+        taskType: 'workout'
+      };
+    }
+
     if (t.priority === 'High') {
       return {
         style: 'bg-rose-950/90 hover:bg-rose-900 border-rose-500/80 text-rose-300 shadow-sm shadow-rose-950/50',
         title: `⚡ [High Priority Task] ${t.title} ${t.due_time ? `@ ${t.due_time}` : ''} (Click to complete)`,
-        iconColor: 'text-rose-400'
+        iconColor: 'text-rose-400',
+        taskType: 'default'
       };
     }
     if (t.priority === 'Low') {
       return {
         style: 'bg-zinc-850 hover:bg-zinc-800 border-zinc-700/80 text-zinc-300 shadow-sm',
         title: `⚡ [Low Priority Task] ${t.title} (Click to complete)`,
-        iconColor: 'text-zinc-400'
+        iconColor: 'text-zinc-400',
+        taskType: 'default'
       };
     }
     return {
       style: 'bg-blue-950/90 hover:bg-blue-900 border-blue-500/80 text-blue-300 shadow-sm shadow-blue-950/50',
       title: `⚡ [Task] ${t.title} ${t.due_time ? `@ ${t.due_time}` : ''} (Click to complete)`,
-      iconColor: 'text-blue-400'
+      iconColor: 'text-blue-400',
+      taskType: 'default'
     };
   };
 
@@ -672,6 +729,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                       {/* Tasks (Color changes when marked completed and stays on calendar!) */}
                       {dayTasks.map((t) => {
                         const badge = getTaskCalendarBadge(t);
+                        const TaskIcon = badge.taskType === 'pool' ? Waves : badge.taskType === 'workout' ? Dumbbell : CheckCircle2;
                         return (
                           <div
                             key={t.id}
@@ -679,7 +737,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             className={`p-1 sm:p-1.5 rounded-md sm:rounded-lg border transition-all hover:scale-105 active:scale-95 cursor-pointer ${badge.style}`}
                             title={badge.title}
                           >
-                            <CheckCircle2 className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 ${badge.iconColor}`} />
+                            <TaskIcon className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 ${badge.iconColor}`} />
                           </div>
                         );
                       })}
@@ -820,9 +878,21 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             <Check className="w-3 h-3 stroke-[2.5]" />
                           </button>
                           <div className="min-w-0 flex-1">
-                            <span className={`text-xs block truncate ${t.completed ? 'line-through text-emerald-400/70 font-normal' : 'text-zinc-200 font-medium'}`}>
-                              {t.title}
-                            </span>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {badge.taskType === 'pool' && (
+                                <span className="p-1 rounded-md bg-cyan-950/80 border border-cyan-500/50 text-cyan-400 shrink-0">
+                                  <Waves className="w-3 h-3" />
+                                </span>
+                              )}
+                              {badge.taskType === 'workout' && (
+                                <span className="p-1 rounded-md bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 shrink-0">
+                                  <Dumbbell className="w-3 h-3" />
+                                </span>
+                              )}
+                              <span className={`text-xs block truncate ${t.completed ? 'line-through text-emerald-400/70 font-normal' : 'text-zinc-200 font-medium'}`}>
+                                {t.title}
+                              </span>
+                            </div>
                             {t.description && (
                               <p className="text-[11px] text-zinc-400 mt-1 whitespace-pre-line bg-zinc-950/70 p-1.5 rounded-lg border border-zinc-850/80 leading-relaxed">
                                 <span className="text-zinc-500 font-semibold text-[10px] mr-1">კომენტარი:</span>
@@ -1018,6 +1088,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
 
                       {dayTasks.map((t) => {
                         const badge = getTaskCalendarBadge(t);
+                        const TaskIcon = badge.taskType === 'pool' ? Waves : badge.taskType === 'workout' ? Dumbbell : CheckCircle2;
                         return (
                           <div
                             key={t.id}
@@ -1025,7 +1096,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                             className={`p-2 rounded-lg border transition-all hover:scale-105 active:scale-95 cursor-pointer ${badge.style}`}
                             title={badge.title}
                           >
-                            <CheckCircle2 className={`w-4 h-4 ${badge.iconColor}`} />
+                            <TaskIcon className={`w-4 h-4 ${badge.iconColor}`} />
                           </div>
                         );
                       })}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dumbbell,
   Waves,
@@ -10,7 +10,13 @@ import {
   RefreshCw,
   Check,
   Sparkles,
-  Zap
+  Send,
+  Zap,
+  Flame,
+  ArrowRight,
+  ShieldCheck,
+  Clock,
+  Heart
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -18,6 +24,7 @@ interface WorkoutDay {
   id: string;
   dayName: string;
   dayShort: string;
+  dayIndex: number; // 0: Sun, 1: Mon, 2: Tue, 3: Wed, 4: Thu, 5: Fri, 6: Sat
   type: 'gym' | 'pool' | 'rest';
   title: string;
   subtitle: string;
@@ -26,6 +33,7 @@ interface WorkoutDay {
   focus: string;
   isSaturdayPool?: boolean;
   workNote?: string;
+  targetMuscles?: string;
 }
 
 const DEFAULT_SCHEDULE: WorkoutDay[] = [
@@ -33,91 +41,138 @@ const DEFAULT_SCHEDULE: WorkoutDay[] = [
     id: 'mon',
     dayName: 'ორშაბათი',
     dayShort: 'ორშ',
+    dayIndex: 1,
     type: 'rest',
     title: 'სამუშაო დღე & დასვენება',
-    subtitle: 'Recovery & Work',
+    subtitle: 'Recovery & Work Prep',
     duration: 'მთელი დღე',
     focus: 'სამუშაო კვირის სტარტი. ენერგიის დაზოგვა და მობილურობა',
     workNote: 'სამსახური (სრული განაკვეთი)',
-    exercises: ['საღამოს მსუბუქი გასეირნება', 'წყლის ბალანსი']
+    targetMuscles: 'სრული სხეულის რელაქსაცია',
+    exercises: [
+      'საღამოს მსუბუქი გასეირნება (30-40 წუთი)',
+      'წყლის ოპტიმალური ბალანსი (2.5 - 3 ლიტრი)',
+      'ხერხემლისა და კისრის მობილურობის გაჭიმვები',
+      'მინიმუმ 8 საათი ხარისხიანი ძილი'
+    ]
   },
   {
     id: 'tue',
     dayName: 'სამშაბათი',
     dayShort: 'სამ',
+    dayIndex: 2,
     type: 'gym',
     title: 'დარბაზი #1: Push (მკერდი, მხრები, ტრიცეფსი)',
     subtitle: 'ძალოვანი ვარჯიში A',
     duration: '60 წუთი (20:00)',
     focus: 'ზედა ტანის ბიძგითი კუნთები, ჰანტელების პრესი, ბრუსები',
     workNote: 'სამსახურის შემდეგ (20:00 შეტყობინება)',
-    exercises: ['შტანგის / ჰანტელების ჟიმი', 'ჰანტელების განზე აწევა მხრებისთვის', 'ტრიცეფსი ბლოკზე / ფრანგული ჟიმი', 'პრესის ვარჯიშები']
+    targetMuscles: 'გულმკერდი · წინა/შუა დელტები · ტრიცეფსი · პრესი',
+    exercises: [
+      'შტანგის / ჰანტელების ჟიმი ჰორიზონტალურ სკამზე (4 სეტი x 8-10 გამეორება)',
+      'დახრილ სკამზე ჰანტელების ჟიმი ზედა მკერდისთვის (3 სეტი x 10-12 გამეორება)',
+      'ჰანტელების განზე აწევა მხრებისთვის / გვერდითი დელტა (4 სეტი x 12-15 გამეორება)',
+      'ტრიცეფსი ბლოკზე თოკით ან ფრანგული ჟიმი (3 სეტი x 12 გამეორება)',
+      'ფიცარი (Plank) და მუცლის პრესის აწევები (3 სეტი x 45-60 წამი)'
+    ]
   },
   {
     id: 'wed',
     dayName: 'ოთხშაბათი',
     dayShort: 'ოთხ',
+    dayIndex: 3,
     type: 'rest',
     title: 'სამუშაო დღე & აღდგენა',
-    subtitle: 'Rest & Recovery',
+    subtitle: 'Rest & Nutrient Synthesis',
     duration: 'მთელი დღე',
     focus: 'კუნთების აღდგენა Push ვარჯიშის შემდეგ',
     workNote: 'სამსახური (სრული განაკვეთი)',
-    exercises: ['კარგი ძილი', 'მსუბუქი გაჭიმვა']
+    targetMuscles: 'კუნთოვანი ქსოვილის რეგენერაცია',
+    exercises: [
+      'კარგი ძილი და კუნთოვანი ქსოვილის აღდგენა',
+      'ცილოვანი ბალანსის შენარჩუნება',
+      'მხრებისა და მკერდის მსუბუქი გაჭიმვა',
+      'კომპიუტერთან ჯდომის შემდეგ ზურგის გამართვა'
+    ]
   },
   {
     id: 'thu',
     dayName: 'ხუთშაბათი',
     dayShort: 'ხუთ',
+    dayIndex: 4,
     type: 'gym',
     title: 'დარბაზი #2: Pull (ზურგი, ბიცეფსი)',
     subtitle: 'ძალოვანი ვარჯიში B',
     duration: '60 წუთი (20:00)',
     focus: 'ზურგის სიგანე და სისქე, ტურნიკი, ბიცეფსის იზოლაცია',
     workNote: 'სამსახურის შემდეგ (20:00 შეტყობინება)',
-    exercises: ['ტურნიკი / ვერტიკალური ბლოკი', 'ჰანტელის წევა დახრილში', 'ბიცეფსი შტანგით / ჰანტელებით', 'ჰიპერექსტენზია ზურგის ქვედა ნაწილისთვის']
+    targetMuscles: 'ფართო ზურგი · ტრაპეცია · უკანა დელტა · ბიცეფსი',
+    exercises: [
+      'ტურნიკზე აზიდვები / ვერტიკალური ბლოკის ჩამოწევა (4 სეტი x 8-10 გამეორება)',
+      'ჰანტელის წევა დახრილში ცალი ხელით (4 სეტი x 10 გამეორება თითო მხარე)',
+      'ჰორიზონტალური ბლოკის წევა მუცელთან (3 სეტი x 12 გამეორება)',
+      'ბიცეფსის აწევა შტანგით / ჰანტელებით (4 სეტი x 10-12 გამეორება)',
+      'ჰიპერექსტენზია ზურგის ქვედა ნაწილისა და წელისთვის (3 სეტი x 15 გამეორება)'
+    ]
   },
   {
     id: 'fri',
     dayName: 'პარასკევი',
     dayShort: 'პარ',
+    dayIndex: 5,
     type: 'rest',
     title: 'სამსახური 17:00-მდე & განტვირთვა',
-    subtitle: 'Early Finish & Pre-Pool Prep',
+    subtitle: 'Early Finish & Weekend Transition',
     duration: 'საღამო თავისუფალი',
     focus: 'სამსახური სრულდება 5 საათზე. სრული განტვირთვა შაბათის აუზის წინ',
     workNote: 'სამსახური 17:00-მდე (შაბათ-კვირა დასვენება)',
-    exercises: ['ადრე დაძინება შაბათის ენერგიისთვის']
+    targetMuscles: 'ნერვული სისტემის განტვირთვა',
+    exercises: [
+      'სამუშაო კვირის პოზიტიურად დახურვა 17:00-ზე',
+      'მშვიდი საღამო და მენტალური რელაქსაცია',
+      'აუზის ინვენტარისა და ჩანთის მომზადება',
+      'ადრე დაძინება შაბათის სრული ენერგიისთვის'
+    ]
   },
   {
     id: 'sat',
     dayName: 'შაბათი',
     dayShort: 'შაბ',
+    dayIndex: 6,
     type: 'pool',
     isSaturdayPool: true,
-    title: '🏊‍♂️ აუზის დღე (Swimming & Recovery)',
-    subtitle: 'ჰიდროთერაპია & კარდიო',
+    title: '🏊‍♂️ აუზის დღე (Swimming & Hydrotherapy)',
+    subtitle: 'ჰიდროთერაპია & სრული აღდგენა',
     duration: '60–75 წუთი (20:00)',
     focus: 'სრული კარდიო დატვირთვა, ხერხემლისა და სახსრების განტვირთვა, საუნა',
-    workNote: 'დასვენების დღე',
+    workNote: 'დასვენების დღე (აუზი & სპა)',
+    targetMuscles: 'გულ-სისხლძარღვთა სისტემა · ხერხემალი · სახსრები',
     exercises: [
-      '45 წუთი თავისუფალი სტილით/ბრასით ცურვა',
-      'ინტერვალური აჩქარებები (4x50მ)',
-      '15 წუთი მშვიდი ცურვა და გაწელვები წყალში',
-      'საუნა / კონტრასტული შხაპი'
+      '1. გახურება (10 წთ): მშვიდი ბრასი და წყლის ტემპერატურასთან შეგუება',
+      '2. კარდიო ცურვა (35 წთ): თავისუფალი სტილი (Freestyle), 4x50მ კონტროლირებადი აჩქარებები',
+      '3. განტვირთვა (15 წთ): მშვიდი ზურგზე ცურვა, ხერხემლის სრული გაჭიმვა წყალში',
+      '4. საუნა & სპა (15 წთ): ტოქსინების გამოდევნა, ჰიდრომასაჟი და კონტრასტული შხაპი'
     ]
   },
   {
     id: 'sun',
     dayName: 'კვირა',
     dayShort: 'კვი',
+    dayIndex: 0,
     type: 'gym',
     title: 'დარბაზი #3: Legs & Core (ფეხები, პრესი)',
     subtitle: 'ძალოვანი ვარჯიში C',
     duration: '60 წუთი (20:00)',
     focus: 'ქვედა ტანი, კვადრიცეფსი, ბარძაყი, წვივები, პრესი',
     workNote: 'დასვენების დღე (20:00 შეტყობინება)',
-    exercises: ['ჩაჯდომები (Squats) / ლეგ პრესი', 'ფეხის გაშლა/მოხრა ტრენაჟორზე', 'წვივების აწევა', 'ფიცარი (Plank) და პრესი']
+    targetMuscles: 'კვადრიცეფსი · ბარძაყის ბიცეფსი · დუნდულები · წვივები · პრესი',
+    exercises: [
+      'ჩაჯდომები შტანგით / ლეგ პრესი (4 სეტი x 10 გამეორება)',
+      'ფეხის გაშლა ტრენაჟორზე კვადრიცეფსისთვის (3 სეტი x 12 გამეორება)',
+      'ფეხის მოხრა ტრენაჟორზე ბარძაყის უკანა ნაწილისთვის (3 სეტი x 12 გამეორება)',
+      'წვივების აწევა დგომში (4 სეტი x 15 გამეორება)',
+      'მუცლის პრესი ტურნიკზე ფეხების აწევით + როლერი (3 სეტი x 15 გამეორება)'
+    ]
   }
 ];
 
@@ -126,6 +181,15 @@ interface WorkoutPageProps {
 }
 
 export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
+  // Current day index (0: Sun, 1: Mon, 2: Tue, 3: Wed, 4: Thu, 5: Fri, 6: Sat)
+  const currentDayOfWeek = new Date().getDay();
+
+  // Find today's workout day or default to Tuesday
+  const todayScheduleItem = DEFAULT_SCHEDULE.find((d) => d.dayIndex === currentDayOfWeek) || DEFAULT_SCHEDULE[1];
+
+  // Selected day for detailed breakdown below
+  const [selectedDayId, setSelectedDayId] = useState<string>(todayScheduleItem.id);
+
   // Persistence for weekly completed days
   const [completedDays, setCompletedDays] = useState<Record<string, boolean>>(() => {
     try {
@@ -138,6 +202,8 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const [telegramStatus, setTelegramStatus] = useState<string | null>(null);
 
   // Save to local storage
   const toggleDayCompletion = (dayId: string) => {
@@ -161,6 +227,9 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   const completedCount = activeWorkoutDays.filter((d) => !!completedDays[d.id]).length;
   const progressPercent = Math.round((completedCount / activeWorkoutDays.length) * 100);
 
+  // Selected day data
+  const selectedDay = DEFAULT_SCHEDULE.find((d) => d.id === selectedDayId) || DEFAULT_SCHEDULE[1];
+
   // Sync workout days into real tasks with 20:00 reminders
   const handleSyncToTasks = async () => {
     setIsSyncing(true);
@@ -168,37 +237,26 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
 
     try {
       const now = new Date();
-      const currentDayOfWeek = now.getDay(); // 0 is Sun, 1 is Mon, 2 is Tue...
-
-      // Day of week index mapping
-      const dayIndexMap: Record<string, number> = {
-        tue: 2,
-        thu: 4,
-        sat: 6,
-        sun: 0
-      };
+      const currentDay = now.getDay();
 
       for (const day of activeWorkoutDays) {
-        const targetDay = dayIndexMap[day.id];
-        if (targetDay !== undefined) {
-          let diff = targetDay - currentDayOfWeek;
-          if (diff < 0) diff += 7; // Next occurrence
+        let diff = day.dayIndex - currentDay;
+        if (diff < 0) diff += 7; // Next occurrence
 
-          const targetDate = new Date(now);
-          targetDate.setDate(now.getDate() + diff);
-          const dateStr = targetDate.toISOString().split('T')[0];
+        const targetDate = new Date(now);
+        targetDate.setDate(now.getDate() + diff);
+        const dateStr = targetDate.toISOString().split('T')[0];
 
-          await api.createTask({
-            title: day.isSaturdayPool ? '🏊‍♂️ აუზის დღე (Swimming Pool Session)' : `🏋️‍♂️ ${day.title}`,
-            due_date: dateStr,
-            due_time: '20:00',
-            priority: 'High',
-            description: `${day.subtitle} — ${day.focus} (${day.workNote})`,
-            reminder_type: 'same_day',
-            reminder_time: '20:00',
-            stage: 'Workout'
-          });
-        }
+        await api.createTask({
+          title: day.isSaturdayPool ? '🏊‍♂️ აუზის დღე (Swimming Pool Session)' : `🏋️‍♂️ ${day.title}`,
+          due_date: dateStr,
+          due_time: '20:00',
+          priority: 'High',
+          description: `${day.subtitle} — ${day.focus} (${day.workNote})`,
+          reminder_type: 'same_day',
+          reminder_time: '20:00',
+          stage: 'Workout'
+        });
       }
 
       setSyncSuccess(true);
@@ -211,53 +269,103 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
     }
   };
 
+  // Send live test reminder via Telegram Bot API directly
+  const handleSendTelegramTest = async () => {
+    setIsSendingTelegram(true);
+    setTelegramStatus(null);
+
+    const botToken = '9109098723:AAGy5e6NzYclKL7ZaMYML9yfRBziKzJNvps';
+    const chatId = '8635727434';
+
+    const text = `🔔 *FLOW OS შეხსენება / WORKOUT REMINDER*
+
+📌 *დღის აქტივობა:* ${selectedDay.title}
+⏰ *დრო:* 20:00 (ყოველდღიური შეხსენება)
+🎯 *სტატუსი:* ${completedDays[selectedDay.id] ? '✅ შესრულებულია' : '⏳ მომლოდინე'}
+
+📝 *ფოკუსი:*
+${selectedDay.focus} (${selectedDay.workNote})
+
+💪 *მზადება:* წყლის ბალანსი, სპორტული ეკიპირება და მაქსიმალური ფოკუსი!`;
+
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: text,
+          parse_mode: 'Markdown'
+        })
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        setTelegramStatus('გამოგზავნილია! შეამოწმე ტელეგრამი 📲');
+      } else {
+        setTelegramStatus('შეცდომა გაგზავნისას');
+      }
+    } catch (err) {
+      setTelegramStatus('კავშირის შეცდომა');
+    } finally {
+      setIsSendingTelegram(false);
+      setTimeout(() => setTelegramStatus(null), 5000);
+    }
+  };
+
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 font-sans">
-      {/* 1. Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-900/90 to-emerald-950/40 border border-emerald-900/40 p-6 md:p-8 shadow-xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
-              <Dumbbell className="w-4 h-4" />
-              <span>Personal Fitness & Activity OS</span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-700/50 text-[10px] text-emerald-300">
-                სამშაბათი · ხუთშაბათი · შაბათი (აუზი) · კვირა
-              </span>
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto font-sans">
+      {/* 1. TOP HEADER & METRICS BAR (Matching Flow OS standard card design) */}
+      <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-zinc-850 pb-4 sm:pb-5">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2.5 sm:p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0">
+              <Dumbbell className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-              გიგის სავარჯიშო და აუზის განრიგი
-            </h1>
-            <p className="text-xs md:text-sm text-zinc-300 max-w-xl leading-relaxed">
-              მორგებულია შენს სამუშაო რეჟიმზე: <strong>სამშაბათი, ხუთშაბათი, კვირა</strong> (დარბაზი), ყოველ <strong className="text-cyan-400">შაბათს აუზის დღე</strong>. შეტყობინებები ტელეგრამზე <strong>20:00 (8 საათზე)</strong>.
-            </p>
+            <div className="space-y-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  ვარჯიში & აუზი (Workout & Recovery OS)
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-700/60 text-[11px] font-semibold text-emerald-300">
+                  3 დარბაზი + 1 აუზი
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-700/60 text-[11px] font-semibold text-cyan-300 flex items-center gap-1">
+                  <Waves className="w-3 h-3" />
+                  შაბათის ჰიდროთერაპია
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                გიგის პერსონალური გრაფიკი: <strong>სამშაბათი, ხუთშაბათი, კვირა</strong> (დარბაზი) · ყოველ <strong className="text-cyan-400">შაბათს აუზის დღე</strong> · Telegram შეტყობინებები ყოველდღე <strong>20:00 (8:00 PM)</strong>.
+              </p>
+            </div>
           </div>
 
-          {/* Quick Metrics */}
-          <div className="flex items-center gap-4 bg-zinc-950/80 p-4 rounded-xl border border-zinc-800 shrink-0">
+          {/* Quick Metrics Widget */}
+          <div className="flex items-center gap-3 sm:gap-4 bg-zinc-900/80 p-3 sm:p-3.5 rounded-xl border border-zinc-800 shrink-0">
             <div className="space-y-1">
               <div className="text-[11px] text-zinc-400 font-medium">კვირის პროგრესი</div>
-              <div className="text-2xl font-bold font-mono text-emerald-400">
-                {completedCount} <span className="text-zinc-600 text-sm font-normal">/ {activeWorkoutDays.length}</span>
+              <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400 flex items-center gap-1.5">
+                <span>{completedCount}</span>
+                <span className="text-zinc-600 text-xs font-normal">/ {activeWorkoutDays.length} სესია</span>
               </div>
             </div>
-            <div className="w-16 h-16 rounded-full bg-zinc-900 border-2 border-emerald-500/40 flex items-center justify-center font-bold text-xs text-white">
+            <div className="w-14 h-14 rounded-full bg-zinc-950 border-2 border-emerald-500/40 flex items-center justify-center font-bold text-xs font-mono text-white shrink-0 shadow-inner">
               {progressPercent}%
             </div>
           </div>
         </div>
 
-        {/* Action Buttons Bar */}
-        <div className="mt-6 pt-5 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+        {/* Action Buttons & Integration Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleSyncToTasks}
               disabled={isSyncing}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all shadow-sm ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all shadow-sm ${
                 syncSuccess
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                  : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
               }`}
             >
               {isSyncing ? (
@@ -268,7 +376,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               ) : syncSuccess ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>ტასკებში დამატებულია! (8:00 PM შეხსენება)</span>
+                  <span>ტასკებში დამატებულია (20:00 შეხსენება) ✅</span>
                 </>
               ) : (
                 <>
@@ -279,185 +387,381 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
             </button>
 
             <button
+              onClick={handleSendTelegramTest}
+              disabled={isSendingTelegram}
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-2 transition-all"
+            >
+              {isSendingTelegram ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>იგზავნება...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" />
+                  <span>შეხსენების ტესტი Telegram-ზე 📲</span>
+                </>
+              )}
+            </button>
+
+            <button
               onClick={resetWeek}
               className="px-3 py-2 bg-zinc-900/60 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 border border-zinc-800 rounded-xl text-xs transition-colors"
             >
-              განულება
+              კვირის განულება
             </button>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-            <Bell className="w-3.5 h-3.5 text-blue-400" />
-            <span>Telegram შეხსენება: <strong className="text-zinc-200 font-mono">20:00 (საღამოს 8:00)</strong></span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Spotlight: Saturday Pool Day (შაბათის აუზის დღე) */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 via-cyan-950/30 to-blue-950/40 border border-cyan-800/40 p-6 shadow-lg">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-sm">
-              <Waves className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded bg-cyan-900/60 text-cyan-300 text-[10px] font-bold uppercase tracking-wider border border-cyan-700/50">
-                  ყოველ შაბათს
-                </span>
-                <span className="text-xs text-zinc-400 font-medium">სავალდებულო აღდგენა & კარდიო</span>
-              </div>
-              <h2 className="text-lg md:text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                შაბათი: აუზის დღე & ჰიდროთერაპია
-              </h2>
-              <p className="text-xs text-zinc-300 max-w-2xl leading-relaxed">
-                სამუშაო კვირის შემდეგ ხერხემლისა და სახსრების სრული განტვირთვა. 45–60 წთ ცურვა (სისხლის მიმოქცევა და ფილტვები) + საუნა და ჰიდრომასაჟი.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => toggleDayCompletion('sat')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all shrink-0 ${
-              completedDays['sat']
-                ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
-                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700'
-            }`}
-          >
-            {completedDays['sat'] ? (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>შესრულებულია 🏊‍♂️</span>
-              </>
+          <div className="flex items-center gap-2 text-xs text-zinc-400">
+            {telegramStatus ? (
+              <span className="text-emerald-400 font-semibold animate-pulse">{telegramStatus}</span>
             ) : (
-              <>
-                <Circle className="w-4 h-4 text-zinc-400" />
-                <span>მონიშნე შესრულებულად</span>
-              </>
+              <div className="flex items-center gap-1.5">
+                <Bell className="w-3.5 h-3.5 text-blue-400" />
+                <span>Telegram შეტყობინება: <strong className="text-zinc-200 font-mono">20:00 (8:00 PM)</strong></span>
+              </div>
             )}
-          </button>
-        </div>
-
-        {/* Pool Day Routine Breakdown */}
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-cyan-900/40">
-          <div className="p-3 rounded-xl bg-zinc-950/60 border border-cyan-900/30 text-xs space-y-1">
-            <span className="text-cyan-400 font-bold block text-[11px]">1. გახურება (10 წთ)</span>
-            <span className="text-zinc-400">მსუბუქი ბრასი და წყალში შეგუება</span>
-          </div>
-          <div className="p-3 rounded-xl bg-zinc-950/60 border border-cyan-900/30 text-xs space-y-1">
-            <span className="text-cyan-400 font-bold block text-[11px]">2. კარდიო ცურვა (35 წთ)</span>
-            <span className="text-zinc-400">თავისუფალი სტილი (Freestyle), 4x50მ აჩქარებები</span>
-          </div>
-          <div className="p-3 rounded-xl bg-zinc-950/60 border border-cyan-900/30 text-xs space-y-1">
-            <span className="text-cyan-400 font-bold block text-[11px]">3. განტვირთვა (15 წთ)</span>
-            <span className="text-zinc-400">მშვიდი ცურვა, გაჭიმვები ხერხემლისთვის</span>
-          </div>
-          <div className="p-3 rounded-xl bg-zinc-950/60 border border-cyan-900/30 text-xs space-y-1">
-            <span className="text-cyan-400 font-bold block text-[11px]">4. საუნა & შხაპი (15 წთ)</span>
-            <span className="text-zinc-400">ტოქსინების გამოდევნა და კუნთების მოდუნება</span>
           </div>
         </div>
       </div>
 
-      {/* 3. 7-Day Weekly Grid View */}
-      <div className="space-y-4">
+      {/* 2. 7-DAY WEEKLY SCHEDULE (Full 7-Column Responsive Grid) */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-emerald-400" />
-            <span>კვირის სრული გრაფიკი (სამუშაო & ვარჯიში)</span>
-          </h2>
-          <span className="text-xs text-zinc-500">დააჭირეთ ბარათს სტატუსის შესაცვლელად</span>
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
+              კვირის სრული გრაფიკი (ორშაბათი – კვირა)
+            </h2>
+          </div>
+          <span className="text-xs text-zinc-500">
+            დააჭირეთ ბარათს დეტალური პროგრამის სანახავად
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        {/* 7 Columns on Desktop: Every day has its own clean column! */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3">
           {DEFAULT_SCHEDULE.map((day) => {
             const isCompleted = !!completedDays[day.id];
             const isRest = day.type === 'rest';
             const isPool = day.type === 'pool';
+            const isSelected = selectedDayId === day.id;
+            const isToday = currentDayOfWeek === day.dayIndex;
 
             return (
               <div
                 key={day.id}
-                onClick={() => !isRest && toggleDayCompletion(day.id)}
-                className={`relative rounded-2xl p-4.5 border transition-all cursor-pointer group ${
-                  isCompleted
-                    ? 'bg-emerald-950/20 border-emerald-600/50 shadow-md shadow-emerald-950/20'
+                onClick={() => setSelectedDayId(day.id)}
+                className={`relative rounded-2xl p-3.5 sm:p-4 border transition-all cursor-pointer flex flex-col justify-between select-none ${
+                  isSelected
+                    ? isPool
+                      ? 'bg-cyan-950/30 border-cyan-500 ring-2 ring-cyan-500/40 shadow-lg shadow-cyan-950/40'
+                      : isRest
+                      ? 'bg-zinc-900 border-zinc-600 ring-2 ring-zinc-500/30'
+                      : 'bg-emerald-950/30 border-emerald-500 ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-950/40'
+                    : isCompleted
+                    ? 'bg-emerald-950/20 border-emerald-600/40 opacity-80 hover:opacity-100'
                     : isPool
-                    ? 'bg-zinc-900/80 border-cyan-800/40 hover:border-cyan-600/60'
+                    ? 'bg-zinc-950 border-cyan-800/40 hover:border-cyan-600/70 hover:bg-zinc-900'
                     : isRest
-                    ? 'bg-zinc-900/30 border-zinc-800/50 opacity-70 cursor-default'
-                    : 'bg-zinc-900/70 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-850/80'
+                    ? 'bg-zinc-950/60 border-zinc-850 hover:border-zinc-750 opacity-75 hover:opacity-100'
+                    : 'bg-zinc-950 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-900'
                 }`}
               >
-                {/* Card Header */}
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-xs font-mono font-bold px-2 py-0.5 rounded-lg ${
-                        isPool
-                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                          : isRest
-                          ? 'bg-zinc-800 text-zinc-400'
-                          : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                      }`}
-                    >
-                      {day.dayName}
-                    </span>
-                    <span className="text-[11px] text-zinc-400 font-medium">{day.duration}</span>
+                <div>
+                  {/* Card Header: Day pill + Checkbox */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                          isPool
+                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                            : isRest
+                            ? 'bg-zinc-800 text-zinc-400'
+                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        }`}
+                      >
+                        {day.dayName}
+                      </span>
+                      {isToday && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 animate-pulse">
+                          დღეს
+                        </span>
+                      )}
+                    </div>
+
+                    {!isRest ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleDayCompletion(day.id);
+                        }}
+                        className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${
+                          isCompleted
+                            ? 'bg-emerald-600 text-white'
+                            : 'border border-zinc-700 text-transparent hover:border-emerald-500'
+                        }`}
+                        title={isCompleted ? 'მონიშნე მომლოდინედ' : 'მონიშნე შესრულებულად'}
+                      >
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      </button>
+                    ) : (
+                      <span className="text-zinc-600 text-[11px]">💤</span>
+                    )}
                   </div>
 
-                  {!isRest && (
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                        isCompleted ? 'text-emerald-400' : 'text-zinc-600 group-hover:text-zinc-400'
-                      }`}
-                    >
-                      {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                  {/* Work Schedule Indicator */}
+                  {day.workNote && (
+                    <div className="mb-2 flex items-center gap-1 text-[10px] text-zinc-400 bg-zinc-900/90 px-1.5 py-0.5 rounded border border-zinc-855 truncate">
+                      <Briefcase className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                      <span className="truncate">{day.workNote}</span>
                     </div>
                   )}
-                </div>
 
-                {/* Work Schedule Indicator */}
-                {day.workNote && (
-                  <div className="mb-2 flex items-center gap-1.5 text-[11px] text-zinc-400 bg-zinc-950/60 px-2 py-1 rounded-md border border-zinc-800/60">
-                    <Briefcase className="w-3 h-3 text-zinc-500 shrink-0" />
-                    <span className="truncate">{day.workNote}</span>
+                  {/* Card Title & Duration */}
+                  <div className="space-y-1">
+                    <h3
+                      className={`font-bold text-xs sm:text-sm tracking-tight line-clamp-2 ${
+                        isCompleted ? 'line-through text-zinc-500' : 'text-zinc-100'
+                      }`}
+                    >
+                      {day.title}
+                    </h3>
+                    <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                      {day.focus}
+                    </p>
                   </div>
-                )}
-
-                {/* Card Body */}
-                <div className="space-y-1.5">
-                  <h3
-                    className={`font-bold text-sm tracking-tight ${
-                      isCompleted ? 'line-through text-zinc-400' : 'text-white'
-                    }`}
-                  >
-                    {day.title}
-                  </h3>
-                  <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                    {day.focus}
-                  </p>
                 </div>
 
-                {/* Exercises list if available */}
-                {day.exercises && day.exercises.length > 0 && !isRest && (
-                  <div className="mt-3.5 pt-3 border-t border-zinc-800/60 space-y-1">
-                    <span className="text-[10px] uppercase font-semibold text-zinc-500 tracking-wider block">
-                      პროგრამა:
+                {/* Footer Time & Badge */}
+                <div className="mt-3 pt-2.5 border-t border-zinc-850/80 flex items-center justify-between text-[10px]">
+                  <span className="text-zinc-400 font-mono flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-zinc-500" />
+                    {day.duration}
+                  </span>
+                  {isPool ? (
+                    <span className="text-cyan-400 font-bold flex items-center gap-1">
+                      <Waves className="w-3 h-3" />
+                      აუზი
                     </span>
-                    <ul className="text-[11px] text-zinc-300 space-y-0.5">
-                      {day.exercises.slice(0, 3).map((ex, i) => (
-                        <li key={i} className="flex items-center gap-1.5 truncate">
-                          <span className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
-                          <span className="truncate">{ex}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                  ) : !isRest ? (
+                    <span className="text-emerald-400 font-bold flex items-center gap-1">
+                      <Dumbbell className="w-3 h-3" />
+                      დარბაზი
+                    </span>
+                  ) : (
+                    <span className="text-zinc-500">დასვენება</span>
+                  )}
+                </div>
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* 3. LOWER SECTION: 2-COLUMN DETAIL DASHBOARD */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Left 2 Columns: Selected Day's Workout Routine & Exercises */}
+        <div className="lg:col-span-2 bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-850 pb-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2.5 rounded-xl border shrink-0 ${
+                  selectedDay.type === 'pool'
+                    ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                    : selectedDay.type === 'rest'
+                    ? 'bg-zinc-800/50 border-zinc-700 text-zinc-400'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                }`}
+              >
+                {selectedDay.type === 'pool' ? (
+                  <Waves className="w-6 h-6" />
+                ) : selectedDay.type === 'rest' ? (
+                  <Sparkles className="w-6 h-6" />
+                ) : (
+                  <Dumbbell className="w-6 h-6" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-zinc-850 text-zinc-300">
+                    {selectedDay.dayName}
+                  </span>
+                  <span className="text-xs text-zinc-400 font-mono">
+                    {selectedDay.duration}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-white tracking-tight mt-0.5">
+                  {selectedDay.title}
+                </h3>
+              </div>
+            </div>
+
+            {selectedDay.type !== 'rest' && (
+              <button
+                type="button"
+                onClick={() => toggleDayCompletion(selectedDay.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
+                  completedDays[selectedDay.id]
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
+                    : 'bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-750'
+                }`}
+              >
+                {completedDays[selectedDay.id] ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>შესრულებულია ✅</span>
+                  </>
+                ) : (
+                  <>
+                    <Circle className="w-4 h-4 text-zinc-400" />
+                    <span>მონიშნე შესრულებულად</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+          {/* Target Focus & Muscles */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+              <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                სამიზნე კუნთები / ეფექტი:
+              </span>
+              <span className="text-zinc-200 font-medium">
+                {selectedDay.targetMuscles || selectedDay.focus}
+              </span>
+            </div>
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+              <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                სამუშაო გრაფიკთან თავსებადობა:
+              </span>
+              <span className="text-zinc-200 font-medium">
+                {selectedDay.workNote} · Telegram 20:00 შეტყობინება
+              </span>
+            </div>
+          </div>
+
+          {/* Exercise Program Breakdown */}
+          <div className="space-y-2 pt-1">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+              <span>სრული სავარჯიშო გეგმა & ეტაპები</span>
+            </h4>
+            <div className="space-y-2">
+              {selectedDay.exercises?.map((exercise, idx) => (
+                <div
+                  key={idx}
+                  className="p-3 rounded-xl bg-zinc-900/40 hover:bg-zinc-900/80 border border-zinc-850 transition-colors flex items-start gap-3"
+                >
+                  <span className="w-6 h-6 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                    {idx + 1}
+                  </span>
+                  <div className="text-xs text-zinc-200 leading-relaxed font-medium">
+                    {exercise}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right 1 Column: Saturday Pool Spotlight & Telegram Bot Info */}
+        <div className="space-y-4">
+          {/* Spotlight: Saturday Pool Day Card */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-950 via-cyan-950/30 to-blue-950/40 border border-cyan-800/40 p-5 shadow-sm space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0">
+                  <Waves className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                  შაბათის აუზის დღე
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-700/60 text-cyan-300">
+                სავალდებულო
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white tracking-tight">
+                ჰიდროთერაპია & სრული აღდგენა
+              </h4>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                სამუშაო კვირის შემდეგ ხერხემლისა და სახსრების განტვირთვა. 45-60 წთ ცურვა (სისხლის მიმოქცევა) + საუნა & ჰიდრომასაჟი.
+              </p>
+            </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-cyan-900/40 text-xs">
+              <div className="flex items-center justify-between text-zinc-300">
+                <span>1. გახურება ბრასით</span>
+                <span className="text-cyan-400 font-mono">10 წთ</span>
+              </div>
+              <div className="flex items-center justify-between text-zinc-300">
+                <span>2. კარდიო Freestyle</span>
+                <span className="text-cyan-400 font-mono">35 წთ</span>
+              </div>
+              <div className="flex items-center justify-between text-zinc-300">
+                <span>3. ხერხემლის განტვირთვა</span>
+                <span className="text-cyan-400 font-mono">15 წთ</span>
+              </div>
+              <div className="flex items-center justify-between text-zinc-300">
+                <span>4. საუნა & კონტრასტული შხაპი</span>
+                <span className="text-cyan-400 font-mono">15 წთ</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => toggleDayCompletion('sat')}
+              className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all mt-2 ${
+                completedDays['sat']
+                  ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/20'
+                  : 'bg-cyan-950/80 hover:bg-cyan-900/90 text-cyan-200 border border-cyan-700/60'
+              }`}
+            >
+              {completedDays['sat'] ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>აუზი შესრულებულია 🏊‍♂️</span>
+                </>
+              ) : (
+                <>
+                  <Waves className="w-4 h-4" />
+                  <span>მონიშნე აუზი შესრულებულად</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Telegram Notification Bot Card */}
+          <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Telegram Notifications</h4>
+                  <span className="text-[10px] text-zinc-400">Bot: @Hejssj_bot</span>
+                </div>
+              </div>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Active" />
+            </div>
+
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              შეტყობინება იგზავნება ყოველდღიურად <strong>20:00 (8:00 PM)</strong> პირდაპირ პირად ჩატში.
+            </p>
+
+            <button
+              onClick={handleSendTelegramTest}
+              disabled={isSendingTelegram}
+              className="w-full py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-200 flex items-center justify-center gap-2 transition-colors"
+            >
+              <Send className="w-3.5 h-3.5 text-blue-400" />
+              <span>გაგზავნე შეხსენება ახლა 📲</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
