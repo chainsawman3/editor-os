@@ -11,6 +11,7 @@ import {
   Circle,
   Clock,
   ArrowRight,
+  ArrowLeft,
   Filter,
   Layers,
   Sparkles,
@@ -28,7 +29,10 @@ import {
   GraduationCap,
   StickyNote,
   Dumbbell,
-  Waves
+  Waves,
+  Trash2,
+  Heart,
+  X as XIcon
 } from 'lucide-react';
 import { CalendarSkeleton } from '../components/common/SkeletonLoader';
 
@@ -36,9 +40,145 @@ interface CalendarPageProps {
   onOpenProject: (projectId: string) => void;
   onOpenGoal?: (goalId: string) => void;
   onOpenNote?: (noteId: string) => void;
+  activeUser?: string;
 }
 
-export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpenGoal, onOpenNote }) => {
+interface RoutineItem {
+  dayIndex: number;
+  type: 'gym' | 'pool' | 'rest';
+  title: string;
+  subtitle: string;
+  focus: string;
+  targetMuscles?: string;
+  exercises?: string[];
+}
+
+const DEFAULT_ROUTINES: RoutineItem[] = [
+  {
+    dayIndex: 1, // Mon
+    type: 'rest',
+    title: 'სამუშაო დღე & დასვენება',
+    subtitle: 'Recovery & Work Prep',
+    focus: 'სამუშაო კვირის სტარტი. ენერგიის დაზოგვა და მობილურობა',
+    exercises: [
+      'საღამოს მსუბუქი გასეირნება (30-40 წუთი)',
+      'წყლის ოპტიმალური ბალანსი (2.5 - 3 ლიტრი)',
+      'ხერხემლისა და კისრის მობილურობის გაჭიმვები',
+      'მინიმუმ 8 საათი ხარისხიანი ძილი'
+    ]
+  },
+  {
+    dayIndex: 2, // Tue
+    type: 'gym',
+    title: 'დარბაზი #1: Push (მკერდი, მხრები, ტრიცეფსი)',
+    subtitle: 'ძალოვანი ვარჯიში A',
+    focus: 'ზედა ტანის ბიძგითი კუნთები, ჰანტელების პრესი, ბრუსები',
+    targetMuscles: 'გულმკერდი · წინა/შუა დელტები · ტრიცეფსი · პრესი',
+    exercises: [
+      'შტანგის / ჰანტელების ჟიმი ჰორიზონტალურ სკამზე (4 სეტი x 8-10 გამეორება)',
+      'დახრილ სკამზე ჰანტელების ჟიმი ზედა მკერდისთვის (3 სეტი x 10-12 გამეორება)',
+      'ჰანტელების განზე აწევა მხრებისთვის / გვერდითი დელტა (4 სეტი x 12-15 გამეორება)',
+      'ტრიცეფსი ბლოკზე თოკით ან ფრანგული ჟიმი (3 სეტი x 12 გამეორება)',
+      'ფიცარი (Plank) და მუცლის პრესის აწევები (3 სეტი x 45-60 წამი)'
+    ]
+  },
+  {
+    dayIndex: 3, // Wed
+    type: 'rest',
+    title: 'სამუშაო დღე & აღდგენა',
+    subtitle: 'Rest & Nutrient Synthesis',
+    focus: 'კუნთების აღდგენა Push ვარჯიშის შემდეგ',
+    exercises: [
+      'კარგი ძილი და კუნთოვანი ქსოვილის აღდგენა',
+      'ცილოვანი ბალანსის შენარჩუნება',
+      'მხრებისა და მკერდის მსუბუქი გაჭიმვა',
+      'კომპიუტერთან ჯდომის შემდეგ ზურგის გამართვა'
+    ]
+  },
+  {
+    dayIndex: 4, // Thu
+    type: 'gym',
+    title: 'დარბაზი #2: Pull (ზურგი, ბიცეფსი)',
+    subtitle: 'ძალოვანი ვარჯიში B',
+    focus: 'ზურგის სიგანე და სისქე, ტურნიკი, ბიცეფსის იზოლაცია',
+    targetMuscles: 'ფართო ზურგი · ტრაპეცია · უკანა დელტა · ბიცეფსი',
+    exercises: [
+      'ტურნიკზე აზიდვები / ვერტიკალური ბლოკის ჩამოწევა (4 სეტი x 8-10 გამეორება)',
+      'ჰანტელის წევა დახრილში ცალი ხელით (4 სეტი x 10 გამეორება თითო მხარე)',
+      'ჰორიზონტალური ბლოკის წევა მუცელთან (3 სეტი x 12 გამეორება)',
+      'ბიცეფსის აწევა შტანგით / ჰანტელებით (4 სეტი x 10-12 გამეორება)',
+      'ჰიპერექსტენზია ზურგის ქვედა ნაწილისა და წელისთვის (3 სეტი x 15 გამეორება)'
+    ]
+  },
+  {
+    dayIndex: 5, // Fri
+    type: 'rest',
+    title: 'სამსახური 17:00-მდე & განტვირთვა',
+    subtitle: 'Early Finish & Weekend Transition',
+    focus: 'სამსახური სრულდება 5 საათზე. სრული განტვირთვა შაბათის აუზის წინ',
+    exercises: [
+      'სამუშაო კვირის პოზიტიურად დახურვა 17:00-ზე',
+      'მშვიდი საღამო და მენტალური რელაქსაცია',
+      'აუზის ინვენტარისა და ჩანთის მომზადება',
+      'ადრე დაძინება შაბათის სრული ენერგიისთვის'
+    ]
+  },
+  {
+    dayIndex: 6, // Sat
+    type: 'pool',
+    title: '🏊‍♂️ აუზის დღე (Swimming & Hydrotherapy)',
+    subtitle: 'ჰიდროთერაპია & სრული აღდგენა',
+    focus: 'სრული კარდიო დატვირთვა, ხერხემლისა და სახსრების განტვირთვა, საუნა',
+    exercises: [
+      '1. გახურება (10 წთ): მშვიდი ბრასი და წყლის ტემპერატურასთან შეგუება',
+      '2. კარდიო ცურვა (35 წთ): თავისუფალი სტილი (Freestyle), 4x50მ კონტროლირებადი აჩქარებები',
+      '3. განტვირთვა (15 წთ): მშვიდი ზურგზე ცურვა, ხერხემლის სრული გაჭიმვა წყალში',
+      '4. საუნა & სპა (15 წთ): ტოქსინების გამოდევნა, ჰიდრომასაჟი და კონტრასტული შხაპი'
+    ]
+  },
+  {
+    dayIndex: 0, // Sun
+    type: 'gym',
+    title: 'დარბაზი #3: Legs & Core (ფეხები, პრესი)',
+    subtitle: 'ძალოვანი ვარჯიში C',
+    focus: 'ქვედა ტანი, კვადრიცეფსი, ბარძაყი, წვივები, პრესი',
+    targetMuscles: 'კვადრიცეფსი · ბარძაყის ბიცეფსი · დუნდულები · წვივები · პრესი',
+    exercises: [
+      'ჩაჯდომები შტანგით / ლეგ პრესი (4 სეტი x 10 გამეორება)',
+      'ფეხის გაშლა ტრენაჟორზე კვადრიცეფსისთვის (3 სეტი x 12 გამეორება)',
+      'ფეხის მოხრა ტრენაჟორზე ბარძაყის უკანა ნაწილისთვის (3 სეტი x 12 გამეორება)',
+      'წვივების აწევა დგომში (4 სეტი x 15 გამეორება)',
+      'მუცლის პრესი ტურნიკზე ფეხების აწევით + როლერი (3 სეტი x 15 გამეორება)'
+    ]
+  }
+];
+
+const geoDayNames: Record<number, string> = {
+  0: 'კვირა',
+  1: 'ორშაბათი',
+  2: 'სამშაბათი',
+  3: 'ოთხშაბათი',
+  4: 'ხუთშაბათი',
+  5: 'პარასკევი',
+  6: 'შაბათი'
+};
+
+const geoMonthNames: Record<number, string> = {
+  0: 'იანვარი',
+  1: 'თებერვალი',
+  2: 'მარტი',
+  3: 'აპრილი',
+  4: 'მაისი',
+  5: 'ივნისი',
+  6: 'ივლისი',
+  7: 'აგვისტო',
+  8: 'სექტემბერი',
+  9: 'ოქტომბერი',
+  10: 'ნოემბერი',
+  11: 'დეკემბერი'
+};
+
+export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpenGoal, onOpenNote, activeUser = 'gigi' }) => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -48,7 +188,24 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
   // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'agenda'>('month');
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
+
+  // Modals for Day View
+  const [showAddWorkoutModal, setShowAddWorkoutModal] = useState(false);
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  
+  // Workout form state
+  const [workoutPreset, setWorkoutPreset] = useState<'push' | 'pull' | 'legs' | 'pool' | 'custom'>('push');
+  const [workoutTitle, setWorkoutTitle] = useState('');
+  const [workoutTime, setWorkoutTime] = useState('20:00');
+  const [workoutDescription, setWorkoutDescription] = useState('');
+
+  // Task form state
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskTime, setNewTaskTime] = useState('');
+  const [newTaskPriority, setNewTaskPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
+  const [newTaskStage, setNewTaskStage] = useState('General');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
 
   // Filters
   const [showGoals, setShowGoals] = useState(true);
@@ -103,6 +260,171 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today.toISOString().split('T')[0]);
+  };
+
+  const handlePrevDay = () => {
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const prev = new Date(y, m - 1, d - 1);
+    const yStr = prev.getFullYear();
+    const mStr = String(prev.getMonth() + 1).padStart(2, '0');
+    const dStr = String(prev.getDate()).padStart(2, '0');
+    setSelectedDate(`${yStr}-${mStr}-${dStr}`);
+  };
+
+  const handleNextDay = () => {
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const next = new Date(y, m - 1, d + 1);
+    const yStr = next.getFullYear();
+    const mStr = String(next.getMonth() + 1).padStart(2, '0');
+    const dStr = String(next.getDate()).padStart(2, '0');
+    setSelectedDate(`${yStr}-${mStr}-${dStr}`);
+  };
+
+  const getGeorgianDateTitle = (dateStr: string) => {
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      const dayOfWeek = dateObj.getDay();
+      return `${geoDayNames[dayOfWeek]}, ${d} ${geoMonthNames[m - 1]}, ${y}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getDayRoutine = (dateStr: string) => {
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dayIdx = new Date(y, m - 1, d).getDay();
+      const currentActiveUser = activeUser || (typeof window !== 'undefined' ? localStorage.getItem('flow_os_active_user') || 'gigi' : 'gigi');
+      const key = currentActiveUser === 'ani' ? 'flow_os_workout_schedule_ani' : 'flow_os_workout_schedule';
+      const saved = localStorage.getItem(key);
+      const schedule: RoutineItem[] = saved ? JSON.parse(saved) : DEFAULT_ROUTINES;
+      return schedule.find((s) => s.dayIndex === dayIdx) || null;
+    } catch (e) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dayIdx = new Date(y, m - 1, d).getDay();
+      return DEFAULT_ROUTINES.find((s) => s.dayIndex === dayIdx) || null;
+    }
+  };
+
+  const handleOpenWorkoutModal = (preset?: 'push' | 'pull' | 'legs' | 'pool' | 'custom') => {
+    const selected = preset || 'push';
+    setWorkoutPreset(selected);
+    if (selected === 'push') {
+      setWorkoutTitle('დარბაზი: Push (მკერდი, მხრები, ტრიცეფსი)');
+      setWorkoutTime('20:00');
+      setWorkoutDescription(
+        '• შტანგის / ჰანტელების ჟიმი ჰორიზონტალურ სკამზე (4x8-10)\n• დახრილ სკამზე ჰანტელების ჟიმი (3x10-12)\n• ჰანტელების განზე აწევა მხრებისთვის (4x12-15)\n• ტრიცეფსი ბლოკზე თოკით (3x12)\n• მუცლის პრესი და პლანკა (3x45-60 წმ)'
+      );
+    } else if (selected === 'pull') {
+      setWorkoutTitle('დარბაზი: Pull (ზურგი, ბიცეფსი)');
+      setWorkoutTime('20:00');
+      setWorkoutDescription(
+        '• ტურნიკზე აზიდვები / ვერტიკალური ბლოკი (4x8-10)\n• ჰანტელის წევა დახრილში (4x10)\n• ჰორიზონტალური ბლოკის წევა (3x12)\n• ბიცეფსის აწევა შტანგით / ჰანტელებით (4x10-12)\n• ჰიპერექსტენზია წელისთვის (3x15)'
+      );
+    } else if (selected === 'legs') {
+      setWorkoutTitle('დარბაზი: Legs & Core (ფეხები, პრესი)');
+      setWorkoutTime('20:00');
+      setWorkoutDescription(
+        '• ჩაჯდომები შტანგით / Leg Press (4x10)\n• ფეხის გაშლა ტრენაჟორზე (3x12)\n• ფეხის მოხრა ტრენაჟორზე (3x12)\n• წვივები დგომში (4x15)\n• მუცლის პრესის აწევები ტურნიკზე (3x15)'
+      );
+    } else if (selected === 'pool') {
+      setWorkoutTitle('🏊‍♂️ აუზის დღე: Swimming & Hydrotherapy');
+      setWorkoutTime('18:00');
+      setWorkoutDescription(
+        '• 10 წთ გახურება და მშვიდი ბრასი\n• 35 წთ კარდიო ცურვა (4x50მ აჩქარებები)\n• 15 წთ ზურგზე ცურვა და ხერხემლის გაჭიმვა\n• 15 წთ საუნა, ჰიდრომასაჟი და კონტრასტული შხაპი'
+      );
+    } else {
+      setWorkoutTitle('ვარჯიში: ');
+      setWorkoutTime('20:00');
+      setWorkoutDescription('');
+    }
+    setShowAddWorkoutModal(true);
+  };
+
+  const handleAddRoutineToDay = async (routine: RoutineItem) => {
+    const isPool = routine.type === 'pool';
+    const newTask: Partial<Task> = {
+      title: routine.title,
+      stage: isPool ? 'Pool' : 'Workout',
+      due_date: selectedDate,
+      due_time: '20:00',
+      priority: 'High',
+      description: routine.exercises?.join('\n') || '',
+      completed: false,
+      order_index: tasks.length
+    };
+    try {
+      const created = await api.createTask(newTask);
+      if (created) {
+        setTasks((prev) => [...prev, created]);
+      }
+    } catch (e) {
+      console.error('Failed to add workout task:', e);
+    }
+  };
+
+  const handleSaveWorkout = async () => {
+    if (!workoutTitle.trim()) return;
+    const isPool =
+      workoutPreset === 'pool' ||
+      workoutTitle.toLowerCase().includes('pool') ||
+      workoutTitle.toLowerCase().includes('აუზი');
+    const newTask: Partial<Task> = {
+      title: workoutTitle.trim(),
+      stage: isPool ? 'Pool' : 'Workout',
+      due_date: selectedDate,
+      due_time: workoutTime || undefined,
+      priority: 'High',
+      description: workoutDescription.trim() || undefined,
+      completed: false,
+      order_index: tasks.length
+    };
+    try {
+      const created = await api.createTask(newTask);
+      if (created) {
+        setTasks((prev) => [...prev, created]);
+      }
+      setShowAddWorkoutModal(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSaveTask = async () => {
+    if (!newTaskTitle.trim()) return;
+    const newTask: Partial<Task> = {
+      title: newTaskTitle.trim(),
+      due_date: selectedDate,
+      due_time: newTaskTime.trim() || undefined,
+      priority: newTaskPriority,
+      stage: newTaskStage || 'General',
+      description: newTaskDescription.trim() || undefined,
+      completed: false,
+      order_index: tasks.length
+    };
+    try {
+      const created = await api.createTask(newTask);
+      if (created) {
+        setTasks((prev) => [...prev, created]);
+      }
+      setShowAddTaskModal(false);
+      setNewTaskTitle('');
+      setNewTaskTime('');
+      setNewTaskDescription('');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    try {
+      await api.deleteTask(taskId);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Helper to determine project badge style & icon based on category/section
@@ -517,6 +839,17 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                 <span>Week</span>
               </button>
               <button
+                onClick={() => setViewMode('day')}
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
+                  viewMode === 'day'
+                    ? 'bg-blue-600 text-white shadow-sm font-bold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-300" />
+                <span>Day</span>
+              </button>
+              <button
                 onClick={() => setViewMode('agenda')}
                 className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
                   viewMode === 'agenda'
@@ -652,7 +985,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                 return (
                   <div
                     key={dateStr}
-                    onClick={() => setSelectedDate(dateStr)}
+                    onClick={() => {
+                      setSelectedDate(dateStr);
+                      setViewMode('day');
+                    }}
                     className={`min-h-[58px] sm:min-h-[105px] md:min-h-[120px] p-1 sm:p-2.5 rounded-lg sm:rounded-xl border cursor-pointer transition-all duration-150 flex flex-col justify-between group overflow-hidden ${
                       isSelected
                         ? 'bg-zinc-900 border-blue-500/80 ring-2 ring-blue-500/20 shadow-lg'
@@ -690,8 +1026,23 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
                       )}
                     </div>
 
-                    {/* EVENT ICONS ONLY (CLEAN COLOR-CODED BADGES) */}
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-1.5 my-0.5 sm:my-1.5 overflow-hidden">
+                    {/* MOBILE ONLY: Clean aggregate badge/indicator to prevent cluttered icons */}
+                    <div className="sm:hidden flex items-center justify-center my-1">
+                      {totalDayItems > 0 && (
+                        <div className="flex items-center gap-1 bg-zinc-950/90 border border-zinc-800/90 px-1.5 py-0.5 rounded-md shadow-sm">
+                          {dayTasks.length > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                          {dayProjects.length > 0 && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                          {dayGoals.length > 0 && <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />}
+                          {dayNotes.length > 0 && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                          <span className="text-[10px] font-mono font-bold text-zinc-300">
+                            {totalDayItems}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* DESKTOP ONLY: EVENT ICONS (CLEAN COLOR-CODED BADGES) */}
+                    <div className="hidden sm:flex flex-wrap items-center justify-start gap-1 sm:gap-1.5 my-0.5 sm:my-1.5 overflow-hidden">
                       {/* Goals */}
                       {dayGoals.map((g) => (
                         <div
@@ -1031,7 +1382,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               return (
                 <div
                   key={dStr}
-                  onClick={() => setSelectedDate(dStr)}
+                  onClick={() => {
+                    setSelectedDate(dStr);
+                    setViewMode('day');
+                  }}
                   className={`min-h-[220px] p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
                     isSelected
                       ? 'bg-zinc-900 border-blue-500 ring-1 ring-blue-500/20'
@@ -1127,6 +1481,716 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
         </div>
       )}
 
+      {/* 3. DEDICATED DAY DETAIL VIEW */}
+      {viewMode === 'day' && (
+        <div className="space-y-4">
+          {/* Day Navigation & Action Header */}
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Back to Calendar & Day Steppers */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setViewMode('month')}
+                  className="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 text-zinc-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>კალენდარი</span>
+                </button>
+
+                <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-0.5">
+                  <button
+                    onClick={handlePrevDay}
+                    className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+                    title="წინა დღე"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  {selectedDate !== todayStr && (
+                    <button
+                      onClick={handleToday}
+                      className="px-2 py-1 text-[11px] font-semibold text-blue-400 hover:text-blue-300"
+                    >
+                      დღეს
+                    </button>
+                  )}
+                  <button
+                    onClick={handleNextDay}
+                    className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+                    title="შემდეგი დღე"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {selectedDate === todayStr && (
+                  <span className="px-2.5 py-1 rounded-full bg-blue-950/80 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                    <span>დღევანდელი დღე</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Action Buttons: Add Workout & Add Task */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleOpenWorkoutModal('push')}
+                  className="flex-1 sm:flex-initial px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-950/40"
+                >
+                  <Dumbbell className="w-3.5 h-3.5" />
+                  <span>+ ვარჯიშის დამატება</span>
+                </button>
+                <button
+                  onClick={() => setShowAddTaskModal(true)}
+                  className="flex-1 sm:flex-initial px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-950/40"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ ახალი ტასკი</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Large Date Header & Stats */}
+            <div className="pt-2 border-t border-zinc-850 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight">
+                  {getGeorgianDateTitle(selectedDate)}
+                </h1>
+                <p className="text-xs text-zinc-400 mt-0.5 font-mono">
+                  თარიღი: {selectedDate}
+                </p>
+              </div>
+
+              {/* Task Completion Mini Stat */}
+              {selectedTasks.length > 0 && (
+                <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800 px-3 py-1.5 rounded-xl">
+                  <div className="text-right">
+                    <div className="text-xs font-bold text-zinc-200">
+                      {selectedTasks.filter((t) => t.completed).length} / {selectedTasks.length} შესრულებული
+                    </div>
+                    <div className="text-[10px] text-zinc-400 font-mono">
+                      {Math.round((selectedTasks.filter((t) => t.completed).length / selectedTasks.length) * 100)}% პროგრესი
+                    </div>
+                  </div>
+                  <div className="w-16 bg-zinc-950 h-2 rounded-full overflow-hidden border border-zinc-800">
+                    <div
+                      className="bg-emerald-500 h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.round((selectedTasks.filter((t) => t.completed).length / selectedTasks.length) * 100)}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Routine Recommendation Card (e.g. Push, Pull, Legs, Pool, Rest) */}
+          {(() => {
+            const routine = getDayRoutine(selectedDate);
+            if (!routine) return null;
+
+            const isAlreadyAdded = selectedTasks.some(
+              (t) =>
+                t.title.toLowerCase().includes(routine.title.toLowerCase()) ||
+                (routine.type === 'pool' && t.stage === 'Pool') ||
+                (routine.type === 'gym' && t.stage === 'Workout')
+            );
+
+            return (
+              <div
+                className={`p-4 rounded-2xl border transition-all ${
+                  routine.type === 'gym'
+                    ? 'bg-gradient-to-r from-emerald-950/40 via-zinc-950 to-zinc-950 border-emerald-500/40 shadow-sm'
+                    : routine.type === 'pool'
+                    ? 'bg-gradient-to-r from-cyan-950/40 via-zinc-950 to-zinc-950 border-cyan-500/40 shadow-sm'
+                    : 'bg-zinc-950 border-zinc-850'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`p-2 rounded-xl border shrink-0 ${
+                        routine.type === 'gym'
+                          ? 'bg-emerald-950/80 border-emerald-700 text-emerald-400'
+                          : routine.type === 'pool'
+                          ? 'bg-cyan-950/80 border-cyan-700 text-cyan-400'
+                          : 'bg-zinc-900 border-zinc-800 text-zinc-400'
+                      }`}
+                    >
+                      {routine.type === 'gym' ? (
+                        <Dumbbell className="w-5 h-5" />
+                      ) : routine.type === 'pool' ? (
+                        <Waves className="w-5 h-5" />
+                      ) : (
+                        <Heart className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono">
+                          {routine.type === 'gym' ? 'დარბაზის რუტინა' : routine.type === 'pool' ? 'აუზის რუტინა' : 'დასვენების დღე'}
+                        </span>
+                        {routine.subtitle && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-900 text-zinc-400 font-medium">
+                            {routine.subtitle}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm sm:text-base font-bold text-white mt-0.5">
+                        {routine.title}
+                      </h3>
+                      {routine.focus && (
+                        <p className="text-xs text-zinc-400 mt-0.5">{routine.focus}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {(routine.type === 'gym' || routine.type === 'pool') && (
+                    <div className="shrink-0">
+                      {isAlreadyAdded ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/80 border border-emerald-600/60 text-emerald-300 text-xs font-bold">
+                          <Check className="w-3.5 h-3.5" />
+                          <span>ვარჯიში დამატებულია</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleAddRoutineToDay(routine)}
+                          className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>ამ ვარჯიშის დამატება (1-Click)</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* MAIN DAY TASKS LIST */}
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>დღის ტასკები ({selectedTasks.length})</span>
+              </h2>
+              <button
+                onClick={() => setShowAddTaskModal(true)}
+                className="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>ტასკის დამატება</span>
+              </button>
+            </div>
+
+            {selectedTasks.length === 0 ? (
+              <div className="py-10 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto text-zinc-500">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-zinc-300">ამ დღისთვის ტასკები ჯერ არ გაქვთ დამატებული</p>
+                  <p className="text-xs text-zinc-500">დაამატეთ ვარჯიში ან სამუშაო ტასკი ქვემოთ მოცემული ღილაკებით</p>
+                </div>
+                <div className="flex items-center justify-center gap-2.5 pt-2">
+                  <button
+                    onClick={() => handleOpenWorkoutModal('push')}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Dumbbell className="w-3.5 h-3.5" />
+                    <span>+ ვარჯიშის დამატება</span>
+                  </button>
+                  <button
+                    onClick={() => setShowAddTaskModal(true)}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ ტასკის დამატება</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {selectedTasks.map((t) => {
+                  const badge = getTaskCalendarBadge(t);
+                  const isWorkout = badge.taskType === 'workout';
+                  const isPool = badge.taskType === 'pool';
+
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => handleToggleTask(t)}
+                      className={`p-3.5 sm:p-4 rounded-xl border transition-all cursor-pointer group flex flex-col gap-2.5 ${
+                        t.completed
+                          ? 'bg-emerald-950/20 border-emerald-800/50 opacity-80'
+                          : isWorkout
+                          ? 'bg-zinc-900/90 hover:bg-zinc-850/90 border-emerald-600/40 shadow-sm shadow-emerald-950/20'
+                          : isPool
+                          ? 'bg-zinc-900/90 hover:bg-zinc-850/90 border-cyan-600/40 shadow-sm shadow-cyan-950/20'
+                          : 'bg-zinc-900/80 hover:bg-zinc-850 border-zinc-800'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          {/* Big Tap Checkbox */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleTask(t);
+                            }}
+                            className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                              t.completed
+                                ? 'bg-emerald-600 border-emerald-500 text-white'
+                                : 'border-zinc-700 hover:border-emerald-500 text-transparent'
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+
+                          <div className="min-w-0 flex-1 space-y-1">
+                            {/* Badges row */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {isWorkout && (
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-950/90 border border-emerald-500/50 text-emerald-300 text-[10px] font-bold flex items-center gap-1 font-mono">
+                                  <Dumbbell className="w-3 h-3" />
+                                  <span>დარბაზი / Workout</span>
+                                </span>
+                              )}
+                              {isPool && (
+                                <span className="px-2 py-0.5 rounded-md bg-cyan-950/90 border border-cyan-500/50 text-cyan-300 text-[10px] font-bold flex items-center gap-1 font-mono">
+                                  <Waves className="w-3 h-3" />
+                                  <span>აუზი / Pool</span>
+                                </span>
+                              )}
+                              {!isWorkout && !isPool && (
+                                <span className="px-2 py-0.5 rounded-md bg-blue-950/90 border border-blue-500/40 text-blue-300 text-[10px] font-bold flex items-center gap-1 font-mono">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>{t.stage || 'ტასკი'}</span>
+                                </span>
+                              )}
+
+                              {t.due_time && (
+                                <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
+                                  <Clock className="w-3 h-3 text-zinc-500" />
+                                  {t.due_time}
+                                </span>
+                              )}
+
+                              {t.priority && (
+                                <span
+                                  className={`text-[10px] font-bold font-mono px-1.5 py-0.5 rounded ${
+                                    t.priority === 'High'
+                                      ? 'bg-rose-950 text-rose-400 border border-rose-800/60'
+                                      : t.priority === 'Medium'
+                                      ? 'bg-amber-950 text-amber-400 border border-amber-800/60'
+                                      : 'bg-zinc-800 text-zinc-400'
+                                  }`}
+                                >
+                                  {t.priority} Priority
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Title */}
+                            <h4
+                              className={`text-sm sm:text-base font-bold tracking-tight transition-colors ${
+                                t.completed ? 'line-through text-zinc-500' : 'text-zinc-100 group-hover:text-white'
+                              }`}
+                            >
+                              {t.title}
+                            </h4>
+
+                            {/* Description / Exercise list */}
+                            {t.description && (
+                              <div className="mt-2 p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 text-xs text-zinc-300 leading-relaxed whitespace-pre-line font-normal">
+                                {t.description}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Delete button */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteTask(t.id, e)}
+                          title="ტასკის წაშლა"
+                          className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-zinc-800 rounded-lg transition-colors shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* DAY PROJECTS & GOALS (IF ANY) */}
+          {(selectedProjects.length > 0 || selectedGoals.length > 0 || selectedNotes.length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Projects Due Today */}
+              {selectedProjects.length > 0 && (
+                <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                  <h3 className="text-xs font-bold uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
+                    <Video className="w-4 h-4" /> პროექტები დედლაინით ({selectedProjects.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedProjects.map((p) => {
+                      const badge = getProjectBadge(p);
+                      const IconComponent = badge.icon;
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => onOpenProject(p.id)}
+                          className="p-3 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-blue-500 rounded-xl cursor-pointer group transition-all flex items-center justify-between"
+                        >
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`p-1 rounded border ${badge.style}`}>
+                                <IconComponent className="w-3 h-3" />
+                              </span>
+                              <span className="text-xs font-bold text-zinc-100 group-hover:text-white truncate">
+                                {p.name}
+                              </span>
+                            </div>
+                            {p.client_name && (
+                              <div className="text-[10px] text-zinc-400 pl-6">კლიენტი: {p.client_name}</div>
+                            )}
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-blue-400 shrink-0" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Goals Due Today */}
+              {selectedGoals.length > 0 && (
+                <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                  <h3 className="text-xs font-bold uppercase text-purple-400 tracking-wider flex items-center gap-1.5">
+                    <Target className="w-4 h-4" /> მიზნები ({selectedGoals.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedGoals.map((g) => (
+                      <div
+                        key={g.id}
+                        onClick={() => onOpenGoal && onOpenGoal(g.id)}
+                        className="p-3 bg-purple-950/20 hover:bg-purple-950/40 border border-purple-800/60 hover:border-purple-500 rounded-xl cursor-pointer group transition-all flex items-center justify-between"
+                      >
+                        <div className="min-w-0 space-y-0.5">
+                          <h4 className="text-xs font-bold text-purple-200 group-hover:text-white truncate">
+                            🎯 {g.title}
+                          </h4>
+                          {g.description && (
+                            <p className="text-[11px] text-zinc-400 truncate">{g.description}</p>
+                          )}
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-purple-400 shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes for Today */}
+              {selectedNotes.length > 0 && (
+                <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                  <h3 className="text-xs font-bold uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
+                    <StickyNote className="w-4 h-4" /> ჩანაწერები / Notes ({selectedNotes.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedNotes.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => onOpenNote && onOpenNote(n.id)}
+                        className="p-3 bg-amber-950/20 hover:bg-amber-950/40 border border-amber-600/40 hover:border-amber-400 rounded-xl cursor-pointer group transition-all flex items-center justify-between"
+                      >
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-amber-200 group-hover:text-white truncate">
+                            📝 {n.title}
+                          </h4>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-amber-400 shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ADD WORKOUT MODAL */}
+      {showAddWorkoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-950/80 border border-emerald-700 text-emerald-400">
+                  <Dumbbell className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">ვარჯიშის დამატება</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">{selectedDate} ({getGeorgianDateTitle(selectedDate)})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddWorkoutModal(false)}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-850"
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Presets Selector */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                აირჩიეთ ვარჯიშის ტიპი (შაბლონი):
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('push')}
+                  className={`p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'push'
+                      ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  🏋️‍♂️ Push (მკერდი)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('pull')}
+                  className={`p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'pull'
+                      ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  🏋️‍♂️ Pull (ზურგი)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('legs')}
+                  className={`p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'legs'
+                      ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  🏋️‍♂️ Legs (ფეხები)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('pool')}
+                  className={`p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'pool'
+                      ? 'bg-cyan-950/80 border-cyan-500 text-cyan-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  🏊‍♂️ Pool (აუზი)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('custom')}
+                  className={`col-span-2 sm:col-span-2 p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'custom'
+                      ? 'bg-blue-950/80 border-blue-500 text-blue-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  ⚡ საკუთარი ვარჯიში
+                </button>
+              </div>
+            </div>
+
+            {/* Editable Form Inputs */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  ვარჯიშის სათაური:
+                </label>
+                <input
+                  type="text"
+                  value={workoutTitle}
+                  onChange={(e) => setWorkoutTitle(e.target.value)}
+                  placeholder="მაგ: დარბაზი: Push (მკერდი, მხრები)"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  დრო (არასავალდებულო):
+                </label>
+                <input
+                  type="text"
+                  value={workoutTime}
+                  onChange={(e) => setWorkoutTime(e.target.value)}
+                  placeholder="20:00"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white font-mono outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  ვარჯიშების სია / დეტალები:
+                </label>
+                <textarea
+                  rows={4}
+                  value={workoutDescription}
+                  onChange={(e) => setWorkoutDescription(e.target.value)}
+                  placeholder="ჩამოწერეთ ვარჯიშები და სეტები..."
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-emerald-500 resize-none font-mono leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* Submit */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-850">
+              <button
+                type="button"
+                onClick={() => setShowAddWorkoutModal(false)}
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 rounded-xl text-xs font-semibold"
+              >
+                გაუქმება
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveWorkout}
+                disabled={!workoutTitle.trim()}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-colors shadow-md shadow-emerald-950/40"
+              >
+                ვარჯიშის დამატება
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD REGULAR TASK MODAL */}
+      {showAddTaskModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-950/80 border border-blue-700 text-blue-400">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">ახალი ტასკის დამატება</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">{selectedDate} ({getGeorgianDateTitle(selectedDate)})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddTaskModal(false)}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-850"
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  ტასკის სათაური *
+                </label>
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  placeholder="მაგ: ვიდეოს მონტაჟის დასრულება, პოსტის დადება..."
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-blue-500"
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                    პრიორიტეტი:
+                  </label>
+                  <select
+                    value={newTaskPriority}
+                    onChange={(e: any) => setNewTaskPriority(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-blue-500"
+                  >
+                    <option value="High">High Priority (მაღალი)</option>
+                    <option value="Medium">Medium Priority (საშუალო)</option>
+                    <option value="Low">Low Priority (დაბალი)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                    დრო (მაგ: 15:00):
+                  </label>
+                  <input
+                    type="text"
+                    value={newTaskTime}
+                    onChange={(e) => setNewTaskTime(e.target.value)}
+                    placeholder="15:00"
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white font-mono outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  კატეგორია / ეტაპი:
+                </label>
+                <input
+                  type="text"
+                  value={newTaskStage}
+                  onChange={(e) => setNewTaskStage(e.target.value)}
+                  placeholder="General, Work, Personal, Editing..."
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  დეტალები / კომენტარი:
+                </label>
+                <textarea
+                  rows={3}
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  placeholder="დამატებითი შენიშვნები ტასკის შესახებ..."
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-blue-500 resize-none leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* Submit */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-850">
+              <button
+                type="button"
+                onClick={() => setShowAddTaskModal(false)}
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 rounded-xl text-xs font-semibold"
+              >
+                გაუქმება
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveTask}
+                disabled={!newTaskTitle.trim()}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-colors shadow-md shadow-blue-950/40"
+              >
+                ტასკის დამატება
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 4. AGENDA LIST VIEW */}
       {viewMode === 'agenda' && (
         <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
@@ -1200,6 +2264,272 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ADD WORKOUT MODAL */}
+      {showAddWorkoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-950/80 border border-emerald-700 text-emerald-400">
+                  <Dumbbell className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">ვარჯიშის დამატება</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">{selectedDate} ({getGeorgianDateTitle(selectedDate)})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddWorkoutModal(false)}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-850"
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Presets Selector */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                აირჩიეთ ვარჯიშის ტიპი (შაბლონი):
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('push')}
+                  className={`p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'push'
+                      ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  🏋️‍♂️ Push (მკერდი)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('pull')}
+                  className={`p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'pull'
+                      ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  🏋️‍♂️ Pull (ზურგი)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('legs')}
+                  className={`p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'legs'
+                      ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  🏋️‍♂️ Legs (ფეხები)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('pool')}
+                  className={`p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'pool'
+                      ? 'bg-cyan-950/80 border-cyan-500 text-cyan-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  🏊‍♂️ Pool (აუზი)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkoutModal('custom')}
+                  className={`col-span-2 sm:col-span-2 p-2 rounded-xl border text-left text-xs transition-all ${
+                    workoutPreset === 'custom'
+                      ? 'bg-blue-950/80 border-blue-500 text-blue-300 font-bold'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-850'
+                  }`}
+                >
+                  ⚡ საკუთარი ვარჯიში
+                </button>
+              </div>
+            </div>
+
+            {/* Editable Form Inputs */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  ვარჯიშის სათაური:
+                </label>
+                <input
+                  type="text"
+                  value={workoutTitle}
+                  onChange={(e) => setWorkoutTitle(e.target.value)}
+                  placeholder="მაგ: დარბაზი: Push (მკერდი, მხრები)"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  დრო (არასავალდებულო):
+                </label>
+                <input
+                  type="text"
+                  value={workoutTime}
+                  onChange={(e) => setWorkoutTime(e.target.value)}
+                  placeholder="20:00"
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white font-mono outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  ვარჯიშების სია / დეტალები:
+                </label>
+                <textarea
+                  rows={4}
+                  value={workoutDescription}
+                  onChange={(e) => setWorkoutDescription(e.target.value)}
+                  placeholder="ჩამოწერეთ ვარჯიშები და სეტები..."
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-emerald-500 resize-none font-mono leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* Submit */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-850">
+              <button
+                type="button"
+                onClick={() => setShowAddWorkoutModal(false)}
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 rounded-xl text-xs font-semibold"
+              >
+                გაუქმება
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveWorkout}
+                disabled={!workoutTitle.trim()}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-colors shadow-md shadow-emerald-950/40"
+              >
+                ვარჯიშის დამატება
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD REGULAR TASK MODAL */}
+      {showAddTaskModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-950/80 border border-blue-700 text-blue-400">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">ახალი ტასკის დამატება</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">{selectedDate} ({getGeorgianDateTitle(selectedDate)})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddTaskModal(false)}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-850"
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  ტასკის სათაური *
+                </label>
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  placeholder="მაგ: ვიდეოს მონტაჟის დასრულება, პოსტის დადება..."
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-blue-500"
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                    პრიორიტეტი:
+                  </label>
+                  <select
+                    value={newTaskPriority}
+                    onChange={(e: any) => setNewTaskPriority(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-blue-500"
+                  >
+                    <option value="High">High Priority (მაღალი)</option>
+                    <option value="Medium">Medium Priority (საშუალო)</option>
+                    <option value="Low">Low Priority (დაბალი)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                    დრო (მაგ: 15:00):
+                  </label>
+                  <input
+                    type="text"
+                    value={newTaskTime}
+                    onChange={(e) => setNewTaskTime(e.target.value)}
+                    placeholder="15:00"
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white font-mono outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  კატეგორია / ეტაპი:
+                </label>
+                <input
+                  type="text"
+                  value={newTaskStage}
+                  onChange={(e) => setNewTaskStage(e.target.value)}
+                  placeholder="General, Work, Personal, Editing..."
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400 block mb-1">
+                  დეტალები / კომენტარი:
+                </label>
+                <textarea
+                  rows={3}
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  placeholder="დამატებითი შენიშვნები ტასკის შესახებ..."
+                  className="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white outline-none focus:border-blue-500 resize-none leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* Submit */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-850">
+              <button
+                type="button"
+                onClick={() => setShowAddTaskModal(false)}
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 rounded-xl text-xs font-semibold"
+              >
+                გაუქმება
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveTask}
+                disabled={!newTaskTitle.trim()}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-colors shadow-md shadow-blue-950/40"
+              >
+                ტასკის დამატება
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

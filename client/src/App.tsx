@@ -314,6 +314,7 @@ export function App() {
               setSelectedNoteId(noteId);
               setCurrentTab('notes');
             }}
+            activeUser={activeUser}
           />
         );
       case 'project_detail':
