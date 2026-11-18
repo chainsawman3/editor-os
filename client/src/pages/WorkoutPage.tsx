@@ -16,7 +16,10 @@ import {
   ArrowRight,
   ShieldCheck,
   Clock,
-  Heart
+  Heart,
+  Edit3,
+  X as XIcon,
+  RotateCcw
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -181,15 +184,31 @@ interface WorkoutPageProps {
 }
 
 export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
+  // Active user scope
+  const activeUser = typeof window !== 'undefined' ? (localStorage.getItem('flow_os_active_user') || 'gigi') : 'gigi';
+  const workoutStorageKey = activeUser === 'gigi' ? 'flow_os_completed_workouts' : `flow_os_completed_workouts_${activeUser}`;
+  const scheduleStorageKey = activeUser === 'gigi' ? 'flow_os_workout_schedule' : `flow_os_workout_schedule_${activeUser}`;
+
+  // Persistent workout schedule per user
+  const [schedule, setSchedule] = useState<WorkoutDay[]>(() => {
+    try {
+      const saved = localStorage.getItem(scheduleStorageKey);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error loading workout schedule:', e);
+    }
+    return DEFAULT_SCHEDULE;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(scheduleStorageKey, JSON.stringify(schedule));
+  }, [schedule, activeUser, scheduleStorageKey]);
+
   // Current day index (0: Sun, 1: Mon, 2: Tue, 3: Wed, 4: Thu, 5: Fri, 6: Sat)
   const currentDayOfWeek = new Date().getDay();
 
   // Find today's workout day or default to Tuesday
-  const todayScheduleItem = DEFAULT_SCHEDULE.find((d) => d.dayIndex === currentDayOfWeek) || DEFAULT_SCHEDULE[1];
-
-  // Active user scope
-  const activeUser = typeof window !== 'undefined' ? (localStorage.getItem('flow_os_active_user') || 'gigi') : 'gigi';
-  const workoutStorageKey = activeUser === 'gigi' ? 'flow_os_completed_workouts' : `flow_os_completed_workouts_${activeUser}`;
+  const todayScheduleItem = schedule.find((d) => d.dayIndex === currentDayOfWeek) || schedule[1];
 
   // Selected day for detailed breakdown below
   const [selectedDayId, setSelectedDayId] = useState<string>(todayScheduleItem.id);
@@ -209,6 +228,74 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [telegramStatus, setTelegramStatus] = useState<string | null>(null);
 
+  // Edit Day Modal State
+  const [editingDay, setEditingDay] = useState<WorkoutDay | null>(null);
+  const [editForm, setEditForm] = useState<{
+    title: string;
+    subtitle: string;
+    type: 'gym' | 'pool' | 'rest';
+    duration: string;
+    focus: string;
+    workNote: string;
+    targetMuscles: string;
+    exercisesText: string;
+  }>({
+    title: '',
+    subtitle: '',
+    type: 'gym',
+    duration: '',
+    focus: '',
+    workNote: '',
+    targetMuscles: '',
+    exercisesText: ''
+  });
+
+  const openEditModal = (day: WorkoutDay, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingDay(day);
+    setEditForm({
+      title: day.title,
+      subtitle: day.subtitle,
+      type: day.type,
+      duration: day.duration,
+      focus: day.focus,
+      workNote: day.workNote || '',
+      targetMuscles: day.targetMuscles || '',
+      exercisesText: (day.exercises || []).join('\n')
+    });
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDay) return;
+    const exercises = editForm.exercisesText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    const updatedDay: WorkoutDay = {
+      ...editingDay,
+      title: editForm.title.trim() || editingDay.title,
+      subtitle: editForm.subtitle.trim() || editingDay.subtitle,
+      type: editForm.type,
+      duration: editForm.duration.trim() || editingDay.duration,
+      focus: editForm.focus.trim() || editingDay.focus,
+      workNote: editForm.workNote.trim() || editingDay.workNote,
+      targetMuscles: editForm.targetMuscles.trim() || editingDay.targetMuscles,
+      exercises
+    };
+
+    setSchedule((prev) => prev.map((d) => (d.id === updatedDay.id ? updatedDay : d)));
+    setEditingDay(null);
+  };
+
+  const resetScheduleToDefault = () => {
+    if (window.confirm('გსურთ ვარჯიშის განრიგის საწყის სტანდარტზე დაბრუნება?')) {
+      setSchedule(DEFAULT_SCHEDULE);
+      localStorage.removeItem(scheduleStorageKey);
+    }
+  };
+
   // Save to local storage
   const toggleDayCompletion = (dayId: string) => {
     setCompletedDays((prev) => {
@@ -227,12 +314,12 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   };
 
   // Active workout targets (Tue, Thu, Sun gym + Sat pool = 4 sessions total)
-  const activeWorkoutDays = DEFAULT_SCHEDULE.filter((d) => d.type !== 'rest');
+  const activeWorkoutDays = schedule.filter((d) => d.type !== 'rest');
   const completedCount = activeWorkoutDays.filter((d) => !!completedDays[d.id]).length;
   const progressPercent = Math.round((completedCount / activeWorkoutDays.length) * 100);
 
   // Selected day data
-  const selectedDay = DEFAULT_SCHEDULE.find((d) => d.id === selectedDayId) || DEFAULT_SCHEDULE[1];
+  const selectedDay = schedule.find((d) => d.id === selectedDayId) || schedule[1];
 
   // Sync workout days into real tasks with 20:00 reminders
   const handleSyncToTasks = async () => {
@@ -431,21 +518,32 @@ ${selectedDay.focus} (${selectedDay.workNote})
 
       {/* 2. 7-DAY WEEKLY SCHEDULE (Full 7-Column Responsive Grid) */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-emerald-400" />
             <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
               კვირის სრული გრაფიკი (ორშაბათი – კვირა)
             </h2>
           </div>
-          <span className="text-xs text-zinc-500">
-            დააჭირეთ ბარათს დეტალური პროგრამის სანახავად
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={resetScheduleToDefault}
+              className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition-colors"
+              title="ვარჯიშის განრიგის საწყისზე დაბრუნება"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>საწყისი განრიგი</span>
+            </button>
+            <span className="text-xs text-zinc-500">
+              დააჭირეთ ✏️ რედაქტირებისთვის
+            </span>
+          </div>
         </div>
 
         {/* 7 Columns on Desktop: Every day has its own clean column! */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3">
-          {DEFAULT_SCHEDULE.map((day) => {
+          {schedule.map((day) => {
             const isCompleted = !!completedDays[day.id];
             const isRest = day.type === 'rest';
             const isPool = day.type === 'pool';
@@ -544,19 +642,29 @@ ${selectedDay.focus} (${selectedDay.workNote})
                     <Clock className="w-3 h-3 text-zinc-500" />
                     {day.duration}
                   </span>
-                  {isPool ? (
-                    <span className="text-cyan-400 font-bold flex items-center gap-1">
-                      <Waves className="w-3 h-3" />
-                      აუზი
-                    </span>
-                  ) : !isRest ? (
-                    <span className="text-emerald-400 font-bold flex items-center gap-1">
-                      <Dumbbell className="w-3 h-3" />
-                      დარბაზი
-                    </span>
-                  ) : (
-                    <span className="text-zinc-500">დასვენება</span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => openEditModal(day, e)}
+                      className="p-1 rounded text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                      title="ამ დღის პროგრამის რედაქტირება"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                    </button>
+                    {isPool ? (
+                      <span className="text-cyan-400 font-bold flex items-center gap-1">
+                        <Waves className="w-3 h-3" />
+                        აუზი
+                      </span>
+                    ) : !isRest ? (
+                      <span className="text-emerald-400 font-bold flex items-center gap-1">
+                        <Dumbbell className="w-3 h-3" />
+                        დარბაზი
+                      </span>
+                    ) : (
+                      <span className="text-zinc-500">დასვენება</span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -602,29 +710,41 @@ ${selectedDay.focus} (${selectedDay.workNote})
               </div>
             </div>
 
-            {selectedDay.type !== 'rest' && (
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                onClick={() => toggleDayCompletion(selectedDay.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
-                  completedDays[selectedDay.id]
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
-                    : 'bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-750'
-                }`}
+                onClick={() => openEditModal(selectedDay)}
+                className="px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-750 flex items-center gap-1.5 transition-colors"
+                title="ამ დღის პროგრამის რედაქტირება"
               >
-                {completedDays[selectedDay.id] ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>შესრულებულია ✅</span>
-                  </>
-                ) : (
-                  <>
-                    <Circle className="w-4 h-4 text-zinc-400" />
-                    <span>მონიშნე შესრულებულად</span>
-                  </>
-                )}
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>რედაქტირება</span>
               </button>
-            )}
+
+              {selectedDay.type !== 'rest' && (
+                <button
+                  type="button"
+                  onClick={() => toggleDayCompletion(selectedDay.id)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 ${
+                    completedDays[selectedDay.id]
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40'
+                      : 'bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-750'
+                  }`}
+                >
+                  {completedDays[selectedDay.id] ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>შესრულებულია ✅</span>
+                    </>
+                  ) : (
+                    <>
+                      <Circle className="w-4 h-4 text-zinc-400" />
+                      <span>მონიშნე შესრულებულად</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Target Focus & Muscles */}
@@ -768,6 +888,169 @@ ${selectedDay.focus} (${selectedDay.workNote})
           </div>
         </div>
       </div>
+
+      {/* 4. EDIT WORKOUT DAY MODAL */}
+      {editingDay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {editingDay.dayName} – ვარჯიშის რედაქტირება
+                  </h3>
+                  <span className="text-[11px] text-zinc-400">
+                    ინდივიდუალური განრიგი ({activeUser === 'ani' ? 'ანი' : 'გიგი'})
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingDay(null)}
+                className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-900"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-zinc-300">
+                  სათაური / ვარჯიშის დასახელება:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  placeholder="მაგ. დარბაზი #1: Push ან პილატესი & იოგა"
+                  className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-zinc-300">
+                    ტიპი:
+                  </label>
+                  <select
+                    value={editForm.type}
+                    onChange={(e) => setEditForm({ ...editForm, type: e.target.value as any })}
+                    className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="gym">🏋️‍♂️ დარბაზი / ფიტნესი</option>
+                    <option value="pool">🏊‍♂️ აუზი & ჰიდროთერაპია</option>
+                    <option value="rest">💤 დასვენება & აღდგენა</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-zinc-300">
+                    დრო / ხანგრძლივობა:
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.duration}
+                    onChange={(e) => setEditForm({ ...editForm, duration: e.target.value })}
+                    placeholder="მაგ. 60 წუთი (20:00)"
+                    className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-zinc-300">
+                  ქვესათაური / სტილი:
+                </label>
+                <input
+                  type="text"
+                  value={editForm.subtitle}
+                  onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
+                  placeholder="მაგ. ძალოვანი ვარჯიში A / კარდიო & ტონუსი"
+                  className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-zinc-300">
+                  ფოკუსი / მოკლე აღწერა:
+                </label>
+                <input
+                  type="text"
+                  value={editForm.focus}
+                  onChange={(e) => setEditForm({ ...editForm, focus: e.target.value })}
+                  placeholder="მაგ. ზედა ტანის ბიძგითი კუნთები, ჰანტელების პრესი"
+                  className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-zinc-300">
+                    სამიზნე კუნთები:
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.targetMuscles}
+                    onChange={(e) => setEditForm({ ...editForm, targetMuscles: e.target.value })}
+                    placeholder="მაგ. მკერდი, მხრები, პრესი"
+                    className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-zinc-300">
+                    სამუშაო შენიშვნა:
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.workNote}
+                    onChange={(e) => setEditForm({ ...editForm, workNote: e.target.value })}
+                    placeholder="მაგ. სამსახურის შემდეგ (20:00)"
+                    className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-zinc-300">
+                    სავარჯიშოების სია (თითო ხაზზე თითო სავარჯიშო):
+                  </label>
+                  <span className="text-[10px] text-zinc-500">ხაზ-ხაზად</span>
+                </div>
+                <textarea
+                  rows={5}
+                  value={editForm.exercisesText}
+                  onChange={(e) => setEditForm({ ...editForm, exercisesText: e.target.value })}
+                  placeholder="ჩაჯდომები შტანგით (4 x 10)&#10;ჰანტელების ჟიმი (3 x 12)&#10;ფიცარი / Plank (3 x 45 წმ)"
+                  className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 font-mono leading-relaxed"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-850">
+                <button
+                  type="button"
+                  onClick={() => setEditingDay(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-850 text-zinc-300"
+                >
+                  გაუქმება
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-950/50 flex items-center gap-1.5"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>შენახვა</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -103,10 +103,24 @@ export const EconomyPage: React.FC = () => {
   const [inputNote, setInputNote] = useState<string>('');
   const [logSuccessMsg, setLogSuccessMsg] = useState<string | null>(null);
 
-  // Fixed costs
-  const rent = 500;
-  const utilities = 60;
-  const cigaretteDaily = 7;
+  // Fixed costs (Configurable per user)
+  const [rent, setRent] = useState<number>(() => {
+    const saved = localStorage.getItem(getKey('flow_os_rent'));
+    if (saved !== null) return parseFloat(saved);
+    return activeUser === 'ani' ? 0 : 500;
+  });
+
+  const [utilities, setUtilities] = useState<number>(() => {
+    const saved = localStorage.getItem(getKey('flow_os_utilities'));
+    if (saved !== null) return parseFloat(saved);
+    return activeUser === 'ani' ? 0 : 60;
+  });
+
+  const [cigaretteDaily, setCigaretteDaily] = useState<number>(() => {
+    const saved = localStorage.getItem(getKey('flow_os_cigarette_daily'));
+    if (saved !== null) return parseFloat(saved);
+    return activeUser === 'ani' ? 0 : 7;
+  });
 
   // Calculate days remaining until the next 5th of the month
   const calculateDaysUntil5th = () => {
@@ -145,6 +159,18 @@ export const EconomyPage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(getKey('flow_os_weekly_logs'), JSON.stringify(weeklyLogs));
   }, [weeklyLogs, activeUser]);
+
+  useEffect(() => {
+    localStorage.setItem(getKey('flow_os_rent'), String(rent));
+  }, [rent, activeUser]);
+
+  useEffect(() => {
+    localStorage.setItem(getKey('flow_os_utilities'), String(utilities));
+  }, [utilities, activeUser]);
+
+  useEffect(() => {
+    localStorage.setItem(getKey('flow_os_cigarette_daily'), String(cigaretteDaily));
+  }, [cigaretteDaily, activeUser]);
 
   const toggleLoan = (id: string) => {
     setLoans((prev) =>
@@ -390,7 +416,7 @@ export const EconomyPage: React.FC = () => {
               გადახდილია ✅
             </div>
             <span className="text-[10px] text-zinc-500 block">
-              სესხები (513 ₾) + ქირა (500 ₾)
+              სესხები ({totalLoans} ₾) + ქირა ({rent} ₾)
             </span>
           </div>
         </div>
@@ -656,38 +682,62 @@ export const EconomyPage: React.FC = () => {
             </h3>
 
             {/* 1. Fixed obligations */}
-            <div className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800 flex items-center justify-between">
-              <div className="space-y-0.5">
+            <div className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-zinc-200">1. სავალდებულო ფიქსირებული ხარჯები</span>
                   <span className="text-[10px] text-rose-400 font-mono px-1.5 py-0.2 rounded bg-rose-950/60 border border-rose-800/40">
                     -{pFixed}%
                   </span>
                 </div>
-                <div className="text-[11px] text-zinc-400">
-                  ქირა (500 ₾) + კომუნალურები (60 ₾) + სესხები 7 ცალი ({totalLoans} ₾)
+                <div className="text-[11px] text-zinc-400 flex flex-wrap items-center gap-2">
+                  <span>ქირა:</span>
+                  <input
+                    type="number"
+                    value={rent}
+                    onChange={(e) => setRent(parseFloat(e.target.value) || 0)}
+                    className="w-16 bg-zinc-950 border border-zinc-700 rounded px-1.5 py-0.5 text-xs text-white font-mono text-center focus:border-rose-500"
+                    title="ჩაწერეთ ქირის თანხა (ან 0 თუ არ გაქვთ)"
+                  />
+                  <span>₾ + კომუნალურები:</span>
+                  <input
+                    type="number"
+                    value={utilities}
+                    onChange={(e) => setUtilities(parseFloat(e.target.value) || 0)}
+                    className="w-14 bg-zinc-950 border border-zinc-700 rounded px-1.5 py-0.5 text-xs text-white font-mono text-center focus:border-rose-500"
+                    title="ჩაწერეთ კომუნალურები (ან 0)"
+                  />
+                  <span>₾ + სესხები ({totalLoans} ₾)</span>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <div className="text-sm font-bold font-mono text-rose-400">-{totalFixedCosts} ₾</div>
                 <div className="text-[10px] text-zinc-500">რჩება: {remainingAfterFixed} ₾</div>
               </div>
             </div>
 
-            {/* 2. Cigarettes */}
-            <div className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800 flex items-center justify-between">
-              <div className="space-y-0.5">
+            {/* 2. Cigarettes / Daily Habit */}
+            <div className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-zinc-200">2. სიგარეტის ყოველთვიური ფონდი</span>
+                  <span className="text-xs font-bold text-zinc-200">2. {cigaretteDaily > 0 ? 'სიგარეტის / ყოველდღიური' : 'ყოველდღიური პირადი'} ფონდი</span>
                   <span className="text-[10px] text-amber-400 font-mono px-1.5 py-0.2 rounded bg-amber-950/60 border border-amber-800/40">
                     -{pCigarettes}%
                   </span>
                 </div>
-                <div className="text-[11px] text-zinc-400">
-                  ფიქსირებული: 7 ₾ ყოველდღე × 30 დღე
+                <div className="text-[11px] text-zinc-400 flex items-center gap-2">
+                  <span>დღიური ხარჯი:</span>
+                  <input
+                    type="number"
+                    value={cigaretteDaily}
+                    onChange={(e) => setCigaretteDaily(parseFloat(e.target.value) || 0)}
+                    className="w-14 bg-zinc-950 border border-zinc-700 rounded px-1.5 py-0.5 text-xs text-white font-mono text-center focus:border-amber-500"
+                    title="თუ არ ეწევით, ჩაწერეთ 0"
+                  />
+                  <span>₾ ყოველდღე × 30 დღე {cigaretteDaily === 0 ? '(გათიშულია)' : ''}</span>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <div className="text-sm font-bold font-mono text-amber-400">-{monthlyCigarettes} ₾</div>
                 <div className="text-[10px] text-zinc-500">რჩება: {remainingAfterCigarettes} ₾</div>
               </div>
