@@ -755,7 +755,7 @@ export const EconomyPage: React.FC = () => {
         </div>
 
         {/* 7 Columns on Desktop: Every day has its own clean card */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
           {weekSchedule.map((day) => {
             const rec = dailyRecords[day.dateKey];
             const isDeducted = !!rec?.deducted;
@@ -765,118 +765,145 @@ export const EconomyPage: React.FC = () => {
             return (
               <div
                 key={day.dateKey}
-                className={`relative rounded-2xl p-3.5 sm:p-4 border transition-all flex flex-col justify-between select-none ${
+                className={`group relative rounded-2xl p-3 border transition-all flex flex-col justify-between select-none min-h-[225px] ${
                   day.isToday
                     ? isDeducted
-                      ? 'bg-gradient-to-b from-emerald-950/40 via-zinc-900 to-zinc-950 border-emerald-500/70 ring-2 ring-emerald-500/40 shadow-xl'
-                      : 'bg-gradient-to-b from-amber-950/40 via-zinc-900 to-zinc-950 border-amber-500 ring-2 ring-amber-500/50 shadow-xl shadow-amber-950/50'
+                      ? 'bg-gradient-to-b from-emerald-950/30 via-zinc-900/90 to-zinc-950 border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-950/50'
+                      : 'bg-gradient-to-b from-amber-950/30 via-zinc-900/90 to-zinc-950 border-amber-500 ring-2 ring-amber-500/50 shadow-lg shadow-amber-950/50'
                     : isDeducted
-                    ? 'bg-zinc-950/90 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60'
+                    ? 'bg-emerald-950/15 border-emerald-800/40 opacity-90 hover:opacity-100 hover:border-emerald-600/60'
                     : day.isPast
-                    ? 'bg-zinc-950/40 border-zinc-850/60 opacity-60'
+                    ? 'bg-zinc-950/50 border-zinc-850/80 opacity-60 hover:opacity-90'
                     : day.isWeekend
-                    ? 'bg-zinc-950 border-cyan-800/40 hover:border-cyan-600/70 hover:bg-zinc-900'
-                    : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'
+                    ? 'bg-zinc-950/90 border-cyan-850/50 hover:border-cyan-600/70 hover:bg-cyan-950/10'
+                    : 'bg-zinc-950/90 border-zinc-850 hover:border-zinc-700 hover:bg-zinc-900/50'
                 }`}
               >
-                <div>
-                  {/* Card Header: Day pill + Status Badge */}
-                  <div className="flex items-center justify-between mb-2">
+                {/* Top Section */}
+                <div className="space-y-1.5">
+                  {/* Card Header: Day Name + Status Icon + Edit button */}
+                  <div className="flex items-center justify-between gap-1">
                     <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-wider font-mono shrink-0 ${
                         day.isToday
                           ? isDeducted
                             ? 'bg-emerald-500 text-black shadow-sm'
                             : 'bg-amber-500 text-black shadow-sm'
                           : day.isWeekend
-                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                          : 'bg-zinc-800 text-zinc-300'
+                          ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                          : 'bg-zinc-800/80 text-zinc-300 border border-zinc-750'
                       }`}
                     >
                       {day.name}
                     </span>
 
-                    {day.isToday && (
-                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
-                        isDeducted
-                          ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300'
-                          : 'bg-amber-500/20 border border-amber-500/50 text-amber-300 animate-pulse'
-                      }`}>
-                        {isDeducted ? 'ჩამოჭრილია ✅' : 'დღეს ⭐'}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {day.isToday && (
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                          isDeducted
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+                        }`}>
+                          დღეს
+                        </span>
+                      )}
 
-                    {!day.isToday && isDeducted && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40 text-emerald-400">
-                        ჩამოჭრილია ✅
-                      </span>
-                    )}
+                      {isDeducted && (
+                        <span
+                          className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0"
+                          title="ხარჯი ჩამოჭრილია"
+                        >
+                          <Check className="w-2.5 h-2.5" />
+                        </span>
+                      )}
 
-                    {!day.isToday && !isDeducted && day.isPast && (
-                      <span className="text-[10px] font-medium text-zinc-500">
-                        გასული
-                      </span>
-                    )}
+                      {!day.isToday && !isDeducted && day.isPast && (
+                        <span className="text-[10px] text-zinc-500 font-mono">
+                          გასული
+                        </span>
+                      )}
+
+                      {/* Header Edit Pencil for fast access */}
+                      <button
+                        type="button"
+                        onClick={() => openModal(day.dateKey, day.name, day.dateStr, day.dayTotal)}
+                        className="p-1 rounded-md text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors opacity-70 group-hover:opacity-100"
+                        title="ხარჯის რედაქტირება"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
 
-                  <span className="text-[10px] font-mono text-zinc-500 block mb-2">
+                  {/* Date line */}
+                  <div className="text-[10px] font-mono text-zinc-500">
                     {day.dateStr}
-                  </span>
+                  </div>
 
                   {/* Spend Target / Actual Deducted Display */}
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-zinc-400 block font-medium">
-                      {isDeducted
-                        ? 'ჩამოჭრილია ბიუჯეტიდან:'
-                        : day.isToday
-                        ? '👉 დღეს დასახარჯი:'
-                        : day.isPast
-                        ? 'დაგეგმილი იყო:'
-                        : 'დასახარჯი:'}
+                  <div className="space-y-0.5 pt-0.5">
+                    <span className="text-[10px] block font-medium truncate">
+                      {isDeducted ? (
+                        <span className="text-emerald-400 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 shrink-0" /> ჩამოჭრილია
+                        </span>
+                      ) : day.isToday ? (
+                        <span className="text-amber-400 flex items-center gap-1 font-bold">
+                          <Zap className="w-3 h-3 shrink-0 text-amber-400" /> დღეს დასახარჯი
+                        </span>
+                      ) : day.isPast ? (
+                        <span className="text-zinc-500">დაგეგმილი იყო</span>
+                      ) : (
+                        <span className="text-zinc-400">დასახარჯი</span>
+                      )}
                     </span>
 
                     <div
                       className={`text-xl font-black font-mono tracking-tight ${
                         isDeducted
-                          ? 'text-emerald-400 text-2xl'
+                          ? 'text-emerald-400'
                           : day.isToday
-                          ? 'text-amber-400 text-2xl'
+                          ? 'text-amber-400'
                           : day.isPast
                           ? 'text-zinc-500'
-                          : 'text-white'
+                          : 'text-zinc-200'
                       }`}
                     >
                       {isDeducted ? `-${actualSpent.toFixed(2)}` : `~${day.dayTotal.toFixed(0)}`}{' '}
-                      <span className="text-xs font-normal text-zinc-400 font-mono">₾</span>
+                      <span className="text-xs font-normal text-zinc-500 font-mono">₾</span>
                     </div>
 
-                    {/* Difference / status badge */}
-                    {isDeducted && (
-                      <div className="pt-0.5">
-                        {Math.abs(diff) < 0.05 ? (
-                          <span className="text-[10px] text-zinc-400">
-                            გეგმის მიხედვით {rec?.isAuto ? '(ავტო)' : ''}
+                    {/* Difference / status line (Fixed 1-line height) */}
+                    <div className="h-4 flex items-center">
+                      {isDeducted ? (
+                        Math.abs(diff) < 0.05 ? (
+                          <span className="text-[10px] text-zinc-400 font-mono truncate">
+                            გეგმით {rec?.isAuto ? '(ავტო)' : ''}
                           </span>
                         ) : diff > 0 ? (
-                          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/50">
-                            დაზოგილია +{diff.toFixed(2)} ₾
+                          <span className="text-[10px] text-emerald-400 font-bold font-mono truncate">
+                            +{diff.toFixed(1)} ₾ დაზოგილი
                           </span>
                         ) : (
-                          <span className="text-[10px] text-rose-400 font-bold bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800/50">
-                            გადახარჯვა {diff.toFixed(2)} ₾
+                          <span className="text-[10px] text-rose-400 font-bold font-mono truncate">
+                            {diff.toFixed(1)} ₾ გადახარჯვა
                           </span>
-                        )}
-                      </div>
-                    )}
+                        )
+                      ) : (
+                        <span className="text-[10px] text-zinc-500 font-mono truncate">
+                          ლიმიტი: ~{day.dayTotal.toFixed(0)} ₾
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Action Buttons: Instant Deduct or Edit */}
-                  <div className="pt-2">
+                  {/* Action Buttons: Uniform h-8 slot across ALL cards */}
+                  <div className="pt-1">
                     {isDeducted ? (
                       <button
                         type="button"
                         onClick={() => openModal(day.dateKey, day.name, day.dateStr, day.dayTotal)}
-                        className="w-full py-1.5 px-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-750 hover:border-zinc-600 rounded-lg text-[11px] font-semibold text-zinc-300 hover:text-white flex items-center justify-center gap-1 transition-all"
+                        className="w-full h-8 px-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-750 hover:border-zinc-600 rounded-xl text-[11px] font-semibold text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 transition-all shadow-sm"
                       >
                         <Edit3 className="w-3 h-3 text-zinc-400" />
                         <span>ჩასწორება</span>
@@ -885,25 +912,30 @@ export const EconomyPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => openModal(day.dateKey, day.name, day.dateStr, day.dayTotal)}
-                        className="w-full py-2 px-2 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/40 transition-all active:scale-95"
+                        className="w-full h-8 px-2 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/40 transition-all active:scale-95"
                       >
-                        <Zap className="w-3.5 h-3.5" />
-                        <span>ხარჯის ჩამოჭრა</span>
+                        <Zap className="w-3.5 h-3.5 shrink-0" />
+                        <span>ჩამოჭრა</span>
                       </button>
                     ) : day.isPast ? (
                       <button
                         type="button"
                         onClick={() => openModal(day.dateKey, day.name, day.dateStr, day.dayTotal)}
-                        className="w-full py-1.5 px-2 bg-zinc-850 hover:bg-zinc-800 border border-zinc-700 rounded-lg text-[11px] font-medium text-zinc-300 flex items-center justify-center gap-1"
+                        className="w-full h-8 px-2 bg-zinc-900/80 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 font-medium rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-all"
                       >
-                        <span>ხარჯის ჩაწერა</span>
+                        <Plus className="w-3 h-3 text-zinc-500" />
+                        <span>ჩაწერა</span>
                       </button>
-                    ) : null}
+                    ) : (
+                      <div className="w-full h-8 rounded-xl bg-zinc-950/60 border border-zinc-850/80 flex items-center justify-center text-[10px] text-zinc-500 font-mono">
+                        დაგეგმილია
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Day Cost Breakdown Sub-tags */}
-                <div className="mt-3 pt-2.5 border-t border-zinc-850/80 space-y-1 text-[10px] text-zinc-400">
+                {/* Day Cost Breakdown Sub-tags (Fixed 3-row slot so all cards align 100% horizontally) */}
+                <div className="mt-2.5 pt-2 border-t border-zinc-850/80 space-y-0.5 text-[10px] text-zinc-400">
                   <div className="flex justify-between">
                     <span>საკვები:</span>
                     <span className="font-mono text-zinc-300">{day.foodPart.toFixed(0)} ₾</span>
@@ -912,12 +944,14 @@ export const EconomyPage: React.FC = () => {
                     <span>სიგარეტი:</span>
                     <span className="font-mono text-zinc-300">{day.cigPart} ₾</span>
                   </div>
-                  {day.funPart > 0 && (
-                    <div className="flex justify-between text-cyan-400 font-bold">
-                      <span>გართობა:</span>
-                      <span className="font-mono">{day.funPart} ₾</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span>გართობა:</span>
+                    {day.funPart > 0 ? (
+                      <span className="font-mono text-cyan-400 font-bold">{day.funPart} ₾</span>
+                    ) : (
+                      <span className="font-mono text-zinc-600">—</span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
