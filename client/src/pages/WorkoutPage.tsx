@@ -119,19 +119,18 @@ const DEFAULT_SCHEDULE: WorkoutDay[] = [
     dayName: 'ხუთშაბათი',
     dayShort: 'ხუთ',
     dayIndex: 4,
-    type: 'gym',
-    title: 'დარბაზი: Pull (ზურგი, ბიცეფსი)',
-    subtitle: 'ძალოვანი ვარჯიში B',
-    duration: '20:00 (60წთ)',
-    focus: 'ზურგის სიგანე და სისქე, ტურნიკი',
-    workNote: 'სამსახურის შემდეგ',
-    targetMuscles: 'ფართო ზურგი · ტრაპეცია · უკანა დელტა · ბიცეფსი',
+    type: 'rest',
+    title: 'სამუშაო დღე & დასვენება / აღდგენა',
+    subtitle: 'Rest & Recovery',
+    duration: 'მთელი დღე',
+    focus: 'დასვენება და ენერგიის აღდგენა პარასკევის ვარჯიშისთვის',
+    workNote: 'სამსახური (სრული)',
+    targetMuscles: 'სრული სხეულის რელაქსაცია',
     exercises: [
-      'ტურნიკზე აზიდვები / ვერტიკალური ბლოკის ჩამოწევა (4 სეტი x 8-10 გამეორება)',
-      'ჰანტელის წევა დახრილში ცალი ხელით (4 სეტი x 10 გამეორება თითო მხარე)',
-      'ჰორიზონტალური ბლოკის წევა მუცელთან (3 სეტი x 12 გამეორება)',
-      'ბიცეფსის აწევა შტანგით / ჰანტელებით (4 სეტი x 10-12 გამეორება)',
-      'ჰიპერექსტენზია ზურგის ქვედა ნაწილისა და წელისთვის (3 სეტი x 15 გამეორება)'
+      'საღამოს მსუბუქი გასეირნება და განტვირთვა',
+      'წყლის ოპტიმალური ბალანსი (2.5 - 3 ლიტრი)',
+      'მხრებისა და ზურგის მსუბუქი გაჭიმვები',
+      'მინიმუმ 8 საათი ხარისხიანი ძილი'
     ]
   },
   {
@@ -139,18 +138,19 @@ const DEFAULT_SCHEDULE: WorkoutDay[] = [
     dayName: 'პარასკევი',
     dayShort: 'პარ',
     dayIndex: 5,
-    type: 'rest',
-    title: 'სამსახური 17:00-მდე & განტვირთვა',
-    subtitle: 'Early Finish & Transition',
-    duration: 'საღამო თავისუფალი',
-    focus: 'სამსახური 5 საათზე სრულდება · რელაქსაცია',
-    workNote: '17:00-მდე',
-    targetMuscles: 'ნერვული სისტემის განტვირთვა',
+    type: 'gym',
+    title: 'დარბაზი: Pull (ზურგი, ბიცეფსი)',
+    subtitle: 'ძალოვანი ვარჯიში B',
+    duration: '20:00 (60წთ)',
+    focus: 'ზურგის სიგანე და სისქე, ტურნიკი',
+    workNote: 'სამსახური 17:00-მდე · ვარჯიში საღამოს',
+    targetMuscles: 'ფართო ზურგი · ტრაპეცია · უკანა დელტა · ბიცეფსი',
     exercises: [
-      'სამუშაო კვირის პოზიტიურად დახურვა 17:00-ზე',
-      'მშვიდი საღამო და მენტალური რელაქსაცია',
-      'აუზის ინვენტარისა და ჩანთის მომზადება',
-      'ადრე დაძინება შაბათის სრული ენერგიისთვის'
+      'ტურნიკზე აზიდვები / ვერტიკალური ბლოკის ჩამოწევა (4 სეტი x 8-10 გამეორება)',
+      'ჰანტელის წევა დახრილში ცალი ხელით (4 სეტი x 10 გამეორება თითო მხარე)',
+      'ჰორიზონტალური ბლოკის წევა მუცელთან (3 სეტი x 12 გამეორება)',
+      'ბიცეფსის აწევა შტანგით / ჰანტელებით (4 სეტი x 10-12 გამეორება)',
+      'ჰიპერექსტენზია ზურგის ქვედა ნაწილისა და წელისთვის (3 სეტი x 15 გამეორება)'
     ]
   },
   {
@@ -210,6 +210,14 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   // Persistent workout schedule per user
   const [schedule, setSchedule] = useState<WorkoutDay[]>(() => {
     try {
+      const versionKey = `${scheduleStorageKey}_version`;
+      const currentVersion = 'v2_fri_pull';
+      const savedVersion = localStorage.getItem(versionKey);
+      if (savedVersion !== currentVersion) {
+        localStorage.setItem(versionKey, currentVersion);
+        localStorage.setItem(scheduleStorageKey, JSON.stringify(DEFAULT_SCHEDULE));
+        return DEFAULT_SCHEDULE;
+      }
       const saved = localStorage.getItem(scheduleStorageKey);
       if (saved) return JSON.parse(saved);
     } catch (e) {
