@@ -779,14 +779,6 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
 
           {/* Month Navigation & View Modes */}
           <div className="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2.5 flex-wrap">
-            <button
-              onClick={handleToday}
-              className="px-2.5 sm:px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1 shrink-0"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span className="text-xs">Today</span>
-            </button>
-
             <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-0.5 sm:p-1 shadow-inner">
               <button
                 onClick={handlePrevMonth}
@@ -840,17 +832,6 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               >
                 <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-300" />
                 <span>Day</span>
-              </button>
-              <button
-                onClick={() => setViewMode('agenda')}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs rounded-lg font-semibold transition-all flex items-center gap-1 ${
-                  viewMode === 'agenda'
-                    ? 'bg-zinc-800 text-white shadow-sm'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                <ListOrdered className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>List</span>
               </button>
             </div>
           </div>
@@ -917,18 +898,6 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Category Filter */}
-            <select
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
-              className="px-2 py-1 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-xl text-[11px] sm:text-xs outline-none focus:border-zinc-600 font-medium"
-            >
-              <option value="all">All Categories</option>
-              <option value="video_editing">Core Projects</option>
-              <option value="marketing">Marketing & Growth</option>
-              <option value="skills">Skills & Learning</option>
-              <option value="freelance">Clients & CRM</option>
-            </select>
 
             {/* Quick Search */}
             <div className="relative min-w-[140px] flex-1 sm:max-w-xs">

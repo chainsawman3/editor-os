@@ -45,13 +45,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Stats & Quick Actions */}
       <div className="flex items-center gap-2 sm:gap-4 text-xs shrink-0">
-        {/* Streak Counter */}
-        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg">
-          <Flame className="w-3.5 h-3.5 text-zinc-200" />
-          <span className="text-zinc-200 font-bold">{streakDays}</span>
-          <span className="text-[10px] text-zinc-400 uppercase font-semibold">Day Streak</span>
-        </div>
-
         {/* Date Display */}
         <div className="text-zinc-400 text-xs hidden md:block font-medium">
           {currentDateFormatted} (Cycle Day {cycleDay})

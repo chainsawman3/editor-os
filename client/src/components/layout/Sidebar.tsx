@@ -85,43 +85,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* 90-Day Sprint Progress Card */}
-        <div className="mx-3.5 my-3 p-3 bg-zinc-900/70 border border-zinc-800/90 rounded-xl text-xs space-y-2.5 shadow-sm">
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-zinc-400 font-medium flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 text-blue-400" />
-              90-Day Sprint
-            </span>
-            <span className="font-mono font-bold text-zinc-200">
-              Day {cycleDay} <span className="text-zinc-500 font-normal">/ {cycleTotalDays}</span>
-            </span>
-          </div>
-          <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden border border-zinc-800/60">
-            <div
-              className="bg-blue-500 h-full rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, Math.round((cycleDay / cycleTotalDays) * 100))}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Quick Capture Button (⌘K) */}
-        <div className="px-3.5 pb-2">
-          <button
-            onClick={onOpenQuickCapture}
-            className="w-full py-2 px-3 bg-zinc-900/80 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-xl text-xs flex items-center justify-between transition-all group font-medium shadow-sm"
-          >
-            <span className="flex items-center gap-2 text-zinc-400 group-hover:text-zinc-200">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              Quick Capture
-            </span>
-            <kbd className="px-1.5 py-0.5 text-[10px] bg-zinc-950 text-zinc-400 border border-zinc-800 rounded font-mono font-semibold">
-              ⌘K
-            </kbd>
-          </button>
-        </div>
-
         {/* Navigation Menu */}
-        <nav className="px-2.5 py-1.5 space-y-1 overflow-y-auto max-h-[calc(100vh-270px)]">
+        <nav className="px-2.5 py-2.5 space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
           {/* Main Landing: Projects Pipeline */}
           <button
             onClick={() => handleTabClick('content')}
