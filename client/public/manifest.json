@@ -1,7 +1,7 @@
 {
-  "name": "Flow OS - Goals & Projects Workspace",
-  "short_name": "Flow OS",
-  "description": "The ultimate production tracking and goal workspace for creators, professionals, and teams.",
+  "name": "MyOS - Personal Workspace",
+  "short_name": "MyOS",
+  "description": "Personal operating system and goal workspace.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

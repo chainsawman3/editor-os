@@ -4,6 +4,7 @@ interface FlowLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
   className?: string;
+  title?: string;
   subtitle?: string;
 }
 
@@ -11,25 +12,41 @@ export const FlowLogo: React.FC<FlowLogoProps> = ({
   size = 'md',
   showText = false,
   className = '',
-  subtitle
+  title = 'MyOS',
+  subtitle = 'Goals & Projects Hub ↗'
 }) => {
-  const sizeMap = {
-    sm: { box: 'w-7 h-7', svg: 28, text: 'text-xs', badge: 'text-[9px]' },
-    md: { box: 'w-8.5 h-8.5', svg: 34, text: 'text-sm', badge: 'text-[10px]' },
-    lg: { box: 'w-11 h-11', svg: 44, text: 'text-base', badge: 'text-[11px]' },
-    xl: { box: 'w-16 h-16', svg: 64, text: 'text-xl', badge: 'text-xs' }
+  const pixelSizes = {
+    sm: 26,
+    md: 32,
+    lg: 40,
+    xl: 52
   };
 
-  const currentSize = sizeMap[size] || sizeMap.md;
+  const px = pixelSizes[size] || 32;
+
+  const fontClasses = {
+    sm: { text: 'text-xs', badge: 'text-[9px]' },
+    md: { text: 'text-sm font-black', badge: 'text-[10px]' },
+    lg: { text: 'text-base font-black', badge: 'text-[11px]' },
+    xl: { text: 'text-2xl font-black', badge: 'text-xs' }
+  }[size] || { text: 'text-sm font-black', badge: 'text-[10px]' };
 
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`}>
-      {/* High-Performance Vector Mark */}
+      {/* Precision Fixed Vector Mark (Never overflows) */}
       <div
-        className={`${currentSize.box} rounded-xl bg-gradient-to-b from-zinc-900 to-black border border-white/10 shadow-[0_0_15px_rgba(56,189,248,0.15)] flex items-center justify-center shrink-0 group-hover:border-blue-500/50 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all overflow-hidden p-1`}
+        style={{
+          width: `${px}px`,
+          height: `${px}px`,
+          minWidth: `${px}px`,
+          minHeight: `${px}px`,
+          maxWidth: `${px}px`,
+          maxHeight: `${px}px`
+        }}
+        className="rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-950 to-black border border-white/10 shadow-[0_0_15px_rgba(56,189,248,0.12)] flex items-center justify-center shrink-0 group-hover:border-blue-500/50 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.25)] transition-all overflow-hidden p-1"
       >
         <svg
-          viewBox="0 0 512 512"
+          viewBox="0 0 32 32"
           width="100%"
           height="100%"
           fill="none"
@@ -37,76 +54,52 @@ export const FlowLogo: React.FC<FlowLogoProps> = ({
           className="w-full h-full transform transition-transform duration-300 group-hover:scale-105"
         >
           <defs>
-            <linearGradient id="mark_flowPrimary" x1="0%" y1="100%" x2="100%" y2="0%">
+            <linearGradient id="logo_grad_primary" x1="0%" y1="100%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#00f2fe" />
-              <stop offset="30%" stopColor="#38bdf8" />
-              <stop offset="65%" stopColor="#6366f1" />
-              <stop offset="100%" stopColor="#a855f7" />
+              <stop offset="35%" stopColor="#38bdf8" />
+              <stop offset="70%" stopColor="#6366f1" />
+              <stop offset="100%" stopColor="#c084fc" />
             </linearGradient>
 
-            <linearGradient id="mark_flowSecondary" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#818cf8" />
-              <stop offset="50%" stopColor="#c084fc" />
-              <stop offset="100%" stopColor="#f43f5e" />
+            <linearGradient id="logo_glow" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
             </linearGradient>
           </defs>
 
-          {/* Primary Flow Spine (F Body) */}
+          {/* Ambient Inner Halo */}
+          <circle cx="16" cy="16" r="10" fill="url(#logo_glow)" />
+
+          {/* Sleek Minimalist Monogram M / Dynamic Flow Wave */}
           <path
-            d="M 152 384
-               L 152 188
-               C 152 154, 178 128, 212 128
-               L 336 128
-               C 358 128, 376 146, 376 168
-               C 376 190, 358 208, 336 208
-               L 236 208
-               C 220 208, 208 220, 208 236
-               L 208 384
-               C 208 400, 196 412, 180 412
-               C 164 412, 152 400, 152 384 Z"
-            fill="url(#mark_flowPrimary)"
+            d="M 6.5 22 V 12 C 6.5 9.8 8.2 8.2 10.4 9.1 L 16 11.6 L 21.6 9.1 C 23.8 8.2 25.5 9.8 25.5 12 V 22"
+            stroke="url(#logo_grad_primary)"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
 
-          {/* Secondary Forward Momentum Jet */}
+          {/* Clean Mid-Level Horizon Beam */}
           <path
-            d="M 236 244
-               C 236 230, 248 218, 262 218
-               L 316 218
-               C 342 218, 364 240, 364 266
-               C 364 292, 342 314, 316 314
-               L 262 314
-               C 248 314, 236 302, 236 288 Z"
-            fill="url(#mark_flowSecondary)"
+            d="M 11.5 17.5 L 16 15 L 20.5 17.5"
+            stroke="#38bdf8"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeOpacity="0.85"
           />
-
-          {/* Speed Flow Accent Blade */}
-          <path
-            d="M 248 344
-               C 248 333, 257 324, 268 324
-               L 288 324
-               C 304 324, 316 336, 316 352
-               C 316 368, 304 380, 288 380
-               L 268 380
-               C 257 380, 248 371, 248 360 Z"
-            fill="#38bdf8"
-            opacity="0.85"
-          />
-
-          {/* Glowing Apex Core */}
-          <circle cx="336" cy="168" r="12" fill="#ffffff" />
-          <circle cx="316" cy="266" r="9" fill="#ffffff" />
         </svg>
       </div>
 
       {/* Typography Lockup */}
       {showText && (
         <div className="flex flex-col min-w-0">
-          <div className="flex items-center gap-1.5 leading-none">
-            <span className={`font-black ${currentSize.text} tracking-tight text-white group-hover:text-blue-200 transition-colors`}>
-              Flow
+          <div className="flex items-center gap-1.5 leading-tight">
+            <span className={`${fontClasses.text} tracking-tight text-white group-hover:text-blue-200 transition-colors`}>
+              {title}
             </span>
             <span
-              className={`font-mono font-bold ${currentSize.badge} px-1.5 py-0.5 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-300 tracking-wider uppercase`}
+              className={`font-mono font-bold ${fontClasses.badge} px-1.5 py-0.2 rounded bg-blue-500/15 border border-blue-500/30 text-blue-300 tracking-wider uppercase`}
             >
               OS
             </span>

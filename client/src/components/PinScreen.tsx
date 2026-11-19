@@ -117,7 +117,7 @@ export const PinScreen: React.FC<PinScreenProps> = ({ onSuccess }) => {
           <FlowLogo size="xl" />
           <div className="text-center space-y-1">
             <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-              <span>Flow OS</span>
+              <span>MyOS</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 font-semibold tracking-wider uppercase">
                 Security
               </span>
