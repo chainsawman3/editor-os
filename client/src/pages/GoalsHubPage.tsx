@@ -486,54 +486,6 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               )}
             </div>
           </div>
-
-          {/* Phase & Priority Filter Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2.5 sm:pt-3 border-t border-zinc-850 text-xs">
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0 w-full sm:w-auto">
-              <span className="text-zinc-500 font-semibold text-[10px] sm:text-[11px] uppercase tracking-wider flex items-center gap-1 mr-0.5 shrink-0">
-                <SlidersHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-zinc-400" /> Phase:
-              </span>
-              {(['all', 'Planning', 'In Progress', 'Ready', 'Paused'] as const).map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition-all shrink-0 ${
-                    statusFilter === st
-                      ? 'bg-blue-600 text-white font-bold shadow-sm'
-                      : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
-                  }`}
-                >
-                  {st === 'Ready' ? 'Ready / Done' : st === 'all' ? 'All Phases' : st}
-                </button>
-              ))}
-
-              <div className="h-4 w-px bg-zinc-800 mx-1 shrink-0" />
-
-              <span className="text-zinc-500 font-semibold text-[10px] sm:text-[11px] uppercase tracking-wider mr-0.5 shrink-0">Priority:</span>
-              {(['all', 'High', 'Medium', 'Low'] as const).map((pr) => (
-                <button
-                  key={pr}
-                  onClick={() => setPriorityFilter(pr)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition-all shrink-0 ${
-                    priorityFilter === pr
-                      ? 'bg-zinc-100 text-zinc-950 font-bold'
-                      : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
-                  }`}
-                >
-                  {pr === 'all' ? 'All' : pr}
-                </button>
-              ))}
-            </div>
-
-            {isFiltersActive && (
-              <button
-                onClick={resetFilters}
-                className="text-[11px] sm:text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold self-end sm:self-auto shrink-0"
-              >
-                <X className="w-3.5 h-3.5" /> Clear Filters
-              </button>
-            )}
-          </div>
         </div>
       )}
 
