@@ -113,15 +113,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
             <BarChart3 className="w-5 h-5" />
           </span>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-zinc-100 tracking-tight">Executive Analytics & Insights</h1>
-              <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-emerald-950/70 border border-emerald-800/70 text-emerald-300 font-bold uppercase flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Telemetry
-              </span>
-            </div>
-            <p className="text-xs text-zinc-400 font-medium mt-0.5">
-              Click any metric or chart bar to jump directly to filtered project workspaces
-            </p>
+            <h1 className="text-xl font-bold text-zinc-100 tracking-tight">ანალიტიკა</h1>
           </div>
         </div>
 

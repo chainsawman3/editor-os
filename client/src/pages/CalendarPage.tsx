@@ -773,15 +773,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onOpenProject, onOpe
               <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
             <div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">Calendar</h1>
-                <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-mono rounded bg-purple-950/70 border border-purple-800/70 text-purple-300 font-bold uppercase">
-                  Schedule
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-xs text-zinc-400 font-medium hidden sm:block">
-                Visual radar for Primary Objectives, Project Deliveries, and Daily Notes
-              </p>
+              <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">კალენდარი</h1>
             </div>
           </div>
 

@@ -431,17 +431,14 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
       <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <span className="p-1.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400">
                 <CheckCircle2 className="w-5 h-5" />
               </span>
               <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                დამოუკიდებელი ტასკები / Standalone Tasks
+                ტასკები
               </h1>
             </div>
-            <p className="text-xs text-zinc-400 mt-1">
-              მიუთითეთ ზუსტი დღე და საათი შეტყობინებისთვის. 5-წუთიანი განგაშის გამეორება ავტომატურად ჩერდება, როცა ტასკს <strong>WIP</strong>-ზე გადაიყვანთ.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -453,10 +450,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                   ? 'bg-sky-500/15 border border-sky-500/40 text-sky-300 hover:bg-sky-500/25'
                   : 'bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white border border-zinc-800'
               }`}
-              title="ტელეფონზე (Telegram) შეტყობინებების მართვა"
+              title="Telegram შეტყობინებები"
             >
               <Send className="w-3.5 h-3.5 text-sky-400" />
-              <span>{telegramConfig.isEnabled ? '📱 Telegram ჩართულია' : '📱 Telegram-ის მიბმა'}</span>
+              <span>{telegramConfig.isEnabled ? 'Telegram ჩართულია' : 'Telegram მიბმა'}</span>
             </button>
 
             {/* Notification Permission Indicator */}

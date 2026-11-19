@@ -620,27 +620,21 @@ export const EconomyPage: React.FC = () => {
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                  Budget & Expense Control
+                  ბიუჯეტი
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-700/60 text-[11px] font-semibold text-amber-300">
-                  ხელფასი 5 რიცხვში
-                </span>
                 <button
                   onClick={() => setAutoDeductEnabled(!autoDeductEnabled)}
-                  title="დააჭირეთ ავტო-ჩამოჭრის ჩასართავად/გასათიშად"
+                  title="ავტო-ჩამოჭრის ჩართვა/გათიშვა"
                   className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
                     autoDeductEnabled
                       ? 'bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 hover:bg-emerald-900/60'
-                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white'
+                      : 'bg-zinc-900 border border-zinc-750 text-zinc-400 hover:text-white'
                   }`}
                 >
                   <RefreshCw className={`w-3 h-3 ${autoDeductEnabled ? 'animate-spin' : ''}`} style={{ animationDuration: '6s' }} />
-                  <span>დღიური ავტო-ჩამოჭრა: {autoDeductEnabled ? 'ჩართულია' : 'გათიშულია'}</span>
+                  <span>ავტო-ჩამოჭრა: {autoDeductEnabled ? 'ჩართულია' : 'გათიშულია'}</span>
                 </button>
               </div>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                {activeUser === 'ani' ? 'ანის' : 'გიგის'} ფინანსური მართვის სისტემა: ყოველ დღე ავტომატურად აკლდება დაგეგმილი ხარჯი, ხოლო დარჩენილი ბალანსი ({currentBalance.toFixed(2)} ₾) მუდმივად აკორექტირებს მომდევნო დღეების ლიმიტს.
-              </p>
             </div>
           </div>
 
@@ -746,7 +740,7 @@ export const EconomyPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <CalendarDays className="w-4 h-4 text-amber-400" />
             <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
-              მიმდინარე კვირის განრიგი (ორშაბათი – კვირა)
+              კვირის განრიგი
             </h2>
           </div>
           <span className="text-xs text-zinc-400">
@@ -1180,11 +1174,8 @@ export const EconomyPage: React.FC = () => {
             <div>
               <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
                 <Coins className="w-5 h-5 text-amber-400" />
-                <span>ყოველთვიური ხელფასის კალკულატორი (5 რიცხვი)</span>
+                <span>ხელფასის კალკულატორი (5 რიცხვი)</span>
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                შეიყვანეთ 5-ში აღებული ხელფასი — სისტემა მომენტალურად გადაანაწილებს სესხებს, საკვებსა და გართობას.
-              </p>
             </div>
 
             {/* Editable Salary Input */}
@@ -1333,10 +1324,6 @@ export const EconomyPage: React.FC = () => {
                 სულ: {totalLoans} ₾
               </span>
             </div>
-
-            <p className="text-[11px] text-zinc-400 leading-relaxed">
-              ხელფასის აღებისას მონიშნეთ გადახდილი სესხები:
-            </p>
 
             <div className="space-y-1.5">
               {loans.map((loan) => (

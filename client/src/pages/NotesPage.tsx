@@ -294,9 +294,8 @@ export const NotesPage: React.FC<NotesPageProps> = ({ initialNoteId }) => {
               </div>
               <div>
                 <h2 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
-                  <span>Notes</span>
+                  <span>ნოტები</span>
                 </h2>
-                <span className="text-[10px] font-mono text-zinc-400">Creative Scratchpad</span>
               </div>
             </div>
 

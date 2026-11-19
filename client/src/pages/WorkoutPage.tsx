@@ -613,17 +613,10 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
             <div className="p-2 sm:p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0">
               <Dumbbell className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <div className="min-w-0">
               <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                ვარჯიში & აუზი (Workout & Recovery OS)
+                ვარჯიში
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-700/60 text-[11px] font-semibold text-emerald-300">
-                3 დარბაზი + 1 აუზი
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-700/60 text-[11px] font-semibold text-cyan-300 flex items-center gap-1">
-                <Waves className="w-3 h-3" />
-                შაბათის ჰიდროთერაპია
-              </span>
             </div>
           </div>
         </div>
@@ -755,12 +748,12 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               ) : syncSuccess ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>ტასკებში დამატებულია (20:00 შეხსენება) ✅</span>
+                  <span>დამატებულია</span>
                 </>
               ) : (
                 <>
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>ამ კვირის გრაფიკის დამატება Tasks-ში 📅</span>
+                  <span>ტასკებში დამატება</span>
                 </>
               )}
             </button>
@@ -778,7 +771,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               ) : (
                 <>
                   <Send className="w-3.5 h-3.5" />
-                  <span>შეხსენების ტესტი Telegram-ზე 📲</span>
+                  <span>Telegram შემოწმება</span>
                 </>
               )}
             </button>
@@ -788,14 +781,14 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               className="px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ სესიის დამატება</span>
+              <span>სესიის დამატება</span>
             </button>
 
             <button
               onClick={resetWeek}
               className="px-3 py-2 bg-zinc-900/60 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 border border-zinc-800 rounded-xl text-xs transition-colors"
             >
-              კვირის განულება
+              განულება
             </button>
           </div>
 
@@ -814,7 +807,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-emerald-400" />
             <h2 className="text-base font-bold text-white tracking-tight">
-              კვირის სრული გრაფიკი (ორშაბათი – კვირა)
+              კვირის განრიგი
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -826,9 +819,6 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               <RotateCcw className="w-3 h-3 text-zinc-500" />
               <span>საწყისი განრიგი</span>
             </button>
-            <span className="text-[11px] text-zinc-500 hidden sm:inline font-medium">
-              დააჭირეთ ✏️ რედაქტირებისთვის
-            </span>
           </div>
         </div>
 
@@ -1139,11 +1129,8 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
 
             <div className="space-y-1">
               <h4 className="text-sm font-bold text-white tracking-tight">
-                ჰიდროთერაპია & სრული აღდგენა
+                ჰიდროთერაპია & აღდგენა
               </h4>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                სამუშაო კვირის შემდეგ ხერხემლისა და სახსრების განტვირთვა. 45-60 წთ ცურვა (სისხლის მიმოქცევა) + საუნა & ჰიდრომასაჟი.
-              </p>
             </div>
 
             <div className="space-y-1.5 pt-2 border-t border-cyan-900/40 text-xs">
@@ -1202,23 +1189,19 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Active" />
             </div>
 
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              შეტყობინება იგზავნება ყოველდღიურად <strong>20:00 (8:00 PM)</strong> პირდაპირ პირად ჩატში.
-            </p>
-
             <button
               onClick={handleSendTelegramTest}
               disabled={isSendingTelegram}
               className="w-full py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-200 flex items-center justify-center gap-2 transition-colors"
             >
               <Send className="w-3.5 h-3.5 text-blue-400" />
-              <span>გაგზავნე შეხსენება ახლა 📲</span>
+              <span>შეტყობინების ტესტი</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 5. SESSION HISTORY & JOURNAL (ჩატარებული სესიების ჟურნალი & ისტორია) */}
+      {/* 5. SESSION HISTORY & JOURNAL */}
       <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-850 pb-3">
           <div className="flex items-center gap-2.5">
@@ -1228,15 +1211,12 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-white tracking-tight">
-                  ჩატარებული სესიების ჟურნალი & ისტორია
+                  ჩატარებული სესიების ჟურნალი
                 </h3>
                 <span className="px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] font-mono font-semibold text-zinc-300">
-                  {sessionLogs.length} ჩაწერილი სესია
+                  {sessionLogs.length} სესია
                 </span>
               </div>
-              <p className="text-xs text-zinc-400">
-                სესიები ავტომატურად იწერება განრიგში დღის შესრულებისას (✅) ან შეგიძლიათ დაამატოთ ხელით.
-              </p>
             </div>
           </div>
 

@@ -403,10 +403,7 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               <Target className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
             <div>
-              <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">Goals & Objectives Hub</h1>
-              <p className="text-xs text-zinc-400 font-medium mt-0.5 hidden sm:block">
-                Define high-level objectives and link production projects
-              </p>
+              <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">მიზნები</h1>
             </div>
           </div>
 
@@ -416,14 +413,14 @@ export const GoalsHubPage: React.FC<GoalsHubPageProps> = ({
               className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border border-zinc-750 hover:border-zinc-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm shrink-0"
             >
               <Plus className="w-3.5 h-3.5 text-zinc-400" />
-              <span>New Goal</span>
+              <span>მიზანი</span>
             </button>
             <button
               onClick={() => setShowProjectModal(true)}
               className="flex-1 sm:flex-initial px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-900/20 shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>New Project</span>
+              <span>პროექტი</span>
             </button>
           </div>
         </div>

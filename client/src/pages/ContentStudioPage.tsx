@@ -213,10 +213,7 @@ export const ContentStudioPage: React.FC<ContentStudioPageProps> = ({
               <FolderKanban className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
             <div>
-              <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">PROJECTS PIPELINE & RADAR</h1>
-              <p className="text-xs text-zinc-400 font-medium mt-0.5 hidden sm:block">
-                Visual Kanban Pipeline, Stage Distribution, and Dynamic Action Steps
-              </p>
+              <h1 className="text-base sm:text-xl font-bold text-zinc-100 tracking-tight">პროექტები</h1>
             </div>
           </div>
 

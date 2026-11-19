@@ -356,11 +356,8 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold font-sans text-zinc-100 tracking-tight">
-                  Deadlines & Delivery Hub
+                  დედლაინები
                 </h1>
-                <p className="text-xs text-zinc-400 mt-0.5 font-medium">
-                  Track upcoming deliverables sorted strictly by urgency and remaining time
-                </p>
               </div>
             </div>
           </div>
