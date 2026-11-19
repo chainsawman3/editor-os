@@ -25,17 +25,20 @@ import {
   Info,
   CalendarDays,
   Flame,
-  BadgeAlert
+  BadgeAlert,
+  Edit3,
+  X,
+  SlidersHorizontal
 } from 'lucide-react';
 
-interface LoanItem {
+export interface LoanItem {
   id: string;
   name: string;
   amount: number;
   paid: boolean;
 }
 
-interface WeeklyLogItem {
+export interface WeeklyLogItem {
   id: string;
   date: string;
   weekName: string;
@@ -43,6 +46,20 @@ interface WeeklyLogItem {
   actualSpent: number;
   difference: number;
   remainingBalanceAfter: number;
+  note?: string;
+}
+
+export interface DailyExpenseRecord {
+  date: string; // 'YYYY-MM-DD'
+  dayName: string; // 'ოთხშაბათი'
+  plannedAmount: number;
+  actualSpent: number;
+  foodPart: number;
+  cigPart: number;
+  funPart: number;
+  deducted: boolean;
+  deductedAt: string;
+  isAuto: boolean;
   note?: string;
 }
 
@@ -55,6 +72,32 @@ const DEFAULT_LOANS: LoanItem[] = [
   { id: 'loan_6', name: 'სესხი #6', amount: 25, paid: true },
   { id: 'loan_7', name: 'სესხი #7', amount: 16, paid: true }
 ];
+
+// Helper: Format date key as YYYY-MM-DD in local timezone
+const formatDateKey = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+// Helper: Parse YYYY-MM-DD to midday Date to avoid DST shifts
+const parseDateKey = (key: string): Date => {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0);
+};
+
+// Helper: Return all date keys from startStr (inclusive) to endStr (exclusive)
+const getDatesBetween = (startStr: string, endStr: string): string[] => {
+  const dates: string[] = [];
+  const curr = parseDateKey(startStr);
+  const end = parseDateKey(endStr);
+  while (curr.getTime() < end.getTime()) {
+    dates.push(formatDateKey(curr));
+    curr.setDate(curr.getDate() + 1);
+  }
+  return dates;
+};
 
 export const EconomyPage: React.FC = () => {
   const activeUser = typeof window !== 'undefined' ? (localStorage.getItem('flow_os_active_user') || 'gigi') : 'gigi';
@@ -98,6 +141,24 @@ export const EconomyPage: React.FC = () => {
     }
   });
 
+  // Daily Expenses Record keyed by YYYY-MM-DD
+  const [dailyRecords, setDailyRecords] = useState<Record<string, DailyExpenseRecord>>(() => {
+    try {
+      const saved = localStorage.getItem(getKey('flow_os_daily_expenses'));
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Automatic daily deduction enabled toggle (default true)
+  const [autoDeductEnabled, setAutoDeductEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem(getKey('flow_os_auto_deduct_enabled'));
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [autoDeductNotice, setAutoDeductNotice] = useState<string | null>(null);
+
   // Sunday Check-in form state
   const [inputActualSpent, setInputActualSpent] = useState<string>('');
   const [inputNote, setInputNote] = useState<string>('');
@@ -121,6 +182,20 @@ export const EconomyPage: React.FC = () => {
     if (saved !== null) return parseFloat(saved);
     return activeUser === 'ani' ? 0 : 7;
   });
+
+  // Edit / Deduct Modal State
+  const [modalDay, setModalDay] = useState<{
+    dateKey: string;
+    dayName: string;
+    dateStr: string;
+    plannedAmount: number;
+    currentSpent: number;
+    isDeducted: boolean;
+    note?: string;
+  } | null>(null);
+
+  const [modalSpentInput, setModalSpentInput] = useState<string>('');
+  const [modalNoteInput, setModalNoteInput] = useState<string>('');
 
   // Calculate days remaining until the next 5th of the month
   const calculateDaysUntil5th = () => {
@@ -161,6 +236,14 @@ export const EconomyPage: React.FC = () => {
   }, [weeklyLogs, activeUser]);
 
   useEffect(() => {
+    localStorage.setItem(getKey('flow_os_daily_expenses'), JSON.stringify(dailyRecords));
+  }, [dailyRecords, activeUser]);
+
+  useEffect(() => {
+    localStorage.setItem(getKey('flow_os_auto_deduct_enabled'), String(autoDeductEnabled));
+  }, [autoDeductEnabled, activeUser]);
+
+  useEffect(() => {
     localStorage.setItem(getKey('flow_os_rent'), String(rent));
   }, [rent, activeUser]);
 
@@ -194,18 +277,192 @@ export const EconomyPage: React.FC = () => {
 
   // ==========================================
   // DYNAMIC RE-CALCULATION FOR REMAINING DAYS
-  // Dependent on REAL currentBalance (e.g. 600 ₾) & daysUntilNext5th (e.g. 17 days)
   // ==========================================
   const remainingWeekends = Math.max(1, Math.ceil(daysUntilNext5th / 7));
-  const remainingCigarettesCost = cigaretteDaily * daysUntilNext5th; // 17 x 7 = 119 ₾
-  const remainingWeekendCost = weekendBudget * remainingWeekends; // 2 x 40 = 80 ₾
-  const liveFoodBudget = Math.max(0, currentBalance - remainingCigarettesCost - remainingWeekendCost); // 401 ₾
-  const liveDailyFoodNum = parseFloat((liveFoodBudget / daysUntilNext5th).toFixed(2)); // ~23.59 ₾
+  const remainingCigarettesCost = cigaretteDaily * daysUntilNext5th;
+  const remainingWeekendCost = weekendBudget * remainingWeekends;
+  const liveFoodBudget = Math.max(0, currentBalance - remainingCigarettesCost - remainingWeekendCost);
+  const liveDailyFoodNum = parseFloat((liveFoodBudget / daysUntilNext5th).toFixed(2));
+
+  // ==========================================
+  // AUTOMATIC DAILY ROLLOVER & EXPENSE DEDUCTION
+  // ==========================================
+  useEffect(() => {
+    if (!autoDeductEnabled) return;
+
+    const today = new Date();
+    const todayKey = formatDateKey(today);
+    const lastActiveKey = localStorage.getItem(getKey('flow_os_last_active_date'));
+
+    let effectiveLastKey = lastActiveKey;
+
+    // Bootstrap if user had balance saved (e.g. 600) but no last_active_date was recorded yet:
+    if (!effectiveLastKey) {
+      const savedBalance = localStorage.getItem(getKey('flow_os_current_balance'));
+      if (savedBalance) {
+        // Set yesterday so yesterday's expense is deducted immediately
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        effectiveLastKey = formatDateKey(yesterday);
+      } else {
+        localStorage.setItem(getKey('flow_os_last_active_date'), todayKey);
+        return;
+      }
+    }
+
+    if (effectiveLastKey < todayKey) {
+      const datesToProcess = getDatesBetween(effectiveLastKey, todayKey);
+      let totalAutoDeducted = 0;
+      const updatedRecords = { ...dailyRecords };
+      const dayNames = ['კვირა', 'ორშაბათი', 'სამშაბათი', 'ოთხშაბათი', 'ხუთშაბათი', 'პარასკევი', 'შაბათი'];
+
+      let tempBalance = currentBalance;
+
+      datesToProcess.forEach((dateStr) => {
+        if (!updatedRecords[dateStr]?.deducted) {
+          const d = parseDateKey(dateStr);
+          const dayOfWeek = d.getDay();
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+          const foodPart = liveDailyFoodNum;
+          const cigPart = cigaretteDaily;
+          const funPart = isWeekend ? weekendBudget / 2 : 0;
+          const plannedTotal = parseFloat((foodPart + cigPart + funPart).toFixed(2));
+
+          tempBalance = Math.max(0, parseFloat((tempBalance - plannedTotal).toFixed(2)));
+          totalAutoDeducted += plannedTotal;
+
+          updatedRecords[dateStr] = {
+            date: dateStr,
+            dayName: dayNames[dayOfWeek],
+            plannedAmount: plannedTotal,
+            actualSpent: plannedTotal,
+            foodPart,
+            cigPart,
+            funPart,
+            deducted: true,
+            deductedAt: new Date().toISOString(),
+            isAuto: true
+          };
+        }
+      });
+
+      if (totalAutoDeducted > 0) {
+        setCurrentBalance(tempBalance);
+        setDailyRecords(updatedRecords);
+        localStorage.setItem(getKey('flow_os_current_balance'), String(tempBalance));
+        localStorage.setItem(getKey('flow_os_daily_expenses'), JSON.stringify(updatedRecords));
+
+        if (datesToProcess.length === 1) {
+          setAutoDeductNotice(
+            `გუშინდელი დღის (${datesToProcess[0]}) დაგეგმილი ხარჯი (-${totalAutoDeducted.toFixed(2)} ₾) ავტომატურად ჩამოიჭრა ბიუჯეტიდან. ახალი ბალანსი: ${tempBalance.toFixed(2)} ₾. თუ განსხვავებული თანხა დახარჯეთ, შეგიძლიათ ბარათზე ჩაასწოროთ.`
+          );
+        } else {
+          setAutoDeductNotice(
+            `გასული ${datesToProcess.length} დღის დაგეგმილი ხარჯი (-${totalAutoDeducted.toFixed(2)} ₾) ავტომატურად ჩამოიჭრა. ახალი ბალანსი: ${tempBalance.toFixed(2)} ₾.`
+          );
+        }
+      }
+
+      localStorage.setItem(getKey('flow_os_last_active_date'), todayKey);
+    }
+  }, [activeUser, autoDeductEnabled]);
+
+  // Modal Handlers
+  const openModal = (
+    dateKey: string,
+    dayName: string,
+    dateStr: string,
+    plannedAmount: number
+  ) => {
+    const existing = dailyRecords[dateKey];
+    setModalDay({
+      dateKey,
+      dayName,
+      dateStr,
+      plannedAmount,
+      currentSpent: existing?.actualSpent ?? plannedAmount,
+      isDeducted: !!existing?.deducted,
+      note: existing?.note
+    });
+    setModalSpentInput(String(existing?.actualSpent ?? plannedAmount.toFixed(2)));
+    setModalNoteInput(existing?.note || '');
+  };
+
+  const closeModal = () => {
+    setModalDay(null);
+    setModalSpentInput('');
+    setModalNoteInput('');
+  };
+
+  const handleSaveModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalDay) return;
+
+    const newSpent = parseFloat(modalSpentInput);
+    if (isNaN(newSpent) || newSpent < 0) {
+      alert('გთხოვთ შეიყვანოთ სწორი თანხა');
+      return;
+    }
+
+    const existing = dailyRecords[modalDay.dateKey];
+    let newBalance = currentBalance;
+
+    if (existing?.deducted) {
+      const diff = existing.actualSpent - newSpent;
+      newBalance = Math.max(0, parseFloat((currentBalance + diff).toFixed(2)));
+    } else {
+      newBalance = Math.max(0, parseFloat((currentBalance - newSpent).toFixed(2)));
+    }
+
+    const updated: DailyExpenseRecord = {
+      date: modalDay.dateKey,
+      dayName: modalDay.dayName,
+      plannedAmount: modalDay.plannedAmount,
+      actualSpent: newSpent,
+      foodPart: parseFloat(Math.max(0, modalDay.plannedAmount - cigaretteDaily).toFixed(2)),
+      cigPart: cigaretteDaily,
+      funPart: 0,
+      deducted: true,
+      deductedAt: new Date().toISOString(),
+      isAuto: false,
+      note: modalNoteInput.trim() || undefined
+    };
+
+    const nextRecords = { ...dailyRecords, [modalDay.dateKey]: updated };
+    setCurrentBalance(newBalance);
+    setDailyRecords(nextRecords);
+    localStorage.setItem(getKey('flow_os_current_balance'), String(newBalance));
+    localStorage.setItem(getKey('flow_os_daily_expenses'), JSON.stringify(nextRecords));
+
+    closeModal();
+    setLogSuccessMsg(`✅ ${modalDay.dayName}-ს ხარჯი (${newSpent.toFixed(2)} ₾) წარმატებით დაფიქსირდა! დარჩენილი ბალანსი: ${newBalance.toFixed(2)} ₾.`);
+    setTimeout(() => setLogSuccessMsg(null), 6000);
+  };
+
+  const handleRevertDeduction = () => {
+    if (!modalDay) return;
+    const existing = dailyRecords[modalDay.dateKey];
+    if (!existing || !existing.deducted) return;
+
+    const refundedBalance = parseFloat((currentBalance + existing.actualSpent).toFixed(2));
+    const nextRecords = { ...dailyRecords };
+    delete nextRecords[modalDay.dateKey];
+
+    setCurrentBalance(refundedBalance);
+    setDailyRecords(nextRecords);
+    localStorage.setItem(getKey('flow_os_current_balance'), String(refundedBalance));
+    localStorage.setItem(getKey('flow_os_daily_expenses'), JSON.stringify(nextRecords));
+
+    closeModal();
+    setLogSuccessMsg(`↩️ ${modalDay.dayName}-ს ჩამოჭრა გაუქმდა. ${existing.actualSpent.toFixed(2)} ₾ დაბრუნდა ბალანსზე. დარჩენილი ბალანსი: ${refundedBalance.toFixed(2)} ₾.`);
+    setTimeout(() => setLogSuccessMsg(null), 6000);
+  };
 
   // Calculate current week's dates (Monday to Sunday)
   const getWeekDates = () => {
     const now = new Date();
-    const currentDay = now.getDay(); // 0 is Sun, 1 is Mon...
+    const currentDay = now.getDay();
     const distanceToMonday = currentDay === 0 ? -6 : 1 - currentDay;
     const monday = new Date(now);
     monday.setDate(now.getDate() + distanceToMonday);
@@ -220,17 +477,18 @@ export const EconomyPage: React.FC = () => {
       const isPast = !isToday && d.getTime() < new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
       const isWeekend = i >= 5;
 
-      // Planned spending for this specific day
       const foodPart = liveDailyFoodNum;
       const cigPart = cigaretteDaily;
       const funPart = isWeekend ? weekendBudget / 2 : 0;
       const dayTotal = parseFloat((foodPart + cigPart + funPart).toFixed(2));
+      const dateKey = formatDateKey(d);
 
       days.push({
         name: dayNames[i],
         dateStr: d.toLocaleDateString('ka-GE', { month: 'short', day: 'numeric' }),
+        dateKey,
         rawDate: d,
-        dayNumber: i + 1, // 1 to 7
+        dayNumber: i + 1,
         isToday,
         isPast,
         isWeekend,
@@ -245,17 +503,23 @@ export const EconomyPage: React.FC = () => {
 
   const weekSchedule = getWeekDates();
   const todayItem = weekSchedule.find((d) => d.isToday) || weekSchedule[2];
+  const todayRecord = dailyRecords[todayItem.dateKey];
+  const isTodayDeducted = !!todayRecord?.deducted;
 
-  // How much should be spent in THIS CURRENT WEEK from today until Sunday
-  const daysLeftInThisWeek = weekSchedule.filter((d) => !d.isPast);
+  // How much should be spent in THIS CURRENT WEEK from un-deducted days until Sunday
+  const daysLeftInThisWeek = weekSchedule.filter((d) => {
+    const isDed = !!dailyRecords[d.dateKey]?.deducted;
+    return !isDed && !d.isPast;
+  });
   const thisWeekRemainingSpendTarget = daysLeftInThisWeek
     .reduce((acc, d) => acc + d.dayTotal, 0)
     .toFixed(0);
 
-  // Full 7-day week target
-  const fullWeekSpendTarget = weekSchedule
-    .reduce((acc, d) => acc + d.dayTotal, 0)
-    .toFixed(0);
+  // Total daily expenses recorded so far this week
+  const totalSpentThisWeek = weekSchedule.reduce((acc, d) => {
+    const rec = dailyRecords[d.dateKey];
+    return acc + (rec?.deducted ? rec.actualSpent : 0);
+  }, 0);
 
   // Sunday Check-in Handler
   const handleSundayCheckIn = (e: React.FormEvent) => {
@@ -267,7 +531,7 @@ export const EconomyPage: React.FC = () => {
     }
 
     const planned = parseFloat(thisWeekRemainingSpendTarget);
-    const diff = planned - spent; // Positive means saved, negative means overspent
+    const diff = planned - spent;
     const newBalance = Math.max(0, currentBalance - spent);
 
     const now = new Date();
@@ -289,7 +553,6 @@ export const EconomyPage: React.FC = () => {
     setInputActualSpent('');
     setInputNote('');
 
-    // Recompute feedback
     if (diff >= 0) {
       setLogSuccessMsg(`🎉 შესანიშნავია! დაზოგე ${diff.toFixed(0)} ₾. შემდეგი კვირის დღიური საკვების ლიმიტი გაიზარდა! დარჩენილი ბალანსი: ${newBalance} ₾.`);
     } else {
@@ -311,8 +574,42 @@ export const EconomyPage: React.FC = () => {
   const pCigarettes = Math.round((monthlyCigarettes / salary) * 100) || 0;
   const pWeekend = Math.round((monthlyWeekendFun / salary) * 100) || 0;
 
+  // Sorted list of daily records for history
+  const sortedDailyRecords = Object.values(dailyRecords).sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
   return (
     <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto font-sans">
+      {/* AUTO DEDUCT NOTIFICATION BANNER */}
+      {autoDeductNotice && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/60 via-zinc-900 to-amber-950/40 border border-amber-500/60 text-amber-200 text-xs sm:text-sm flex items-start justify-between gap-3 shadow-lg shadow-amber-950/40 animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-amber-300 flex items-center gap-2">
+                <span>დღიური ავტომატური ჩამოჭრა შესრულდა</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  განახლებულია
+                </span>
+              </div>
+              <p className="mt-1 leading-relaxed text-zinc-300 text-xs sm:text-sm">
+                {autoDeductNotice}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setAutoDeductNotice(null)}
+            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shrink-0"
+            title="დახურვა"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* 1. TOP HEADER & CURRENT STATUS */}
       <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-zinc-850 pb-4">
@@ -328,13 +625,21 @@ export const EconomyPage: React.FC = () => {
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-700/60 text-[11px] font-semibold text-amber-300">
                   ხელფასი 5 რიცხვში
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-[11px] font-semibold text-emerald-300 flex items-center gap-1">
-                  <RefreshCw className="w-3 h-3" />
-                  დინამიური გადათვლა
-                </span>
+                <button
+                  onClick={() => setAutoDeductEnabled(!autoDeductEnabled)}
+                  title="დააჭირეთ ავტო-ჩამოჭრის ჩასართავად/გასათიშად"
+                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
+                    autoDeductEnabled
+                      ? 'bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 hover:bg-emerald-900/60'
+                      : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <RefreshCw className={`w-3 h-3 ${autoDeductEnabled ? 'animate-spin' : ''}`} style={{ animationDuration: '6s' }} />
+                  <span>დღიური ავტო-ჩამოჭრა: {autoDeductEnabled ? 'ჩართულია' : 'გათიშულია'}</span>
+                </button>
               </div>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                {activeUser === 'ani' ? 'ანის' : 'გიგის'} ფინანსური მართვის სისტემა: მიმდინარე ბალანსზე ({currentBalance} ₾) მორგებული დღიური ლიმიტი, კვირის საღამოს ფაქტობრივი ხარჯის აღრიცხვა და შემდეგი კვირის ავტომატური კორექტირება.
+                {activeUser === 'ani' ? 'ანის' : 'გიგის'} ფინანსური მართვის სისტემა: ყოველ დღე ავტომატურად აკლდება დაგეგმილი ხარჯი, ხოლო დარჩენილი ბალანსი ({currentBalance.toFixed(2)} ₾) მუდმივად აკორექტირებს მომდევნო დღეების ლიმიტს.
               </p>
             </div>
           </div>
@@ -348,9 +653,10 @@ export const EconomyPage: React.FC = () => {
               <div className="flex items-baseline gap-1 mt-0.5">
                 <input
                   type="number"
+                  step="0.01"
                   value={currentBalance}
                   onChange={(e) => setCurrentBalance(parseFloat(e.target.value) || 0)}
-                  className="w-24 bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-0.5 text-lg font-bold font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                  className="w-28 bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-0.5 text-lg font-bold font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
                   title="დააჭირეთ თანხის ჩასასწორებლად"
                 />
                 <span className="text-xs font-bold text-zinc-400 font-mono">₾</span>
@@ -363,21 +669,33 @@ export const EconomyPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 PROMINENT METRICS (Reflecting exact 600 GEL status) */}
+        {/* 4 PROMINENT METRICS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
-          {/* Today's Spend Limit */}
-          <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-950/30 to-zinc-900 border border-amber-500/50 space-y-1 shadow-sm">
+          {/* Today's Spend Status */}
+          <div className={`p-3.5 rounded-xl border space-y-1 shadow-sm transition-all ${
+            isTodayDeducted
+              ? 'bg-gradient-to-br from-emerald-950/30 to-zinc-900 border-emerald-500/50'
+              : 'bg-gradient-to-br from-amber-950/30 to-zinc-900 border-amber-500/50'
+          }`}>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-amber-300 font-bold uppercase tracking-wider">
-                👉 დღეს დასახარჯი (დღეს)
+              <span className={`text-[11px] font-bold uppercase tracking-wider ${
+                isTodayDeducted ? 'text-emerald-300' : 'text-amber-300'
+              }`}>
+                {isTodayDeducted ? 'დღეს ჩამოჭრილია ✅' : '👉 დღეს დასახარჯი'}
               </span>
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className={`w-2 h-2 rounded-full ${
+                isTodayDeducted ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
+              }`} />
             </div>
-            <div className="text-xl sm:text-2xl font-black font-mono text-amber-400">
-              ~{todayItem.dayTotal.toFixed(2)} ₾
+            <div className={`text-xl sm:text-2xl font-black font-mono ${
+              isTodayDeducted ? 'text-emerald-400' : 'text-amber-400'
+            }`}>
+              {isTodayDeducted ? `-${todayRecord?.actualSpent.toFixed(2)} ₾` : `~${todayItem.dayTotal.toFixed(2)} ₾`}
             </div>
-            <span className="text-[10px] text-zinc-400 block">
-              საკვები {todayItem.foodPart} ₾ + სიგარეტი {todayItem.cigPart} ₾ {todayItem.funPart > 0 ? `+ გართობა ${todayItem.funPart} ₾` : ''}
+            <span className="text-[10px] text-zinc-400 block truncate">
+              {isTodayDeducted
+                ? 'ბიუჯეტიდან უკვე ჩამოკლებულია'
+                : `საკვები ${todayItem.foodPart} ₾ + სიგარეტი ${todayItem.cigPart} ₾ ${todayItem.funPart > 0 ? `+ გართობა ${todayItem.funPart} ₾` : ''}`}
             </span>
           </div>
 
@@ -389,7 +707,7 @@ export const EconomyPage: React.FC = () => {
             <div className="text-xl sm:text-2xl font-black font-mono text-cyan-300">
               ~{thisWeekRemainingSpendTarget} ₾
             </div>
-            <span className="text-[10px] text-zinc-500 block">
+            <span className="text-[10px] text-zinc-500 block truncate">
               კვირის საღამომდე (დარჩენილ {daysLeftInThisWeek.length} დღეზე)
             </span>
           </div>
@@ -402,8 +720,8 @@ export const EconomyPage: React.FC = () => {
             <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">
               ~{liveDailyFoodNum.toFixed(2)} ₾
             </div>
-            <span className="text-[10px] text-zinc-500 block">
-              600 ₾-ის 17 დღეზე გაყოფით
+            <span className="text-[10px] text-zinc-500 block truncate">
+              {currentBalance.toFixed(0)} ₾-ის {daysUntilNext5th} დღეზე გაყოფით
             </span>
           </div>
 
@@ -415,14 +733,14 @@ export const EconomyPage: React.FC = () => {
             <div className="text-xl sm:text-2xl font-bold font-mono text-purple-400">
               გადახდილია ✅
             </div>
-            <span className="text-[10px] text-zinc-500 block">
+            <span className="text-[10px] text-zinc-500 block truncate">
               სესხები ({totalLoans} ₾) + ქირა ({rent} ₾)
             </span>
           </div>
         </div>
       </div>
 
-      {/* 2. DYNAMIC 7-DAY WEEKLY SCHEDULE (TODAY HIGHLIGHTED & SPEND LIMITS) */}
+      {/* 2. DYNAMIC 7-DAY WEEKLY SCHEDULE WITH DAILY DEDUCTION CONTROLS */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -439,12 +757,21 @@ export const EconomyPage: React.FC = () => {
         {/* 7 Columns on Desktop: Every day has its own clean card */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3">
           {weekSchedule.map((day) => {
+            const rec = dailyRecords[day.dateKey];
+            const isDeducted = !!rec?.deducted;
+            const actualSpent = rec ? rec.actualSpent : day.dayTotal;
+            const diff = rec ? rec.plannedAmount - rec.actualSpent : 0;
+
             return (
               <div
-                key={day.name}
+                key={day.dateKey}
                 className={`relative rounded-2xl p-3.5 sm:p-4 border transition-all flex flex-col justify-between select-none ${
                   day.isToday
-                    ? 'bg-gradient-to-b from-amber-950/40 via-zinc-900 to-zinc-950 border-amber-500 ring-2 ring-amber-500/50 shadow-xl shadow-amber-950/50'
+                    ? isDeducted
+                      ? 'bg-gradient-to-b from-emerald-950/40 via-zinc-900 to-zinc-950 border-emerald-500/70 ring-2 ring-emerald-500/40 shadow-xl'
+                      : 'bg-gradient-to-b from-amber-950/40 via-zinc-900 to-zinc-950 border-amber-500 ring-2 ring-amber-500/50 shadow-xl shadow-amber-950/50'
+                    : isDeducted
+                    ? 'bg-zinc-950/90 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60'
                     : day.isPast
                     ? 'bg-zinc-950/40 border-zinc-850/60 opacity-60'
                     : day.isWeekend
@@ -453,12 +780,14 @@ export const EconomyPage: React.FC = () => {
                 }`}
               >
                 <div>
-                  {/* Card Header: Day pill + Today Badge */}
+                  {/* Card Header: Day pill + Status Badge */}
                   <div className="flex items-center justify-between mb-2">
                     <span
                       className={`text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
                         day.isToday
-                          ? 'bg-amber-500 text-black shadow-sm'
+                          ? isDeducted
+                            ? 'bg-emerald-500 text-black shadow-sm'
+                            : 'bg-amber-500 text-black shadow-sm'
                           : day.isWeekend
                           ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
                           : 'bg-zinc-800 text-zinc-300'
@@ -468,12 +797,22 @@ export const EconomyPage: React.FC = () => {
                     </span>
 
                     {day.isToday && (
-                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 animate-pulse">
-                        დღეს ⭐
+                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                        isDeducted
+                          ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300'
+                          : 'bg-amber-500/20 border border-amber-500/50 text-amber-300 animate-pulse'
+                      }`}>
+                        {isDeducted ? 'ჩამოჭრილია ✅' : 'დღეს ⭐'}
                       </span>
                     )}
 
-                    {day.isPast && (
+                    {!day.isToday && isDeducted && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40 text-emerald-400">
+                        ჩამოჭრილია ✅
+                      </span>
+                    )}
+
+                    {!day.isToday && !isDeducted && day.isPast && (
                       <span className="text-[10px] font-medium text-zinc-500">
                         გასული
                       </span>
@@ -484,18 +823,82 @@ export const EconomyPage: React.FC = () => {
                     {day.dateStr}
                   </span>
 
-                  {/* Spend Target for this day */}
+                  {/* Spend Target / Actual Deducted Display */}
                   <div className="space-y-1">
                     <span className="text-[10px] text-zinc-400 block font-medium">
-                      {day.isPast ? 'დაგეგმილი იყო:' : day.isToday ? '👉 დღეს დასახარჯი:' : 'დასახარჯი:'}
+                      {isDeducted
+                        ? 'ჩამოჭრილია ბიუჯეტიდან:'
+                        : day.isToday
+                        ? '👉 დღეს დასახარჯი:'
+                        : day.isPast
+                        ? 'დაგეგმილი იყო:'
+                        : 'დასახარჯი:'}
                     </span>
+
                     <div
                       className={`text-xl font-black font-mono tracking-tight ${
-                        day.isToday ? 'text-amber-400 text-2xl' : day.isPast ? 'text-zinc-500' : 'text-white'
+                        isDeducted
+                          ? 'text-emerald-400 text-2xl'
+                          : day.isToday
+                          ? 'text-amber-400 text-2xl'
+                          : day.isPast
+                          ? 'text-zinc-500'
+                          : 'text-white'
                       }`}
                     >
-                      {day.dayTotal.toFixed(0)} <span className="text-xs font-normal text-zinc-400 font-mono">₾</span>
+                      {isDeducted ? `-${actualSpent.toFixed(2)}` : `~${day.dayTotal.toFixed(0)}`}{' '}
+                      <span className="text-xs font-normal text-zinc-400 font-mono">₾</span>
                     </div>
+
+                    {/* Difference / status badge */}
+                    {isDeducted && (
+                      <div className="pt-0.5">
+                        {Math.abs(diff) < 0.05 ? (
+                          <span className="text-[10px] text-zinc-400">
+                            გეგმის მიხედვით {rec?.isAuto ? '(ავტო)' : ''}
+                          </span>
+                        ) : diff > 0 ? (
+                          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/50">
+                            დაზოგილია +{diff.toFixed(2)} ₾
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-rose-400 font-bold bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800/50">
+                            გადახარჯვა {diff.toFixed(2)} ₾
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons: Instant Deduct or Edit */}
+                  <div className="pt-2">
+                    {isDeducted ? (
+                      <button
+                        type="button"
+                        onClick={() => openModal(day.dateKey, day.name, day.dateStr, day.dayTotal)}
+                        className="w-full py-1.5 px-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-750 hover:border-zinc-600 rounded-lg text-[11px] font-semibold text-zinc-300 hover:text-white flex items-center justify-center gap-1 transition-all"
+                      >
+                        <Edit3 className="w-3 h-3 text-zinc-400" />
+                        <span>ჩასწორება</span>
+                      </button>
+                    ) : day.isToday ? (
+                      <button
+                        type="button"
+                        onClick={() => openModal(day.dateKey, day.name, day.dateStr, day.dayTotal)}
+                        className="w-full py-2 px-2 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/40 transition-all active:scale-95"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>ხარჯის ჩამოჭრა</span>
+                      </button>
+                    ) : day.isPast ? (
+                      <button
+                        type="button"
+                        onClick={() => openModal(day.dateKey, day.name, day.dateStr, day.dayTotal)}
+                        className="w-full py-1.5 px-2 bg-zinc-850 hover:bg-zinc-800 border border-zinc-700 rounded-lg text-[11px] font-medium text-zinc-300 flex items-center justify-center gap-1"
+                      >
+                        <span>ხარჯის ჩაწერა</span>
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 
@@ -522,7 +925,87 @@ export const EconomyPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. SUNDAY EVENING EXPENSE CHECK-IN & RE-CALCULATION WIDGET */}
+      {/* 3. DAILY EXPENSES HISTORY TABLE */}
+      {sortedDailyRecords.length > 0 && (
+        <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                დღიური ხარჯების ისტორია & ჩამოჭრები
+              </h3>
+            </div>
+            <span className="text-[11px] text-zinc-400">
+              სულ ჩამოჭრილი დღეები: <strong className="text-emerald-400 font-mono">{sortedDailyRecords.length}</strong>
+            </span>
+          </div>
+
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            {sortedDailyRecords.map((r) => {
+              const diff = r.plannedAmount - r.actualSpent;
+              return (
+                <div
+                  key={r.date}
+                  className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-850 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs hover:border-zinc-700 transition-all"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="font-mono font-bold text-zinc-300 shrink-0">
+                      {r.date}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-semibold shrink-0">
+                      {r.dayName}
+                    </span>
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                      r.isAuto
+                        ? 'bg-blue-950/60 text-blue-300 border border-blue-800/40'
+                        : 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/40'
+                    }`}>
+                      {r.isAuto ? 'ავტო-ჩამოჭრა' : 'ხელით ჩაწერილი'}
+                    </span>
+                    {r.note && (
+                      <span className="text-zinc-400 text-[11px] truncate">
+                        · {r.note}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+                    <div className="text-right">
+                      <span className="font-mono font-bold text-emerald-400 block">
+                        -{r.actualSpent.toFixed(2)} ₾
+                      </span>
+                      <span className={`text-[10px] font-mono ${
+                        Math.abs(diff) < 0.05
+                          ? 'text-zinc-500'
+                          : diff > 0
+                          ? 'text-emerald-400 font-semibold'
+                          : 'text-rose-400 font-semibold'
+                      }`}>
+                        {Math.abs(diff) < 0.05
+                          ? 'გეგმით'
+                          : diff > 0
+                          ? `+${diff.toFixed(2)} ₾ (დაზოგილი)`
+                          : `${diff.toFixed(2)} ₾ (გადახარჯვა)`}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => openModal(r.date, r.dayName, r.date, r.plannedAmount)}
+                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+                      title="ჩასწორება"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 4. SUNDAY EVENING EXPENSE CHECK-IN & RE-CALCULATION WIDGET */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-amber-950/20 border border-amber-600/40 p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3.5">
           <div className="flex items-center gap-2.5">
@@ -539,11 +1022,20 @@ export const EconomyPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-400">კვირის გეგმიური ლიმიტი:</span>
-            <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700">
-              ~{thisWeekRemainingSpendTarget} ₾ (დარჩენილ დღეებზე)
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-zinc-400">დღიურად ჩამოჭრილია სულ:</span>
+            <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-zinc-800 text-emerald-400 border border-zinc-700">
+              {totalSpentThisWeek.toFixed(2)} ₾
             </span>
+            {totalSpentThisWeek > 0 && (
+              <button
+                type="button"
+                onClick={() => setInputActualSpent(totalSpentThisWeek.toFixed(0))}
+                className="text-[11px] px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors"
+              >
+                ჩასვი ეს თანხა
+              </button>
+            )}
           </div>
         </div>
 
@@ -646,7 +1138,7 @@ export const EconomyPage: React.FC = () => {
         )}
       </div>
 
-      {/* 4. 5-TH OF THE MONTH SALARY INPUT & REAL-TIME ALLOCATION CALCULATOR */}
+      {/* 5. 5-TH OF THE MONTH SALARY INPUT & REAL-TIME ALLOCATION CALCULATOR */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left 2 Columns: Salary Input + Full Monthly Allocation */}
         <div className="lg:col-span-2 bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-6 shadow-sm space-y-5">
@@ -869,7 +1361,7 @@ export const EconomyPage: React.FC = () => {
               {/* Loans */}
               <div className="space-y-1">
                 <div className="flex justify-between text-zinc-300">
-                  <span>სესხები (7 ცალი)</span>
+                  <span>სესხები ({loans.length} ცალი)</span>
                   <span className="font-mono font-bold text-rose-400">{totalLoans} ₾ ({Math.round((totalLoans / salary) * 100)}%)</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-zinc-850 overflow-hidden">
@@ -897,7 +1389,7 @@ export const EconomyPage: React.FC = () => {
               {/* Cigarettes */}
               <div className="space-y-1">
                 <div className="flex justify-between text-zinc-300">
-                  <span>სიგარეტი (7 ₾/დღე)</span>
+                  <span>{cigaretteDaily > 0 ? `სიგარეტი (${cigaretteDaily} ₾/დღე)` : 'პირადი ხარჯი'}</span>
                   <span className="font-mono font-bold text-amber-400">{monthlyCigarettes} ₾ ({pCigarettes}%)</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-zinc-850 overflow-hidden">
@@ -925,6 +1417,120 @@ export const EconomyPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* EDIT / DEDUCT EXPENSE MODAL */}
+      {modalDay && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                  <Wallet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {modalDay.dayName} ({modalDay.dateStr})
+                  </h3>
+                  <p className="text-[11px] text-zinc-400">
+                    {modalDay.isDeducted ? 'ხარჯის ჩასწორება' : 'დღიური ხარჯის ჩამოჭრა'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between text-xs">
+              <span className="text-zinc-400">დაგეგმილი დღიური ლიმიტი:</span>
+              <span className="font-mono font-bold text-amber-400">~{modalDay.plannedAmount.toFixed(2)} ₾</span>
+            </div>
+
+            <form onSubmit={handleSaveModal} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-300 block">
+                  რეალურად დახარჯული თანხა (₾):
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={modalSpentInput}
+                    onChange={(e) => setModalSpentInput(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-base font-mono font-bold text-white focus:outline-none focus:border-amber-500"
+                    placeholder="0.00"
+                    autoFocus
+                  />
+                  <span className="absolute right-3.5 top-3 text-xs text-zinc-500 font-bold">₾</span>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setModalSpentInput(modalDay.plannedAmount.toFixed(2))}
+                    className="text-[11px] px-2 py-1 rounded bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 transition-colors"
+                  >
+                    გეგმის მიხედვით ({modalDay.plannedAmount.toFixed(2)} ₾)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalSpentInput('0')}
+                    className="text-[11px] px-2 py-1 rounded bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 transition-colors"
+                  >
+                    0 ₾ (არაფერი)
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-300 block">
+                  შენიშვნა / კომენტარი (სურვილისამებრ):
+                </label>
+                <input
+                  type="text"
+                  value={modalNoteInput}
+                  onChange={(e) => setModalNoteInput(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+                  placeholder="მაგ. სუპერმარკეტი, სიგარეტი, ყავა"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-zinc-850">
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-950/40"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{modalDay.isDeducted ? 'შენახვა & ბალანსის განახლება' : 'ბიუჯეტიდან ჩამოჭრა'}</span>
+                </button>
+
+                {modalDay.isDeducted && (
+                  <button
+                    type="button"
+                    onClick={handleRevertDeduction}
+                    className="py-2.5 px-3 rounded-xl text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-950/50 border border-rose-900/50 transition-all flex items-center justify-center gap-1"
+                    title="თანხის დაბრუნება დარჩენილ ბალანსზე"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>ჩამოჭრის გაუქმება</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="py-2.5 px-3 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800"
+                >
+                  დახურვა
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
