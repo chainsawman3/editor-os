@@ -24,8 +24,7 @@ import {
   Trophy,
   History,
   Plus,
-  Trash2,
-  Settings
+  Trash2
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -206,7 +205,6 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   const workoutStorageKey = activeUser === 'gigi' ? 'flow_os_completed_workouts' : `flow_os_completed_workouts_${activeUser}`;
   const scheduleStorageKey = activeUser === 'gigi' ? 'flow_os_workout_schedule' : `flow_os_workout_schedule_${activeUser}`;
   const startDateStorageKey = activeUser === 'gigi' ? 'flow_os_workout_start_date' : `flow_os_workout_start_date_${activeUser}`;
-  const initialSessionsStorageKey = activeUser === 'gigi' ? 'flow_os_workout_initial_sessions' : `flow_os_workout_initial_sessions_${activeUser}`;
   const sessionLogsStorageKey = activeUser === 'gigi' ? 'flow_os_workout_session_logs' : `flow_os_workout_session_logs_${activeUser}`;
 
   // Persistent workout schedule per user
@@ -224,15 +222,17 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
     localStorage.setItem(scheduleStorageKey, JSON.stringify(schedule));
   }, [schedule, activeUser, scheduleStorageKey]);
 
-  // Start Date of Gym Journey (default Oct 1, 2026 for Gigi)
+  // Start Date of Gym Journey (starts from today as requested)
+  const getTodayStr = () => new Date().toISOString().split('T')[0];
   const [startDate, setStartDate] = useState<string>(() => {
-    return localStorage.getItem(startDateStorageKey) || (activeUser === 'gigi' ? '2026-10-01' : new Date().toISOString().split('T')[0]);
-  });
-
-  // Pre-existing session count before app usage
-  const [initialSessions, setInitialSessions] = useState<number>(() => {
-    const saved = localStorage.getItem(initialSessionsStorageKey);
-    return saved !== null ? parseInt(saved, 10) : (activeUser === 'gigi' ? 12 : 0);
+    const saved = localStorage.getItem(startDateStorageKey);
+    // If empty or was old default Oct 1, start fresh from today
+    if (!saved || saved === '2026-10-01') {
+      const today = getTodayStr();
+      localStorage.setItem(startDateStorageKey, today);
+      return today;
+    }
+    return saved;
   });
 
   // Persistent Session Logs
@@ -248,10 +248,6 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
   useEffect(() => {
     localStorage.setItem(startDateStorageKey, startDate);
   }, [startDate, startDateStorageKey]);
-
-  useEffect(() => {
-    localStorage.setItem(initialSessionsStorageKey, String(initialSessions));
-  }, [initialSessions, initialSessionsStorageKey]);
 
   useEffect(() => {
     localStorage.setItem(sessionLogsStorageKey, JSON.stringify(sessionLogs));
@@ -303,13 +299,6 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
     exercisesText: ''
   });
 
-  // Settings Modal State (Start Date & Baseline Sessions)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settingsForm, setSettingsForm] = useState({
-    startDate: startDate,
-    initialSessions: initialSessions
-  });
-
   // Add Manual Session Modal State
   const [isAddSessionOpen, setIsAddSessionOpen] = useState(false);
   const [addSessionForm, setAddSessionForm] = useState<{
@@ -319,18 +308,18 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
     durationMin: number;
     note: string;
   }>({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayStr(),
     type: 'gym',
     title: 'დარბაზი: ძალოვანი ვარჯიში',
     durationMin: 60,
     note: ''
   });
 
-  // Calculations: Journey Duration & Elapsed Time
+  // Calculations: Journey Duration & Elapsed Time starting from today
   const startDateTime = new Date(startDate).getTime();
   const currentDateTime = new Date().getTime();
   const elapsedDays = Math.max(1, Math.floor((currentDateTime - startDateTime) / (1000 * 60 * 60 * 24)) + 1);
-  const elapsedWeeks = Math.max(1, Math.floor(elapsedDays / 7));
+  const elapsedWeeks = Math.floor((elapsedDays - 1) / 7);
 
   const formatDisplayDate = (dStr: string) => {
     try {
@@ -344,17 +333,15 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
     return dStr;
   };
 
-  // Calculations: Sessions Breakdown
+  // Calculations: Sessions Breakdown (counted from actual sessions)
   const loggedGymCount = sessionLogs.filter((s) => s.type === 'gym').length;
   const loggedPoolCount = sessionLogs.filter((s) => s.type === 'pool').length;
-  const totalSessionsCount = initialSessions + sessionLogs.length;
-  const totalGymSessions = Math.round(initialSessions * 0.75) + loggedGymCount;
-  const totalPoolSessions = Math.round(initialSessions * 0.25) + loggedPoolCount;
+  const totalSessionsCount = sessionLogs.length;
 
   // Training volume (hours) & Pace
-  const totalLoggedMinutes = sessionLogs.reduce((acc, s) => acc + (s.durationMin || 60), 0) + (initialSessions * 60);
+  const totalLoggedMinutes = sessionLogs.reduce((acc, s) => acc + (s.durationMin || 60), 0);
   const totalTrainedHours = (totalLoggedMinutes / 60).toFixed(1);
-  const avgSessionsPerWeek = (totalSessionsCount / elapsedWeeks).toFixed(1);
+  const avgSessionsPerWeek = elapsedWeeks > 0 ? (totalSessionsCount / elapsedWeeks).toFixed(1) : String(totalSessionsCount);
 
   // Helper to get this week's date for a workout day
   const getDayDateThisWeek = (dayIndex: number): string => {
@@ -527,14 +514,6 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
     setIsAddSessionOpen(false);
   };
 
-  // Handle Save Settings
-  const handleSaveSettings = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStartDate(settingsForm.startDate);
-    setInitialSessions(Number(settingsForm.initialSessions) || 0);
-    setIsSettingsOpen(false);
-  };
-
   // Reset current week's completion
   const resetWeek = () => {
     if (window.confirm('გსურთ მიმდინარე კვირის ვარჯიშების სტატუსის განულება? (ჩატარებული სესიების ისტორია შენარჩუნდება)')) {
@@ -627,83 +606,57 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto font-sans">
-      {/* 1. TOP HEADER & WORKOUT HUB TITLE */}
-      <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-zinc-850 pb-4">
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2.5 sm:p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0">
-              <Dumbbell className="w-6 h-6 sm:w-7 sm:h-7" />
+      {/* 1. CLEAN TOP HEADER: ICON + TITLE + BADGES (NO LONG DESCRIPTIVE TEXT OR SETTINGS BUTTON) */}
+      <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between gap-3 border-b border-zinc-850 pb-3 sm:pb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 sm:p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0">
+              <Dumbbell className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div className="space-y-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                  ვარჯიში & აუზი (Workout & Recovery OS)
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-700/60 text-[11px] font-semibold text-emerald-300">
-                  3 დარბაზი + 1 აუზი
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-700/60 text-[11px] font-semibold text-cyan-300 flex items-center gap-1">
-                  <Waves className="w-3 h-3" />
-                  შაბათის ჰიდროთერაპია
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                {activeUser === 'ani' ? 'ანის' : 'გიგის'} პერსონალური გრაფიკი: <strong>სამშაბათი, ხუთშაბათი, კვირა</strong> (დარბაზი) · ყოველ <strong className="text-cyan-400">შაბათს აუზის დღე</strong> · Telegram შეტყობინებები ყოველდღე <strong>20:00 (8:00 PM)</strong>.
-              </p>
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                ვარჯიში & აუზი (Workout & Recovery OS)
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-700/60 text-[11px] font-semibold text-emerald-300">
+                3 დარბაზი + 1 აუზი
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-700/60 text-[11px] font-semibold text-cyan-300 flex items-center gap-1">
+                <Waves className="w-3 h-3" />
+                შაბათის ჰიდროთერაპია
+              </span>
             </div>
-          </div>
-
-          {/* Quick Header Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => {
-                setSettingsForm({ startDate, initialSessions });
-                setIsSettingsOpen(true);
-              }}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 flex items-center gap-1.5 transition-colors"
-              title="ვარჯიშის დაწყების თარიღისა და საწყისი სესიების პარამეტრები"
-            >
-              <Settings className="w-3.5 h-3.5 text-zinc-400" />
-              <span>პარამეტრები</span>
-            </button>
           </div>
         </div>
 
-        {/* 2. FOUR CORE STATS CARDS: JOURNEY DURATION, SESSIONS, WEEKLY GOAL, TRAINING HOURS */}
+        {/* 2. FOUR CORE STATS CARDS: JOURNEY DURATION (STARTING TODAY), SESSIONS, WEEKLY GOAL, TRAINING HOURS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {/* Card 1: Journey Duration (სტაჟი & დაწყება) */}
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3.5 space-y-1.5 relative group hover:border-amber-500/50 transition-all">
+          {/* Card 1: Journey Duration (სტაჟი – დაწყებული დღეიდან) */}
+          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3.5 space-y-1.5 hover:border-amber-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-amber-400" />
                 <span>ვარჯიშის სტაჟი</span>
               </span>
-              <button
-                onClick={() => {
-                  setSettingsForm({ startDate, initialSessions });
-                  setIsSettingsOpen(true);
-                }}
-                className="text-[10px] text-zinc-500 hover:text-amber-300 transition-colors"
-                title="თარიღის შეცვლა"
-              >
-                <Edit3 className="w-3 h-3" />
-              </button>
             </div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-xl sm:text-2xl font-bold font-mono text-amber-400 tracking-tight">
                 {elapsedDays}
               </span>
               <span className="text-xs font-medium text-zinc-400">დღე</span>
-              <span className="text-xs font-mono text-zinc-500">({elapsedWeeks} კვირა)</span>
+              <span className="text-xs font-mono text-zinc-500">
+                ({elapsedWeeks === 0 ? '1-ლი კვირა' : `${elapsedWeeks} კვირა`})
+              </span>
             </div>
             <div className="text-[10px] text-zinc-400 truncate flex items-center gap-1 pt-0.5">
               <span className="text-zinc-500">დაწყებულია:</span>
-              <span className="font-semibold text-zinc-300 font-mono">{formatDisplayDate(startDate)}</span>
+              <span className="font-semibold text-zinc-300 font-mono">
+                {startDate === getTodayStr() ? `დღეს (${formatDisplayDate(startDate)})` : formatDisplayDate(startDate)}
+              </span>
             </div>
           </div>
 
           {/* Card 2: Total Sessions Count (სულ ჩატარებული სესიები) */}
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3.5 space-y-1.5 relative group hover:border-emerald-500/50 transition-all">
+          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3.5 space-y-1.5 hover:border-emerald-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5 text-emerald-400" />
@@ -724,14 +677,14 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               <span className="text-xs font-medium text-zinc-400">სესია</span>
             </div>
             <div className="text-[10px] text-zinc-400 truncate flex items-center gap-1.5 pt-0.5">
-              <span className="text-emerald-400 font-medium">🏋️ {totalGymSessions} დარბაზი</span>
+              <span className="text-emerald-400 font-medium">🏋️ {loggedGymCount} დარბაზი</span>
               <span className="text-zinc-600">·</span>
-              <span className="text-cyan-400 font-medium">🏊 {totalPoolSessions} აუზი</span>
+              <span className="text-cyan-400 font-medium">🏊 {loggedPoolCount} აუზი</span>
             </div>
           </div>
 
           {/* Card 3: Current Week Progress (მიმდინარე კვირის გეგმა) */}
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3.5 space-y-1.5 relative group hover:border-orange-500/50 transition-all">
+          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3.5 space-y-1.5 hover:border-orange-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
                 <Flame className="w-3.5 h-3.5 text-orange-400" />
@@ -756,24 +709,28 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
           </div>
 
           {/* Card 4: Accumulated Hours & Pace (საერთო დრო & ტემპი) */}
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3.5 space-y-1.5 relative group hover:border-cyan-500/50 transition-all">
+          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3.5 space-y-1.5 hover:border-cyan-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-cyan-400" />
                 <span>დაგროვილი დრო</span>
               </span>
               <span className="text-[10px] text-zinc-500 font-mono">
-                ~{avgSessionsPerWeek}/კვირაში
+                {totalSessionsCount > 0 ? `~${avgSessionsPerWeek}/კვირაში` : 'სტარტი'}
               </span>
             </div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-xl sm:text-2xl font-bold font-mono text-cyan-400 tracking-tight">
-                ~{totalTrainedHours}
+                {totalTrainedHours}
               </span>
-              <span className="text-xs font-medium text-zinc-400">საათი</span>
+              <span className="text-xs font-medium text-zinc-400">სთ</span>
             </div>
             <div className="text-[10px] text-zinc-400 truncate pt-0.5">
-              საშუალო რიტმი: <strong className="text-zinc-200 font-mono">{avgSessionsPerWeek}</strong> სესია კვირაში
+              {totalSessionsCount === 0 ? (
+                <span className="text-zinc-500">პირველი სესია წინ არის 🚀</span>
+              ) : (
+                <>საშუალო რიტმი: <strong className="text-zinc-200 font-mono">{avgSessionsPerWeek}</strong> სესია/კვირაში</>
+              )}
             </div>
           </div>
         </div>
@@ -1291,17 +1248,6 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               <Plus className="w-3.5 h-3.5" />
               <span>სესიის დამატება</span>
             </button>
-            <button
-              onClick={() => {
-                setSettingsForm({ startDate, initialSessions });
-                setIsSettingsOpen(true);
-              }}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800 flex items-center gap-1.5 transition-colors"
-              title="ვარჯიშის სტაჟისა და საწყისი სესიების პარამეტრები"
-            >
-              <Settings className="w-3.5 h-3.5 text-zinc-400" />
-              <span>სტაჟის მართვა</span>
-            </button>
           </div>
         </div>
 
@@ -1312,7 +1258,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               ჯერჯერობით სესიების ისტორია ცარიელია
             </h4>
             <p className="text-xs text-zinc-500 max-w-md mx-auto">
-              მონიშნეთ მიმდინარე კვირის განრიგში დასრულებული დღე (✅) ან დააჭირეთ „სესიის დამატება“ ღილაკს წარსული ვარჯიშების დასაფიქსირებლად.
+              ათვლა დაიწყო დღეიდან. მონიშნეთ განრიგში დასრულებული დღე (✅) ან დააჭირეთ „სესიის დამატება“ ღილაკს.
             </p>
           </div>
         ) : (
@@ -1541,91 +1487,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* 7. JOURNEY SETTINGS MODAL (Start Date & Baseline Sessions) */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                  <Calendar className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white">
-                    ვარჯიშის სტაჟის პარამეტრები
-                  </h3>
-                  <span className="text-[11px] text-zinc-400">
-                    სტაჟისა და სესიების საწყისი ათვლა ({activeUser === 'ani' ? 'ანი' : 'გიგი'})
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSettingsOpen(false)}
-                className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-900"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveSettings} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-200 flex items-center justify-between">
-                  <span>ვარჯიშის დაწყების თარიღი:</span>
-                  <span className="text-[10px] text-amber-400 font-mono">რომელი დღიდან ვარჯიშობ</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={settingsForm.startDate}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, startDate: e.target.value })}
-                  className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
-                />
-                <p className="text-[10px] text-zinc-500 leading-relaxed">
-                  თარიღის მიხედვით ავტომატურად ითვლება რამდენი დღე და კვირაა გასული ვარჯიშის დაწყებიდან.
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-200 flex items-center justify-between">
-                  <span>აპლიკაციამდე ჩატარებული სესიები:</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">საწყისი ბაზა</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={settingsForm.initialSessions}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, initialSessions: parseInt(e.target.value, 10) || 0 })}
-                  placeholder="მაგ. 12"
-                  className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
-                />
-                <p className="text-[10px] text-zinc-500 leading-relaxed">
-                  თუ აპლიკაციის გამოყენებამდე უკვე გაქვს ჩატარებული სესიები, მიუთითე მათი რაოდენობა საერთო ჯამში დასამატებლად.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-850">
-                <button
-                  type="button"
-                  onClick={() => setIsSettingsOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-850 text-zinc-300"
-                >
-                  გაუქმება
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-950/50 flex items-center gap-1.5"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>შენახვა</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 8. MANUAL ADD SESSION MODAL */}
+      {/* 7. MANUAL ADD SESSION MODAL */}
       {isAddSessionOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
           <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
