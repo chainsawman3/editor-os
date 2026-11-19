@@ -41,12 +41,12 @@ interface DailyExpenseRecord {
   dayName: string;
   plannedAmount: number;
   actualSpent: number;
-  foodPart: number;
-  cigPart: number;
-  funPart: number;
+  foodPart?: number;
+  cigPart?: number;
+  funPart?: number;
   deducted: boolean;
-  deductedAt: string;
-  isAuto: boolean;
+  deductedAt?: string;
+  isAuto?: boolean;
   note?: string;
 }
 
@@ -68,8 +68,13 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
       setLoading(true);
 
       // 1. Fetch real tasks
-      const fetchedTasks = await api.getTasks();
-      setTasks(fetchedTasks || []);
+      try {
+        const fetchedTasks = await api.getTasks();
+        setTasks(Array.isArray(fetchedTasks) ? fetchedTasks : []);
+      } catch (e) {
+        console.error('Error fetching tasks for analytics:', e);
+        setTasks([]);
+      }
 
       // 2. Load workouts from localStorage
       const workoutStorageKey = getKey('flow_os_completed_workouts');
@@ -78,31 +83,65 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
 
       try {
         const savedLogs = localStorage.getItem(sessionLogsStorageKey);
-        setSessionLogs(savedLogs ? JSON.parse(savedLogs) : []);
+        if (savedLogs) {
+          const parsed = JSON.parse(savedLogs);
+          setSessionLogs(Array.isArray(parsed) ? parsed : Object.values(parsed || {}));
+        } else {
+          setSessionLogs([]);
+        }
       } catch {
         setSessionLogs([]);
       }
 
       try {
         const savedCompleted = localStorage.getItem(workoutStorageKey);
-        setCompletedDays(savedCompleted ? JSON.parse(savedCompleted) : {});
+        if (savedCompleted) {
+          const parsed = JSON.parse(savedCompleted);
+          setCompletedDays(parsed && typeof parsed === 'object' ? parsed : {});
+        } else {
+          setCompletedDays({});
+        }
       } catch {
         setCompletedDays({});
       }
 
-      const savedStartDate = localStorage.getItem(startDateStorageKey) || new Date().toISOString().split('T')[0];
-      setStartDate(savedStartDate);
+      try {
+        const savedStartDate = localStorage.getItem(startDateStorageKey) || new Date().toISOString().split('T')[0];
+        setStartDate(savedStartDate);
+      } catch {
+        setStartDate(new Date().toISOString().split('T')[0]);
+      }
 
       // 3. Load budget & daily expenses from localStorage
-      const savedBalance = localStorage.getItem(getKey('flow_os_current_balance'));
-      setCurrentBalance(savedBalance ? parseFloat(savedBalance) : 600);
+      try {
+        const savedBalance = localStorage.getItem(getKey('flow_os_current_balance'));
+        setCurrentBalance(savedBalance ? parseFloat(savedBalance) || 0 : 600);
+      } catch {
+        setCurrentBalance(600);
+      }
 
-      const savedSalary = localStorage.getItem(getKey('flow_os_salary'));
-      setSalary(savedSalary ? parseFloat(savedSalary) : (activeUser === 'ani' ? 1800 : 2200));
+      try {
+        const savedSalary = localStorage.getItem(getKey('flow_os_salary'));
+        setSalary(savedSalary ? parseFloat(savedSalary) || 2200 : (activeUser === 'ani' ? 1800 : 2200));
+      } catch {
+        setSalary(2200);
+      }
 
       try {
         const savedExpenses = localStorage.getItem(getKey('flow_os_daily_expenses'));
-        setDailyExpenses(savedExpenses ? JSON.parse(savedExpenses) : []);
+        if (savedExpenses) {
+          const parsed = JSON.parse(savedExpenses);
+          if (Array.isArray(parsed)) {
+            setDailyExpenses(parsed);
+          } else if (parsed && typeof parsed === 'object') {
+            // In EconomyPage dailyRecords is stored as Record<string, DailyExpenseRecord>
+            setDailyExpenses(Object.values(parsed));
+          } else {
+            setDailyExpenses([]);
+          }
+        } else {
+          setDailyExpenses([]);
+        }
       } catch {
         setDailyExpenses([]);
       }
@@ -121,41 +160,51 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
     return <AnalyticsSkeleton />;
   }
 
+  // ================= SAFE DATA NORMALIZATION =================
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const safeSessionLogs = Array.isArray(sessionLogs) ? sessionLogs : [];
+  const safeCompletedDays = completedDays && typeof completedDays === 'object' ? completedDays : {};
+  const safeDailyExpenses: DailyExpenseRecord[] = Array.isArray(dailyExpenses)
+    ? dailyExpenses
+    : (dailyExpenses && typeof dailyExpenses === 'object' ? Object.values(dailyExpenses) : []);
+
   // ================= TASK CALCULATIONS =================
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.completed).length;
-  const pendingTasks = totalTasks - completedTasks;
+  const totalTasks = safeTasks.length;
+  const completedTasks = safeTasks.filter((t) => t && t.completed).length;
+  const pendingTasks = Math.max(0, totalTasks - completedTasks);
   const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayTasks = tasks.filter((t) => t.due_date === todayStr);
-  const todayCompletedTasks = todayTasks.filter((t) => t.completed).length;
+  const todayTasks = safeTasks.filter((t) => t && t.due_date === todayStr);
+  const todayCompletedTasks = todayTasks.filter((t) => t && t.completed).length;
 
-  const highPriorityTasks = tasks.filter((t) => t.priority === 'High');
-  const highPriorityCompleted = highPriorityTasks.filter((t) => t.completed).length;
+  const highPriorityTasks = safeTasks.filter((t) => t && t.priority === 'High');
+  const highPriorityCompleted = highPriorityTasks.filter((t) => t && t.completed).length;
 
-  const mediumPriorityTasks = tasks.filter((t) => t.priority === 'Medium');
-  const mediumPriorityCompleted = mediumPriorityTasks.filter((t) => t.completed).length;
+  const mediumPriorityTasks = safeTasks.filter((t) => t && t.priority === 'Medium');
+  const mediumPriorityCompleted = mediumPriorityTasks.filter((t) => t && t.completed).length;
 
-  const normalPriorityTasks = tasks.filter((t) => !t.priority || t.priority === 'Low');
-  const normalPriorityCompleted = normalPriorityTasks.filter((t) => t.completed).length;
+  const normalPriorityTasks = safeTasks.filter((t) => t && (!t.priority || t.priority === 'Low'));
+  const normalPriorityCompleted = normalPriorityTasks.filter((t) => t && t.completed).length;
 
   // ================= WORKOUT CALCULATIONS =================
-  const totalWorkoutSessions = sessionLogs.length;
-  const gymSessions = sessionLogs.filter((s) => s.type === 'gym').length;
-  const poolSessions = sessionLogs.filter((s) => s.type === 'pool').length;
-  const totalWorkoutMinutes = sessionLogs.reduce((acc, s) => acc + (s.durationMin || 60), 0);
+  const totalWorkoutSessions = safeSessionLogs.length;
+  const gymSessions = safeSessionLogs.filter((s) => s && s.type === 'gym').length;
+  const poolSessions = safeSessionLogs.filter((s) => s && s.type === 'pool').length;
+  const totalWorkoutMinutes = safeSessionLogs.reduce((acc, s) => acc + (Number(s?.durationMin) || 60), 0);
   const totalWorkoutHours = Math.round((totalWorkoutMinutes / 60) * 10) / 10;
 
   // Weekly Adherence (out of standard 4 target days: Tue, Thu, Sat pool, Sun gym)
-  const completedThisWeekCount = Object.values(completedDays).filter(Boolean).length;
+  const completedThisWeekCount = Object.values(safeCompletedDays).filter(Boolean).length;
   const weeklyTargetSessions = 4;
   const workoutAdherenceRate = Math.min(100, Math.round((completedThisWeekCount / weeklyTargetSessions) * 100));
 
   // Journey duration in days
   const journeyDays = (() => {
     try {
+      if (!startDate) return 1;
       const start = new Date(startDate);
+      if (isNaN(start.getTime())) return 1;
       const now = new Date();
       start.setHours(0, 0, 0, 0);
       now.setHours(0, 0, 0, 0);
@@ -168,18 +217,19 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
   })();
 
   // ================= BUDGET VARIANCE CALCULATIONS =================
-  const deductedExpenses = dailyExpenses.filter((e) => e.deducted);
-  const totalPlannedSpend = deductedExpenses.reduce((acc, e) => acc + (e.plannedAmount || 0), 0);
-  const totalActualSpend = deductedExpenses.reduce((acc, e) => acc + (e.actualSpent || 0), 0);
+  // Expenses that have been deducted or have actual spent money
+  const deductedExpenses = safeDailyExpenses.filter((e) => e && (e.deducted || Number(e.actualSpent) > 0));
+  const totalPlannedSpend = deductedExpenses.reduce((acc, e) => acc + (Number(e?.plannedAmount) || 0), 0);
+  const totalActualSpend = deductedExpenses.reduce((acc, e) => acc + (Number(e?.actualSpent) || 0), 0);
   const netVariance = totalPlannedSpend - totalActualSpend; // positive = saved, negative = overspent
 
   const totalSaved = deductedExpenses.reduce((acc, e) => {
-    const diff = (e.plannedAmount || 0) - (e.actualSpent || 0);
+    const diff = (Number(e?.plannedAmount) || 0) - (Number(e?.actualSpent) || 0);
     return diff > 0 ? acc + diff : acc;
   }, 0);
 
   const totalOverspent = deductedExpenses.reduce((acc, e) => {
-    const diff = (e.actualSpent || 0) - (e.plannedAmount || 0);
+    const diff = (Number(e?.actualSpent) || 0) - (Number(e?.plannedAmount) || 0);
     return diff > 0 ? acc + diff : acc;
   }, 0);
 
@@ -313,7 +363,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
 
           <div className="flex items-baseline justify-between pt-1">
             <div className="text-2xl font-black font-mono text-white">
-              {currentBalance.toFixed(0)} <span className="text-sm font-normal text-zinc-500">₾ ბალანსი</span>
+              {Number(currentBalance).toFixed(0)} <span className="text-sm font-normal text-zinc-500">₾ ბალანსი</span>
             </div>
             <span className="text-[11px] text-zinc-400 font-medium font-mono">
               ხარჯი: <strong className="text-zinc-200">{totalActualSpend.toFixed(1)} ₾</strong>
@@ -328,7 +378,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
                   netVariance >= 0 ? 'bg-emerald-500' : 'bg-rose-500'
                 }`}
                 style={{
-                  width: `${Math.min(100, Math.max(10, Math.round((currentBalance / salary) * 100)))}%`
+                  width: `${Math.min(100, Math.max(10, Math.round((Number(currentBalance) / (salary || 2200)) * 100)))}%`
                 }}
               />
             </div>
@@ -535,21 +585,23 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
             </div>
           ) : (
             <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-              {deductedExpenses.map((exp) => {
-                const diff = (exp.plannedAmount || 0) - (exp.actualSpent || 0);
+              {deductedExpenses.map((exp, idx) => {
+                const planned = Number(exp?.plannedAmount) || 0;
+                const actual = Number(exp?.actualSpent) || 0;
+                const diff = planned - actual;
                 const isSaved = diff >= 0;
                 return (
                   <div
-                    key={exp.date}
+                    key={exp?.date || `exp_${idx}`}
                     className="p-2.5 rounded-xl bg-zinc-900/70 border border-zinc-800/80 flex items-center justify-between text-xs"
                   >
                     <div>
                       <div className="font-semibold text-white flex items-center gap-1.5">
-                        <span>{exp.dayName}</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">({exp.date})</span>
+                        <span>{exp?.dayName || 'დღე'}</span>
+                        {exp?.date && <span className="text-[10px] text-zinc-500 font-mono">({exp.date})</span>}
                       </div>
                       <div className="text-[10px] text-zinc-400">
-                        გეგმა: {exp.plannedAmount} ₾ · დახარჯული: {exp.actualSpent} ₾
+                        გეგმა: {planned} ₾ · დახარჯული: {actual} ₾
                       </div>
                     </div>
 

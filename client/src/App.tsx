@@ -8,6 +8,7 @@ import { SectionType } from './types';
 import { PinScreen } from './components/PinScreen';
 import { checkTaskReminders, checkProjectReminders } from './utils/notifications';
 import { Bell, X as XIcon, CheckCircle2 } from 'lucide-react';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // Dynamic code-split page imports for minimal bandwidth usage
 const GoalsHubPage = lazy(() => import('./pages/GoalsHubPage').then((m) => ({ default: m.GoalsHubPage })));
@@ -387,7 +388,9 @@ export function App() {
                 </div>
               }
             >
-              {renderContent()}
+              <ErrorBoundary>
+                {renderContent()}
+              </ErrorBoundary>
             </Suspense>
           </div>
         </main>
