@@ -1,38 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import {
-  BarChart,
-  Bar,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
+import { Task } from '../types';
 import {
   BarChart3,
-  Video,
-  Megaphone,
-  Briefcase,
   CheckCircle2,
-  DollarSign,
-  TrendingUp,
   Clock,
-  UserCheck,
-  UserX,
+  Dumbbell,
+  Waves,
+  Wallet,
+  TrendingDown,
+  TrendingUp,
   RefreshCw,
-  Layers,
-  ArrowUpRight,
   Target,
   Sparkles,
-  Zap,
-  Radio,
-  ExternalLink,
-  Filter
+  Calendar,
+  AlertCircle,
+  Percent,
+  Flame,
+  ArrowRight
 } from 'lucide-react';
 import { AnalyticsSkeleton } from '../components/common/SkeletonLoader';
 
@@ -40,720 +25,561 @@ interface AnalyticsPageProps {
   onNavigate?: (tab: string, options?: any) => void;
 }
 
-export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTimeframe, setActiveTimeframe] = useState<'all' | '90day'>('all');
+interface WorkoutSessionLog {
+  id: string;
+  date: string;
+  dayName: string;
+  title: string;
+  type: 'gym' | 'pool';
+  durationMin: number;
+  timestamp: number;
+  note?: string;
+}
 
-  const loadAnalytics = async () => {
+interface DailyExpenseRecord {
+  date: string;
+  dayName: string;
+  plannedAmount: number;
+  actualSpent: number;
+  foodPart: number;
+  cigPart: number;
+  funPart: number;
+  deducted: boolean;
+  deductedAt: string;
+  isAuto: boolean;
+  note?: string;
+}
+
+export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onNavigate }) => {
+  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [sessionLogs, setSessionLogs] = useState<WorkoutSessionLog[]>([]);
+  const [completedDays, setCompletedDays] = useState<Record<string, boolean>>({});
+  const [startDate, setStartDate] = useState<string>('');
+  const [dailyExpenses, setDailyExpenses] = useState<DailyExpenseRecord[]>([]);
+  const [currentBalance, setCurrentBalance] = useState<number>(0);
+  const [salary, setSalary] = useState<number>(2200);
+
+  const activeUser = typeof window !== 'undefined' ? (localStorage.getItem('flow_os_active_user') || 'gigi') : 'gigi';
+  const getKey = (base: string) => (activeUser === 'gigi' ? base : `${base}_${activeUser}`);
+
+  const loadAllAnalyticsData = async () => {
     try {
       setLoading(true);
-      const res = await api.getAnalytics();
-      setData(res);
+
+      // 1. Fetch real tasks
+      const fetchedTasks = await api.getTasks();
+      setTasks(fetchedTasks || []);
+
+      // 2. Load workouts from localStorage
+      const workoutStorageKey = getKey('flow_os_completed_workouts');
+      const sessionLogsStorageKey = getKey('flow_os_workout_session_logs');
+      const startDateStorageKey = getKey('flow_os_workout_start_date');
+
+      try {
+        const savedLogs = localStorage.getItem(sessionLogsStorageKey);
+        setSessionLogs(savedLogs ? JSON.parse(savedLogs) : []);
+      } catch {
+        setSessionLogs([]);
+      }
+
+      try {
+        const savedCompleted = localStorage.getItem(workoutStorageKey);
+        setCompletedDays(savedCompleted ? JSON.parse(savedCompleted) : {});
+      } catch {
+        setCompletedDays({});
+      }
+
+      const savedStartDate = localStorage.getItem(startDateStorageKey) || new Date().toISOString().split('T')[0];
+      setStartDate(savedStartDate);
+
+      // 3. Load budget & daily expenses from localStorage
+      const savedBalance = localStorage.getItem(getKey('flow_os_current_balance'));
+      setCurrentBalance(savedBalance ? parseFloat(savedBalance) : 600);
+
+      const savedSalary = localStorage.getItem(getKey('flow_os_salary'));
+      setSalary(savedSalary ? parseFloat(savedSalary) : (activeUser === 'ani' ? 1800 : 2200));
+
+      try {
+        const savedExpenses = localStorage.getItem(getKey('flow_os_daily_expenses'));
+        setDailyExpenses(savedExpenses ? JSON.parse(savedExpenses) : []);
+      } catch {
+        setDailyExpenses([]);
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load analytics data:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadAnalytics();
-  }, []);
+    loadAllAnalyticsData();
+  }, [activeUser]);
 
   if (loading) {
     return <AnalyticsSkeleton />;
   }
 
-  if (!data) return null;
+  // ================= TASK CALCULATIONS =================
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.completed).length;
+  const pendingTasks = totalTasks - completedTasks;
+  const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  const { overview, videoEditing, marketing, crm, weeklyProgress } = data;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayTasks = tasks.filter((t) => t.due_date === todayStr);
+  const todayCompletedTasks = todayTasks.filter((t) => t.completed).length;
 
-  const responseDiagramData = crm?.responseDiagram || [
-    { name: 'Positive (Agreed / Active)', count: 0, color: '#10b981', percentage: 0, key: 'positive' },
-    { name: 'Negative (Rejected / Ghosted)', count: 0, color: '#f43f5e', percentage: 0, key: 'negative' },
-    { name: 'Pending (Awaiting Reply)', count: 0, color: '#3b82f6', percentage: 0, key: 'pending' }
-  ];
+  const highPriorityTasks = tasks.filter((t) => t.priority === 'High');
+  const highPriorityCompleted = highPriorityTasks.filter((t) => t.completed).length;
 
-  const videoStageData = videoEditing?.stageBreakdown || [];
-  const marketingPlatformData = marketing?.platformBreakdown || [];
+  const mediumPriorityTasks = tasks.filter((t) => t.priority === 'Medium');
+  const mediumPriorityCompleted = mediumPriorityTasks.filter((t) => t.completed).length;
 
-  const handleStageClick = (stageName: string) => {
-    if (!onNavigate) return;
-    let targetStatus = stageName;
-    if (stageName === 'Ready / Done') targetStatus = 'Ready';
-    onNavigate('goals', {
-      section: 'video_editing',
-      status: targetStatus,
-      viewType: 'projects_only'
-    });
-  };
+  const normalPriorityTasks = tasks.filter((t) => !t.priority || t.priority === 'Low');
+  const normalPriorityCompleted = normalPriorityTasks.filter((t) => t.completed).length;
 
-  const handlePlatformClick = (platformName: string) => {
-    if (!onNavigate) return;
-    onNavigate('goal_marketing', {
-      platform: platformName.toLowerCase(),
-      viewType: 'projects_only'
-    });
-  };
+  // ================= WORKOUT CALCULATIONS =================
+  const totalWorkoutSessions = sessionLogs.length;
+  const gymSessions = sessionLogs.filter((s) => s.type === 'gym').length;
+  const poolSessions = sessionLogs.filter((s) => s.type === 'pool').length;
+  const totalWorkoutMinutes = sessionLogs.reduce((acc, s) => acc + (s.durationMin || 60), 0);
+  const totalWorkoutHours = Math.round((totalWorkoutMinutes / 60) * 10) / 10;
 
-  const handleCrmCategoryClick = (categoryKey: 'positive' | 'pending' | 'negative') => {
-    if (!onNavigate) return;
-    onNavigate('goal_freelance', {
-      clientStatus: categoryKey
-    });
-  };
+  // Weekly Adherence (out of standard 4 target days: Tue, Thu, Sat pool, Sun gym)
+  const completedThisWeekCount = Object.values(completedDays).filter(Boolean).length;
+  const weeklyTargetSessions = 4;
+  const workoutAdherenceRate = Math.min(100, Math.round((completedThisWeekCount / weeklyTargetSessions) * 100));
+
+  // Journey duration in days
+  const journeyDays = (() => {
+    try {
+      const start = new Date(startDate);
+      const now = new Date();
+      start.setHours(0, 0, 0, 0);
+      now.setHours(0, 0, 0, 0);
+      const diffTime = now.getTime() - start.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return diffDays > 0 ? diffDays : 1;
+    } catch {
+      return 1;
+    }
+  })();
+
+  // ================= BUDGET VARIANCE CALCULATIONS =================
+  const deductedExpenses = dailyExpenses.filter((e) => e.deducted);
+  const totalPlannedSpend = deductedExpenses.reduce((acc, e) => acc + (e.plannedAmount || 0), 0);
+  const totalActualSpend = deductedExpenses.reduce((acc, e) => acc + (e.actualSpent || 0), 0);
+  const netVariance = totalPlannedSpend - totalActualSpend; // positive = saved, negative = overspent
+
+  const totalSaved = deductedExpenses.reduce((acc, e) => {
+    const diff = (e.plannedAmount || 0) - (e.actualSpent || 0);
+    return diff > 0 ? acc + diff : acc;
+  }, 0);
+
+  const totalOverspent = deductedExpenses.reduce((acc, e) => {
+    const diff = (e.actualSpent || 0) - (e.plannedAmount || 0);
+    return diff > 0 ? acc + diff : acc;
+  }, 0);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto font-sans">
-      {/* 1. TOP HEADER & TIMEFRAME SWITCHER */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <span className="p-2.5 rounded-xl bg-cyan-950/50 border border-cyan-800/60 text-cyan-400 shadow-inner">
+    <div className="p-3 sm:p-6 space-y-5 max-w-7xl mx-auto font-sans">
+      {/* 1. TOP HEADER */}
+      <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
             <BarChart3 className="w-5 h-5" />
-          </span>
+          </div>
           <div>
-            <h1 className="text-xl font-bold text-zinc-100 tracking-tight">ანალიტიკა</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">ანალიტიკა</h1>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Timeframe selector */}
-          <div className="flex items-center bg-zinc-900 p-1 rounded-xl border border-zinc-800 text-xs">
-            <button
-              onClick={() => setActiveTimeframe('all')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                activeTimeframe === 'all' ? 'bg-zinc-800 text-white font-bold shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
+        <button
+          onClick={loadAllAnalyticsData}
+          title="მონაცემების განახლება"
+          className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-white border border-zinc-800 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">განახლება</span>
+        </button>
+      </div>
+
+      {/* 2. THE 3 CORE PILLARS (TOP KPI CARDS) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Pillar 1: ტასკების შესრულება */}
+        <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <CheckCircle2 className="w-4 h-4" />
+              </span>
+              <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                ტასკების შესრულება
+              </span>
+            </div>
+            <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2 py-0.5 rounded-md">
+              {taskCompletionRate}%
+            </span>
+          </div>
+
+          <div className="flex items-baseline justify-between pt-1">
+            <div className="text-2xl font-black font-mono text-white">
+              {completedTasks} <span className="text-sm font-normal text-zinc-500">/ {totalTasks}</span>
+            </div>
+            <span className="text-[11px] text-zinc-400 font-medium">
+              დარჩენილია: <strong className="text-amber-400">{pendingTasks}</strong>
+            </span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="space-y-1">
+            <div className="w-full h-2 rounded-full bg-zinc-850 overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${taskCompletionRate}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+              <span>დღეს: {todayCompletedTasks}/{todayTasks.length}</span>
+              <span>მაღალი პრიორიტეტი: {highPriorityCompleted}/{highPriorityTasks.length}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Pillar 2: ვარჯიშების შესრულება */}
+        <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                <Dumbbell className="w-4 h-4" />
+              </span>
+              <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                ვარჯიშების შესრულება
+              </span>
+            </div>
+            <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/80 px-2 py-0.5 rounded-md">
+              {workoutAdherenceRate}% კვირა
+            </span>
+          </div>
+
+          <div className="flex items-baseline justify-between pt-1">
+            <div className="text-2xl font-black font-mono text-white">
+              {totalWorkoutSessions} <span className="text-sm font-normal text-zinc-500">სესია</span>
+            </div>
+            <span className="text-[11px] text-zinc-400 font-medium">
+              სულ: <strong className="text-cyan-300">~{totalWorkoutHours} სთ</strong>
+            </span>
+          </div>
+
+          {/* Adherence Progress Bar */}
+          <div className="space-y-1">
+            <div className="w-full h-2 rounded-full bg-zinc-850 overflow-hidden">
+              <div
+                className="h-full bg-cyan-500 rounded-full transition-all duration-500"
+                style={{ width: `${workoutAdherenceRate}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+              <span>დარბაზი: {gymSessions}</span>
+              <span>აუზი: {poolSessions}</span>
+              <span>პროგრესი: {journeyDays} დღე</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Pillar 3: ბიუჯეტის გადახრები */}
+        <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 relative overflow-hidden group hover:border-amber-500/40 transition-all">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                <Wallet className="w-4 h-4" />
+              </span>
+              <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                ბიუჯეტის გადახრები
+              </span>
+            </div>
+            <span
+              className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
+                netVariance >= 0
+                  ? 'text-emerald-400 bg-emerald-950/60 border border-emerald-800/80'
+                  : 'text-rose-400 bg-rose-950/60 border border-rose-800/80'
               }`}
             >
-              All Time
-            </button>
-            <button
-              onClick={() => setActiveTimeframe('90day')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                activeTimeframe === '90day' ? 'bg-zinc-800 text-white font-bold shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              90-Day Sprint
-            </button>
-          </div>
-
-          <div className="text-xs font-mono text-emerald-300 bg-emerald-950/60 border border-emerald-800/80 px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-sm">
-            <DollarSign className="w-4 h-4 text-emerald-400" />
-            <span>Pipeline: <strong className="text-white">${overview?.totalRevenue?.toLocaleString() || 0}</strong></span>
-          </div>
-
-          <button
-            onClick={loadAnalytics}
-            title="Refresh live data"
-            className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 border border-zinc-750 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* 2. 4 BIG EXECUTIVE KPI CARDS (INTERACTIVE & CLICKABLE) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Tasks Velocity */}
-        <div
-          onClick={() => onNavigate && onNavigate('content')}
-          className="bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-750 hover:border-emerald-500/60 rounded-2xl p-5 space-y-3 shadow-md transition-all cursor-pointer group hover:shadow-lg hover:shadow-emerald-950/40"
-          title="Click to view Content Studio tasks"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-zinc-200">
-              Tasks Velocity
-            </span>
-            <span className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800 text-emerald-400 group-hover:bg-emerald-900">
-              <CheckCircle2 className="w-4 h-4" />
+              {netVariance >= 0 ? `+${netVariance.toFixed(1)} ₾ დაზოგილი` : `${netVariance.toFixed(1)} ₾ გადახარჯვა`}
             </span>
           </div>
-          <div className="flex items-baseline gap-2">
-            <div className="text-2xl font-bold text-zinc-100 font-mono">
-              {overview?.completedTasks || 0} <span className="text-sm font-normal text-zinc-400">/ {overview?.totalTasks || 0}</span>
+
+          <div className="flex items-baseline justify-between pt-1">
+            <div className="text-2xl font-black font-mono text-white">
+              {currentBalance.toFixed(0)} <span className="text-sm font-normal text-zinc-500">₾ ბალანსი</span>
             </div>
-            <span className="text-xs font-bold text-emerald-400 font-mono">
-              {overview?.taskCompletionRate || 0}%
+            <span className="text-[11px] text-zinc-400 font-medium font-mono">
+              ხარჯი: <strong className="text-zinc-200">{totalActualSpend.toFixed(1)} ₾</strong>
             </span>
           </div>
-          <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden border border-zinc-800">
-            <div
-              className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-              style={{ width: `${overview?.taskCompletionRate || 0}%` }}
-            />
-          </div>
-          <div className="text-[11px] text-zinc-400 flex justify-between">
-            <span>Pending: <strong className="text-zinc-300 font-mono">{overview?.pendingTasks || 0}</strong></span>
-            <span className="text-emerald-400 font-semibold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-              View Tasks <ExternalLink className="w-3 h-3" />
-            </span>
-          </div>
-        </div>
 
-        {/* Total Projects Delivered */}
-        <div
-          onClick={() => onNavigate && onNavigate('goals', { viewType: 'projects_only' })}
-          className="bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-750 hover:border-blue-500/60 rounded-2xl p-5 space-y-3 shadow-md transition-all cursor-pointer group hover:shadow-lg hover:shadow-blue-950/40"
-          title="Click to view all production projects"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-zinc-200">
-              Projects Throughput
-            </span>
-            <span className="p-1.5 rounded-lg bg-blue-950/60 border border-blue-800 text-blue-400 group-hover:bg-blue-900">
-              <Layers className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <div className="text-2xl font-bold text-zinc-100 font-mono">
-              {overview?.completedProjects || 0} <span className="text-sm font-normal text-zinc-400">/ {overview?.totalProjects || 0}</span>
+          {/* Variance Bar */}
+          <div className="space-y-1">
+            <div className="w-full h-2 rounded-full bg-zinc-850 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  netVariance >= 0 ? 'bg-emerald-500' : 'bg-rose-500'
+                }`}
+                style={{
+                  width: `${Math.min(100, Math.max(10, Math.round((currentBalance / salary) * 100)))}%`
+                }}
+              />
             </div>
-            <span className="text-xs font-bold text-blue-400 font-mono">
-              {overview?.projectCompletionRate || 0}%
-            </span>
-          </div>
-          <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden border border-zinc-800">
-            <div
-              className="bg-blue-500 h-full rounded-full transition-all duration-500"
-              style={{ width: `${overview?.projectCompletionRate || 0}%` }}
-            />
-          </div>
-          <div className="text-[11px] text-zinc-400 flex justify-between">
-            <span>In-Progress: <strong className="text-cyan-300 font-mono">{overview?.inProgressProjects || 0}</strong></span>
-            <span className="text-blue-400 font-semibold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-              View Projects <ExternalLink className="w-3 h-3" />
-            </span>
-          </div>
-        </div>
-
-        {/* Client Outreach Conversion */}
-        <div
-          onClick={() => handleCrmCategoryClick('positive')}
-          className="bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-750 hover:border-purple-500/60 rounded-2xl p-5 space-y-3 shadow-md transition-all cursor-pointer group hover:shadow-lg hover:shadow-purple-950/40"
-          title="Click to view agreed and active clients"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-zinc-200">
-              Outreach Conversion
-            </span>
-            <span className="p-1.5 rounded-lg bg-purple-950/60 border border-purple-800 text-purple-400 group-hover:bg-purple-900">
-              <TrendingUp className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <div className="text-2xl font-bold text-purple-300 font-mono">
-              {overview?.conversionRate || 0}%
+            <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+              <span className="text-emerald-400">დაზოგვა: +{totalSaved.toFixed(1)} ₾</span>
+              <span className="text-rose-400">გადახარჯვა: -{totalOverspent.toFixed(1)} ₾</span>
             </div>
-            <span className="text-xs font-medium text-zinc-400">
-              ({overview?.positiveClients || 0} Won)
-            </span>
-          </div>
-          <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden border border-zinc-800">
-            <div
-              className="bg-purple-500 h-full rounded-full transition-all duration-500"
-              style={{ width: `${overview?.conversionRate || 0}%` }}
-            />
-          </div>
-          <div className="text-[11px] text-zinc-400 flex justify-between">
-            <span>Total Leads: <strong className="text-zinc-300 font-mono">{overview?.totalClients || 0}</strong></span>
-            <span className="text-purple-400 font-semibold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-              Won Leads <ExternalLink className="w-3 h-3" />
-            </span>
-          </div>
-        </div>
-
-        {/* Total Client Pipeline */}
-        <div
-          onClick={() => handleCrmCategoryClick('pending')}
-          className="bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-750 hover:border-cyan-500/60 rounded-2xl p-5 space-y-3 shadow-md transition-all cursor-pointer group hover:shadow-lg hover:shadow-cyan-950/40"
-          title="Click to view pending outreach leads"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-zinc-200">
-              Active Pipeline
-            </span>
-            <span className="p-1.5 rounded-lg bg-cyan-950/60 border border-cyan-800 text-cyan-400 group-hover:bg-cyan-900">
-              <Briefcase className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <div className="text-2xl font-bold text-cyan-300 font-mono">
-              {overview?.pendingClients || 0}
-            </div>
-            <span className="text-xs font-medium text-zinc-400">Waiting for Reply</span>
-          </div>
-          <div className="w-full bg-zinc-950 h-1.5 rounded-full overflow-hidden border border-zinc-800">
-            <div
-              className="bg-cyan-500 h-full rounded-full transition-all duration-500"
-              style={{ width: `${overview?.totalClients > 0 ? Math.round((overview.pendingClients / overview.totalClients) * 100) : 0}%` }}
-            />
-          </div>
-          <div className="text-[11px] text-zinc-400 flex justify-between">
-            <span>Pending Leads: <strong className="text-cyan-300 font-mono">{overview?.pendingClients || 0}</strong></span>
-            <span className="text-cyan-400 font-semibold flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-              Pending <ExternalLink className="w-3 h-3" />
-            </span>
           </div>
         </div>
       </div>
 
-      {/* 3. DEDICATED SECTION 1: VIDEO EDITING VS MARKETING BREAKDOWN */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* VIDEO EDITING CRAFT PERFORMANCE */}
-        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-5 shadow-sm">
-          <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-lg bg-blue-950/80 border border-blue-800 text-blue-400">
-                <Layers className="w-4 h-4" />
-              </span>
-              <div>
-                <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Core Projects Analytics</h2>
-                <p className="text-[11px] text-zinc-400">Click any stage bar below to open filtered projects</p>
-              </div>
+      {/* 3. DETAILED SECTIONS GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* SECTION 1: ტასკების შესრულების დეტალები */}
+        <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+                ტასკების პრიორიტეტები
+              </h2>
             </div>
-            <div className="text-right">
-              <span className="text-xs font-mono font-bold text-blue-400">
-                {videoEditing?.completedTasks || 0} / {videoEditing?.totalTasks || 0} Tasks
-              </span>
-              <span className="text-[10px] text-zinc-400 block">{videoEditing?.completionRate || 0}% rate</span>
-            </div>
-          </div>
-
-          {/* Video Projects By Stage Chart */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span>Projects Pipeline Stages</span>
-              <span className="font-mono text-zinc-300">{videoEditing?.totalProjects || 0} Total Projects</span>
-            </div>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={videoStageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="stage" stroke="#71717a" fontSize={11} />
-                  <YAxis stroke="#71717a" fontSize={11} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '10px', fontSize: '11px' }}
-                    itemStyle={{ color: '#60a5fa' }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="#3b82f6"
-                    radius={[6, 6, 0, 0]}
-                    name="Projects"
-                    className="cursor-pointer"
-                    onClick={(entry: any) => handleStageClick(entry.stage)}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Interactive Stage Pills */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-zinc-900 text-center text-xs">
-            {videoStageData.map((s: any) => (
+            {onNavigate && (
               <button
-                key={s.stage}
-                onClick={() => handleStageClick(s.stage)}
-                className="p-2.5 bg-zinc-900/60 hover:bg-zinc-850 border border-zinc-800/80 hover:border-blue-500/50 rounded-xl transition-all group text-left flex flex-col justify-between"
+                type="button"
+                onClick={() => onNavigate('tasks')}
+                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
               >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-[10px] text-zinc-400 group-hover:text-zinc-200 uppercase truncate">{s.stage}</span>
-                  <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-blue-400 transition-colors" />
-                </div>
-                <span className="text-sm font-bold font-mono text-zinc-100 group-hover:text-blue-300 mt-1 block">{s.count}</span>
+                <span>ტასკები</span>
+                <ArrowRight className="w-3 h-3" />
               </button>
-            ))}
+            )}
           </div>
-        </div>
 
-        {/* MARKETING & CONTENT DISTRIBUTION */}
-        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-5 shadow-sm">
-          <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-lg bg-emerald-950/80 border border-emerald-800 text-emerald-400">
-                <Megaphone className="w-4 h-4" />
-              </span>
-              <div>
-                <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Marketing & Social Analytics</h2>
-                <p className="text-[11px] text-zinc-400">Click platform to jump to marketing edits</p>
+          <div className="space-y-3">
+            {/* High Priority */}
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-rose-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" /> მაღალი პრიორიტეტი (High)
+                </span>
+                <span className="font-mono font-bold text-white">
+                  {highPriorityCompleted} / {highPriorityTasks.length}
+                </span>
               </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs font-mono font-bold text-emerald-400">
-                {marketing?.completedTasks || 0} / {marketing?.totalTasks || 0} Tasks
-              </span>
-              <span className="text-[10px] text-zinc-400 block">{marketing?.completionRate || 0}% rate</span>
-            </div>
-          </div>
-
-          {/* Marketing Platforms Breakdown Chart */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span>Platform Distribution</span>
-              <span className="font-mono text-zinc-300">{marketing?.totalProjects || 0} Total Posts/Edits</span>
-            </div>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={marketingPlatformData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="platform" stroke="#71717a" fontSize={11} />
-                  <YAxis stroke="#71717a" fontSize={11} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '10px', fontSize: '11px' }}
-                    itemStyle={{ color: '#34d399' }}
-                  />
-                  <Bar
-                    dataKey="projects"
-                    fill="#10b981"
-                    radius={[6, 6, 0, 0]}
-                    name="Projects"
-                    className="cursor-pointer"
-                    onClick={(entry: any) => handlePlatformClick(entry.platform)}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Interactive Platform Pills */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-zinc-900 text-center text-xs">
-            {marketingPlatformData.map((p: any) => (
-              <button
-                key={p.platform}
-                onClick={() => handlePlatformClick(p.platform)}
-                className="p-2.5 bg-zinc-900/60 hover:bg-zinc-850 border border-zinc-800/80 hover:border-emerald-500/50 rounded-xl transition-all group text-left flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-[10px] text-zinc-400 group-hover:text-zinc-200 uppercase truncate">{p.platform}</span>
-                  <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
-                </div>
-                <span className="text-sm font-bold font-mono text-emerald-400 mt-1 block">{p.projects}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 4. DEDICATED SECTION 2: CLIENT CRM & OUTREACH DIAGRAMS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* DIAGRAM A: Client Activity Ring Gauge (MATCHING USER REFERENCE DESIGN) */}
-        <div className="bg-zinc-950/90 border border-zinc-800/90 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xl relative overflow-hidden backdrop-blur-md">
-          {/* Top Bar matching reference: Icon + Title + Timeframe Pills */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-850 pb-4">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-inner">
-                <Sparkles className="w-4 h-4" />
-              </span>
-              <div>
-                <h2 className="text-sm font-bold text-zinc-100 tracking-tight">Client Activity & Pipeline</h2>
-                <p className="text-[11px] text-zinc-400 font-medium">Real-time CRM conversion telemetry</p>
-              </div>
-            </div>
-
-            {/* Timeframe pills matching reference (1W, 1M, 3W, YTD, Total) */}
-            <div className="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 text-[11px] font-mono font-medium">
-              {(['1W', '1M', '3W', 'YTD', 'Total'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setActiveTimeframe(t === 'Total' ? 'all' : '90day')}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    (t === '1M' || t === 'Total')
-                      ? 'bg-zinc-800 text-white font-bold shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Activity Ring Layout: Left Gauge, Right Category List */}
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center pt-1">
-            {/* Custom SVG Activity Ring Gauge (5 cols on sm+) */}
-            <div className="sm:col-span-6 flex justify-center items-center relative">
-              {(() => {
-                const totalClients = crm?.totalClients ?? 0;
-                const wonCount = crm?.wonClients ?? crm?.positiveClients ?? 0;
-                const wonRev = crm?.wonRevenue ?? crm?.totalRevenue ?? 0;
-                const discussionCount = crm?.discussionClients ?? 0;
-                const discussionRev = crm?.discussionRevenue ?? 0;
-                const pendingCount = crm?.outreachPendingClients ?? crm?.pendingClients ?? 0;
-                const pendingRev = crm?.outreachPendingRevenue ?? 0;
-                const lostCount = crm?.lostClients ?? crm?.negativeClients ?? 0;
-                const lostRev = crm?.lostRevenue ?? 0;
-
-                // Segments matching the 4 colors from reference:
-                // 1. Sky Blue (#38bdf8) -> Pending / Outreach
-                // 2. Amber / Gold (#fbbf24) -> In Discussion / Process
-                // 3. Mint / Teal (#10b981) -> Deals Won / Retainers
-                // 4. Vibrant Pink (#ec4899) -> Returned / Ghosted
-                const ringSegments = [
-                  { key: 'positive', label: 'Delivery Done (Won)', count: wonCount, revenue: wonRev, color: '#10b981', bg: 'bg-[#10b981]' },
-                  { key: 'discussion', label: 'Process Discussion', count: discussionCount, revenue: discussionRev, color: '#fbbf24', bg: 'bg-[#fbbf24]' },
-                  { key: 'pending', label: 'Outreach Pending', count: pendingCount, revenue: pendingRev, color: '#38bdf8', bg: 'bg-[#38bdf8]' },
-                  { key: 'negative', label: 'Lost / Ghosted', count: lostCount, revenue: lostRev, color: '#ec4899', bg: 'bg-[#ec4899]' }
-                ];
-
-                const activeSegments = ringSegments.filter((s) => s.count > 0);
-                const totalValues = ringSegments.reduce((acc, s) => acc + s.count, 0);
-
-                // Helper to describe SVG arc
-                const polarToCart = (cx: number, cy: number, r: number, angleInDeg: number) => {
-                  const rad = ((angleInDeg - 90) * Math.PI) / 180.0;
-                  return {
-                    x: cx + r * Math.cos(rad),
-                    y: cy + r * Math.sin(rad)
-                  };
-                };
-
-                const getArc = (cx: number, cy: number, r: number, startA: number, endA: number) => {
-                  const start = polarToCart(cx, cy, r, endA);
-                  const end = polarToCart(cx, cy, r, startA);
-                  const arcSweep = endA - startA <= 180 ? '0' : '1';
-                  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${arcSweep} 0 ${end.x} ${end.y}`;
-                };
-
-                let accumulatedAngle = 0;
-                const gap = activeSegments.length > 1 ? 8 : 0; // degrees gap between segments for clean separation
-
-                return (
-                  <svg width="220" height="220" viewBox="0 0 240 240" className="overflow-visible select-none">
-                    {/* Background faint track ring */}
-                    <circle cx="120" cy="120" r="88" fill="none" stroke="#18181b" strokeWidth="12" />
-
-                    {/* Inner Dial Ticks (speedometer style radial dashes) */}
-                    {Array.from({ length: 44 }).map((_, i) => {
-                      const angle = i * (360 / 44);
-                      const p1 = polarToCart(120, 120, 68, angle);
-                      const p2 = polarToCart(120, 120, 73, angle);
-                      return (
-                        <line
-                          key={i}
-                          x1={p1.x}
-                          y1={p1.y}
-                          x2={p2.x}
-                          y2={p2.y}
-                          stroke="#27272a"
-                          strokeWidth="1.2"
-                          strokeLinecap="round"
-                        />
-                      );
-                    })}
-
-                    {/* Outer Segmented Arcs with Rounded Caps from REAL database counts */}
-                    {totalValues > 0 ? (
-                      activeSegments.map((seg) => {
-                        const fraction = seg.count / totalValues;
-                        const sweepAngle = Math.max(12, fraction * 360 - gap);
-                        const startAngle = accumulatedAngle + gap / 2;
-                        const endAngle = startAngle + sweepAngle;
-                        accumulatedAngle += fraction * 360;
-
-                        return (
-                          <path
-                            key={seg.key}
-                            d={getArc(120, 120, 88, startAngle, endAngle)}
-                            fill="none"
-                            stroke={seg.color}
-                            strokeWidth="13"
-                            strokeLinecap="round"
-                            className="cursor-pointer transition-all duration-300 hover:opacity-90 hover:stroke-[15]"
-                            onClick={() => handleCrmCategoryClick(seg.key as any)}
-                          >
-                            <title>{`${seg.label}: ${seg.count} (${seg.revenue > 0 ? `$${seg.revenue.toLocaleString()}` : '$0'})`}</title>
-                          </path>
-                        );
-                      })
-                    ) : (
-                      <circle cx="120" cy="120" r="88" fill="none" stroke="#27272a" strokeWidth="6" strokeDasharray="4 4" />
-                    )}
-
-                    {/* Center Numbers: EXACT LIVE TOTAL COUNT FROM DATABASE */}
-                    <text
-                      x="120"
-                      y="116"
-                      textAnchor="middle"
-                      fill="#ffffff"
-                      fontSize="28"
-                      fontWeight="800"
-                      fontFamily="system-ui, -apple-system, sans-serif"
-                      letterSpacing="-0.5"
-                    >
-                      {totalClients}
-                    </text>
-                    <text
-                      x="120"
-                      y="136"
-                      textAnchor="middle"
-                      fill="#71717a"
-                      fontSize="10"
-                      fontWeight="600"
-                      fontFamily="system-ui, -apple-system, sans-serif"
-                      letterSpacing="0.5"
-                    >
-                      Total Activity
-                    </text>
-                  </svg>
-                );
-              })()}
-            </div>
-
-            {/* Right-Side Item List matching real database values */}
-            <div className="sm:col-span-6 space-y-3 text-xs">
-              {(() => {
-                const wonCount = crm?.wonClients ?? crm?.positiveClients ?? 0;
-                const wonRev = crm?.wonRevenue ?? crm?.totalRevenue ?? 0;
-                const discussionCount = crm?.discussionClients ?? 0;
-                const discussionRev = crm?.discussionRevenue ?? 0;
-                const pendingCount = crm?.outreachPendingClients ?? crm?.pendingClients ?? 0;
-                const pendingRev = crm?.outreachPendingRevenue ?? 0;
-                const lostCount = crm?.lostClients ?? crm?.negativeClients ?? 0;
-                const lostRev = crm?.lostRevenue ?? 0;
-
-                return (
-                  <>
-                    {/* 1. Sky Blue -> Outreach Pending */}
-                    <div
-                      onClick={() => handleCrmCategoryClick('pending')}
-                      className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-3.5 h-3.5 rounded-md bg-[#38bdf8] shadow-sm shadow-sky-500/20 group-hover:scale-110 transition-transform" />
-                        <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
-                          Outreach Pending
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-mono font-bold text-zinc-100 group-hover:text-sky-300">
-                          {pendingCount} {pendingCount === 1 ? 'Lead' : 'Leads'}
-                        </span>
-                        {pendingRev > 0 && (
-                          <span className="text-[10px] text-zinc-500 font-mono block">${pendingRev.toLocaleString()}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 2. Amber / Gold -> Process Discussion */}
-                    <div
-                      onClick={() => handleCrmCategoryClick('pending')}
-                      className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-3.5 h-3.5 rounded-md bg-[#fbbf24] shadow-sm shadow-amber-500/20 group-hover:scale-110 transition-transform" />
-                        <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
-                          Process Discussion
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-mono font-bold text-zinc-100 group-hover:text-amber-300">
-                          {discussionCount} {discussionCount === 1 ? 'Lead' : 'Leads'}
-                        </span>
-                        {discussionRev > 0 && (
-                          <span className="text-[10px] text-zinc-500 font-mono block">${discussionRev.toLocaleString()}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 3. Mint / Teal -> Delivery Done / Deals Won */}
-                    <div
-                      onClick={() => handleCrmCategoryClick('positive')}
-                      className="flex items-center justify-between border-b border-zinc-900 pb-2.5 cursor-pointer group transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-3.5 h-3.5 rounded-md bg-[#10b981] shadow-sm shadow-emerald-500/20 group-hover:scale-110 transition-transform" />
-                        <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
-                          Delivery Done (Won)
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-mono font-bold text-zinc-100 group-hover:text-emerald-300">
-                          {wonCount} {wonCount === 1 ? 'Lead' : 'Leads'}
-                        </span>
-                        {wonRev > 0 && (
-                          <span className="text-[10px] text-emerald-400/80 font-mono block font-semibold">${wonRev.toLocaleString()}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 4. Vibrant Pink -> Lost / Ghosted */}
-                    <div
-                      onClick={() => handleCrmCategoryClick('negative')}
-                      className="flex items-center justify-between pb-1 cursor-pointer group transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-3.5 h-3.5 rounded-md bg-[#ec4899] shadow-sm shadow-pink-500/20 group-hover:scale-110 transition-transform" />
-                        <span className="text-zinc-300 font-medium group-hover:text-white transition-colors">
-                          Lost / Ghosted
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-mono font-bold text-zinc-100 group-hover:text-pink-300">
-                          {lostCount} {lostCount === 1 ? 'Lead' : 'Leads'}
-                        </span>
-                        {lostRev > 0 && (
-                          <span className="text-[10px] text-zinc-500 font-mono block">${lostRev.toLocaleString()}</span>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-
-        {/* DIAGRAM B: Outreach Volume & Execution Velocity Over Time */}
-        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-5 shadow-sm">
-          <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-lg bg-amber-950/80 border border-amber-800 text-amber-400">
-                <Zap className="w-4 h-4" />
-              </span>
-              <div>
-                <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Outreach & Velocity Timeline</h2>
-                <p className="text-[11px] text-zinc-400">Activity pace of outreach messages sent vs tasks completed</p>
-              </div>
-            </div>
-            <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/70 border border-emerald-800/80 px-2.5 py-1 rounded-lg">
-              Optimal Pace
-            </span>
-          </div>
-
-          {/* Weekly Timeline Graph */}
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weeklyProgress || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorTasksDone" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorOutreach" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="day" stroke="#71717a" fontSize={11} />
-                <YAxis stroke="#71717a" fontSize={11} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '10px', fontSize: '11px' }}
+              <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                <div
+                  className="h-full bg-rose-500 rounded-full"
+                  style={{
+                    width: `${highPriorityTasks.length > 0 ? (highPriorityCompleted / highPriorityTasks.length) * 100 : 0}%`
+                  }}
                 />
-                <Area type="monotone" dataKey="tasksDone" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorTasksDone)" name="Tasks Completed" />
-                <Area type="monotone" dataKey="outreachSent" stroke="#38bdf8" strokeWidth={2} fillOpacity={1} fill="url(#colorOutreach)" name="Outreach Sent" />
-              </AreaChart>
-            </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Medium Priority */}
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-amber-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" /> საშუალო (Medium)
+                </span>
+                <span className="font-mono font-bold text-white">
+                  {mediumPriorityCompleted} / {mediumPriorityTasks.length}
+                </span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                <div
+                  className="h-full bg-amber-500 rounded-full"
+                  style={{
+                    width: `${mediumPriorityTasks.length > 0 ? (mediumPriorityCompleted / mediumPriorityTasks.length) * 100 : 0}%`
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Normal / Low Priority */}
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-zinc-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-zinc-400" /> ჩვეულებრივი / დაბალი
+                </span>
+                <span className="font-mono font-bold text-white">
+                  {normalPriorityCompleted} / {normalPriorityTasks.length}
+                </span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                <div
+                  className="h-full bg-zinc-400 rounded-full"
+                  style={{
+                    width: `${normalPriorityTasks.length > 0 ? (normalPriorityCompleted / normalPriorityTasks.length) * 100 : 0}%`
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-zinc-400 pt-2 border-t border-zinc-900">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 font-medium">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Tasks Executed
-              </span>
-              <span className="flex items-center gap-1.5 font-medium">
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" /> Outreach Messages Sent
-              </span>
+          <div className="pt-2 border-t border-zinc-850 flex justify-between text-xs text-zinc-400">
+            <span>სულ შესრულებული:</span>
+            <strong className="text-emerald-400 font-mono">{taskCompletionRate}% ({completedTasks} ტასკი)</strong>
+          </div>
+        </div>
+
+        {/* SECTION 2: ვარჯიშების შესრულების დეტალები */}
+        <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+            <div className="flex items-center gap-2">
+              <Dumbbell className="w-4 h-4 text-cyan-400" />
+              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+                ვარჯიშების დისციპლინა
+              </h2>
             </div>
-            <span className="text-zinc-300 font-mono font-bold">Velocity: {overview?.completedTasks || 0} pts</span>
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate('workout')}
+                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
+              >
+                <span>ვარჯიში</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {/* Gym Sessions */}
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                  <Dumbbell className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-white">🏋️‍♂️ დარბაზის სესიები</div>
+                  <div className="text-[10px] text-zinc-400">Push / Pull / Legs & Core</div>
+                </div>
+              </div>
+              <div className="text-right font-mono">
+                <span className="text-base font-bold text-emerald-400">{gymSessions}</span>
+                <span className="text-[10px] text-zinc-500 block">სესია</span>
+              </div>
+            </div>
+
+            {/* Pool Sessions */}
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Waves className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-white">🏊‍♂️ აუზის სესიები</div>
+                  <div className="text-[10px] text-zinc-400">შაბათის ჰიდროთერაპია & კარდიო</div>
+                </div>
+              </div>
+              <div className="text-right font-mono">
+                <span className="text-base font-bold text-cyan-400">{poolSessions}</span>
+                <span className="text-[10px] text-zinc-500 block">სესია</span>
+              </div>
+            </div>
+
+            {/* Weekly Consistency */}
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-850 space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="text-zinc-300 font-medium">კვირის გრაფიკის შესრულება:</span>
+                <span className="font-mono font-bold text-cyan-400">{completedThisWeekCount} / 4 სესია</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                <div
+                  className="h-full bg-cyan-500 rounded-full"
+                  style={{ width: `${workoutAdherenceRate}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-zinc-850 flex justify-between text-xs text-zinc-400">
+            <span>ვარჯიშის სტაჟი:</span>
+            <strong className="text-cyan-400 font-mono">{journeyDays} დღე (~{totalWorkoutHours} საათი)</strong>
+          </div>
+        </div>
+
+        {/* SECTION 3: ბიუჯეტის გადახრების ჟურნალი */}
+        <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+            <div className="flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-amber-400" />
+              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+                დღიური ხარჯის გადახრები
+              </h2>
+            </div>
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate('economy')}
+                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
+              >
+                <span>ეკონომია</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          {deductedExpenses.length === 0 ? (
+            <div className="p-6 text-center text-xs text-zinc-500">
+              ჯერ არ არის დაფიქსირებული დღიური ხარჯები.
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+              {deductedExpenses.map((exp) => {
+                const diff = (exp.plannedAmount || 0) - (exp.actualSpent || 0);
+                const isSaved = diff >= 0;
+                return (
+                  <div
+                    key={exp.date}
+                    className="p-2.5 rounded-xl bg-zinc-900/70 border border-zinc-800/80 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="font-semibold text-white flex items-center gap-1.5">
+                        <span>{exp.dayName}</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">({exp.date})</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-400">
+                        გეგმა: {exp.plannedAmount} ₾ · დახარჯული: {exp.actualSpent} ₾
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span
+                        className={`font-mono font-bold text-xs ${
+                          isSaved ? 'text-emerald-400' : 'text-rose-400'
+                        }`}
+                      >
+                        {isSaved ? `+${diff.toFixed(1)} ₾` : `${diff.toFixed(1)} ₾`}
+                      </span>
+                      <span className="text-[9px] text-zinc-500 block">
+                        {isSaved ? 'დაზოგილი' : 'გადახარჯვა'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="pt-2 border-t border-zinc-850 flex justify-between text-xs text-zinc-400">
+            <span>ბალანსის სტატუსი:</span>
+            <strong
+              className={`font-mono ${
+                netVariance >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              }`}
+            >
+              {netVariance >= 0 ? `+${netVariance.toFixed(1)} ₾ (ეკონომია)` : `${netVariance.toFixed(1)} ₾ (გადახარჯვა)`}
+            </strong>
           </div>
         </div>
       </div>

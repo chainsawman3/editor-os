@@ -462,57 +462,30 @@ export const DeadlinesPage: React.FC<DeadlinesPageProps> = ({ onOpenProject }) =
           </div>
         </div>
 
-        {/* 2. CATEGORY PILLS & CONTROLS TOOLBAR */}
+        {/* 2. SEARCH & SORT TOOLBAR */}
         <div className="pt-3 border-t border-zinc-850/90 flex items-center justify-between gap-4 flex-wrap">
-          {/* Categories */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-            {categories.map((cat) => {
-              const Icon = cat.icon;
-              const isCatActive = selectedSection === cat.id;
-              const count = categoryCounts[cat.id] ?? 0;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedSection(isCatActive && cat.id !== 'all' ? 'all' : cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 ${
-                    isCatActive
-                      ? 'bg-zinc-800 text-white shadow-sm border border-zinc-600 ring-1 ring-white/10'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent'
-                  }`}
-                >
-                  <Icon className={`w-3.5 h-3.5 ${isCatActive ? 'text-purple-400' : 'text-zinc-500'}`} />
-                  <span>{cat.label}</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
-                    isCatActive ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500'
-                  }`}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+          {/* Search */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="პროექტის ძებნა..."
+              className="w-full pl-8 pr-8 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-zinc-600"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="p-1 text-zinc-500 hover:text-zinc-200 absolute right-2 top-1/2 -translate-y-1/2"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
 
           {/* Search & Sort Controls */}
           <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Search */}
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search projects or clients..."
-                className="pl-8 pr-8 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-zinc-600 w-48 sm:w-56"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="p-1 text-zinc-500 hover:text-zinc-200 absolute right-2 top-1/2 -translate-y-1/2"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
 
             {/* Sort Selector */}
             <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-300">
