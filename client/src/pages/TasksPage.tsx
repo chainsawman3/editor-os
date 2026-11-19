@@ -752,7 +752,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
                 {/* Body Content */}
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                       <h3
                         className={`text-xs sm:text-sm font-semibold transition-colors break-words leading-tight ${
                           task.completed
@@ -765,15 +765,15 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
 
                       {/* WIP Pill Indicator */}
                       {isWIP && !task.completed && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-zinc-950 shadow-sm animate-pulse">
-                          <Zap className="w-3 h-3 fill-current" />
-                          <span>WIP • მუშაობაში (შეხსენება გათიშულია)</span>
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-zinc-950 shadow-sm animate-pulse shrink-0">
+                          <Zap className="w-2.5 h-2.5 fill-current" />
+                          <span>WIP</span>
                         </span>
                       )}
                     </div>
 
-                    {/* Action buttons (WIP Toggle, Telegram Push, Calendar Jump, Edit, Delete) */}
-                    <div className="flex items-center gap-1 shrink-0 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    {/* Action buttons on Desktop (Hover) */}
+                    <div className="hidden sm:flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       {/* One-click WIP Toggle Button */}
                       {!task.completed && (
                         <button
@@ -841,61 +841,128 @@ export const TasksPage: React.FC<TasksPageProps> = ({ onNavigateToCalendar }) =>
 
                   {/* Comment / Notes Block */}
                   {task.description && (
-                    <div className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-[11px] text-zinc-300 leading-relaxed font-normal whitespace-pre-line flex items-start gap-2">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-850 text-[11px] text-zinc-300 leading-relaxed font-normal whitespace-pre-line flex items-start gap-1.5">
                       <span className="text-[10px] uppercase font-bold text-zinc-500 shrink-0 pt-0.5 flex items-center gap-1">
                         <MessageSquare className="w-3 h-3 text-zinc-400" />
-                        კომენტარი:
+                        <span className="hidden sm:inline">კომენტარი:</span>
                       </span>
                       <span className="flex-1 text-zinc-300 font-sans">{task.description}</span>
                     </div>
                   )}
 
-                  {/* Metadata Badges */}
-                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                    {/* Deadline Badge */}
-                    {task.due_date && (
+                  {/* Metadata Badges & Mobile Actions Row */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zinc-900/60 sm:border-0 sm:pt-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {/* Deadline Badge */}
+                      {task.due_date && (
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${
+                            task.completed
+                              ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/60'
+                              : deadline.isOverdue
+                              ? 'bg-rose-950/80 text-rose-300 border-rose-800/80'
+                              : deadline.isToday
+                              ? 'bg-blue-950/80 text-blue-300 border-blue-800/80'
+                              : 'bg-zinc-900 text-zinc-400 border-zinc-800'
+                          }`}
+                        >
+                          <CalendarDays className="w-3 h-3" />
+                          <span>{deadline.label}</span>
+                        </span>
+                      )}
+
+                      {/* Exact Alert / Reminder Scheduled Time Badge */}
+                      {task.reminder_date && !task.completed && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-purple-950/60 text-purple-300 border border-purple-800/60">
+                          <Bell className="w-3 h-3 text-purple-400" />
+                          <span>{task.reminder_date} @ {task.reminder_time || '20:00'}</span>
+                        </span>
+                      )}
+
+                      {/* Repeating Alert Badge */}
+                      {isRepeating && !task.completed && (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                          isWIP
+                            ? 'bg-zinc-900 text-zinc-400 border-zinc-800 line-through'
+                            : 'bg-amber-950/70 text-amber-300 border-amber-700/80 animate-pulse'
+                        }`}>
+                          <Repeat className="w-3 h-3 text-amber-400" />
+                          <span>{isWIP ? 'WIP' : '5-წთ'}</span>
+                        </span>
+                      )}
+
+                      {/* Priority Badge */}
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${
-                          task.completed
-                            ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/60'
-                            : deadline.isOverdue
-                            ? 'bg-rose-950/80 text-rose-300 border-rose-800/80'
-                            : deadline.isToday
-                            ? 'bg-blue-950/80 text-blue-300 border-blue-800/80'
-                            : 'bg-zinc-900 text-zinc-400 border-zinc-800'
-                        }`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${priorityBadge.style}`}
                       >
-                        <CalendarDays className="w-3 h-3" />
-                        <span>{deadline.label}</span>
+                        {priorityBadge.label}
                       </span>
-                    )}
+                    </div>
 
-                    {/* Exact Alert / Reminder Scheduled Time Badge */}
-                    {task.reminder_date && !task.completed && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-purple-950/60 text-purple-300 border border-purple-800/60">
-                        <Bell className="w-3 h-3 text-purple-400" />
-                        <span>შეტყობინება: {task.reminder_date} @ {task.reminder_time || '20:00'}</span>
-                      </span>
-                    )}
+                    {/* Mobile Action Buttons Bar */}
+                    <div className="flex sm:hidden items-center gap-1 ml-auto shrink-0">
+                      {!task.completed && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleWIP(task, e)}
+                          className={`p-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all ${
+                            isWIP
+                              ? 'bg-amber-500/20 border border-amber-500 text-amber-300'
+                              : 'bg-zinc-900 border border-zinc-800 text-zinc-400'
+                          }`}
+                          title="WIP"
+                        >
+                          <Zap className={`w-3.5 h-3.5 ${isWIP ? 'text-amber-400 fill-amber-400' : 'text-zinc-400'}`} />
+                        </button>
+                      )}
 
-                    {/* Repeating Alert Badge */}
-                    {isRepeating && !task.completed && (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                        isWIP
-                          ? 'bg-zinc-900 text-zinc-400 border-zinc-800 line-through'
-                          : 'bg-amber-950/70 text-amber-300 border-amber-700/80 animate-pulse'
-                      }`}>
-                        <Repeat className="w-3 h-3 text-amber-400" />
-                        <span>{isWIP ? '5-წთ განგაში (შეჩერებულია WIP-ით)' : 'განგაში ყოველ 5 წთ-ში'}</span>
-                      </span>
-                    )}
+                      {telegramConfig.isEnabled && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleSendSingleTaskToTelegram(task, e)}
+                          disabled={sendingTaskId === task.id}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-sky-300 hover:bg-sky-950/40"
+                          title="Telegram"
+                        >
+                          <Send className={`w-3.5 h-3.5 ${sendingTaskId === task.id ? 'animate-bounce text-sky-400' : ''}`} />
+                        </button>
+                      )}
 
-                    {/* Priority Badge */}
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${priorityBadge.style}`}
-                    >
-                      {priorityBadge.label}
-                    </span>
+                      {task.due_date && onNavigateToCalendar && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigateToCalendar(task.due_date!);
+                          }}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-300"
+                          title="Calendar"
+                        >
+                          <Calendar className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(task);
+                        }}
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-white"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteTask(task.id, e)}
+                        className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

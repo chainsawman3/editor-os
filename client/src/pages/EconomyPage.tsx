@@ -667,9 +667,9 @@ export const EconomyPage: React.FC = () => {
         </div>
 
         {/* 4 PROMINENT METRICS */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
           {/* Today's Spend Status */}
-          <div className={`p-3.5 rounded-xl border space-y-1 shadow-sm transition-all ${
+          <div className={`p-3 sm:p-3.5 rounded-xl border space-y-1 shadow-sm transition-all ${
             isTodayDeducted
               ? 'bg-gradient-to-br from-emerald-950/30 to-zinc-900 border-emerald-500/50'
               : 'bg-gradient-to-br from-amber-950/30 to-zinc-900 border-amber-500/50'
@@ -678,7 +678,7 @@ export const EconomyPage: React.FC = () => {
               <span className={`text-[11px] font-bold uppercase tracking-wider ${
                 isTodayDeducted ? 'text-emerald-300' : 'text-amber-300'
               }`}>
-                {isTodayDeducted ? 'დღეს ჩამოჭრილია ✅' : '👉 დღეს დასახარჯი'}
+                {isTodayDeducted ? 'დღეს ჩამოჭრილია ✅' : '👉 დასახარჯი'}
               </span>
               <span className={`w-2 h-2 rounded-full ${
                 isTodayDeducted ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
@@ -697,22 +697,22 @@ export const EconomyPage: React.FC = () => {
           </div>
 
           {/* This Week Spend Target */}
-          <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-cyan-800/40 space-y-1">
+          <div className="p-3 sm:p-3.5 rounded-xl bg-zinc-900/80 border border-cyan-800/40 space-y-1">
             <span className="text-[11px] text-cyan-400 font-semibold uppercase tracking-wider block">
-              ამ კვირაში დასახარჯი
+              ამ კვირაში
             </span>
             <div className="text-xl sm:text-2xl font-black font-mono text-cyan-300">
               ~{thisWeekRemainingSpendTarget} ₾
             </div>
             <span className="text-[10px] text-zinc-500 block truncate">
-              კვირის საღამომდე (დარჩენილ {daysLeftInThisWeek.length} დღეზე)
+              კვირის საღამომდე ({daysLeftInThisWeek.length} დღეზე)
             </span>
           </div>
 
           {/* Daily Clean Food Budget */}
-          <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
+          <div className="p-3 sm:p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
             <span className="text-[11px] text-zinc-400 font-medium block">
-              დღიური საკვების ლიმიტი
+              საკვების ლიმიტი
             </span>
             <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">
               ~{liveDailyFoodNum.toFixed(2)} ₾
@@ -723,9 +723,9 @@ export const EconomyPage: React.FC = () => {
           </div>
 
           {/* Loans & Fixed Deductions */}
-          <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
+          <div className="p-3 sm:p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-850 space-y-1">
             <span className="text-[11px] text-zinc-400 font-medium block">
-              სესხები & ქირა (ამ თვეში)
+              სესხები & ქირა <span className="hidden sm:inline">(ამ თვეში)</span>
             </span>
             <div className="text-xl sm:text-2xl font-bold font-mono text-purple-400">
               გადახდილია ✅
@@ -751,8 +751,8 @@ export const EconomyPage: React.FC = () => {
           </span>
         </div>
 
-        {/* 7 Columns on Desktop: Every day has its own clean card */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
+        {/* 7 Columns on Desktop / Swipeable Ribbon on Mobile */}
+        <div className="flex sm:grid overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 scrollbar-none snap-x sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
           {weekSchedule.map((day) => {
             const rec = dailyRecords[day.dateKey];
             const isDeducted = !!rec?.deducted;
@@ -762,7 +762,7 @@ export const EconomyPage: React.FC = () => {
             return (
               <div
                 key={day.dateKey}
-                className={`group relative rounded-2xl p-3 border transition-all flex flex-col justify-between select-none min-h-[225px] ${
+                className={`group relative rounded-2xl p-3 border transition-all flex flex-col justify-between select-none min-h-[210px] sm:min-h-[225px] min-w-[155px] sm:min-w-0 flex-1 shrink-0 snap-start ${
                   day.isToday
                     ? isDeducted
                       ? 'bg-gradient-to-b from-emerald-950/30 via-zinc-900/90 to-zinc-950 border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-950/50'

@@ -624,11 +624,11 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
         {/* 2. FOUR CORE STATS CARDS: JOURNEY DURATION (STARTING TODAY), SESSIONS, WEEKLY GOAL, TRAINING HOURS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Card 1: Journey Duration (სტაჟი – დაწყებული დღეიდან) */}
-          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3.5 space-y-1.5 hover:border-amber-500/50 transition-all">
+          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-amber-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                <span>ვარჯიშის სტაჟი</span>
+                <span>სტაჟი</span>
               </span>
             </div>
             <div className="flex items-baseline gap-1.5">
@@ -636,24 +636,24 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
                 {elapsedDays}
               </span>
               <span className="text-xs font-medium text-zinc-400">დღე</span>
-              <span className="text-xs font-mono text-zinc-500">
-                ({elapsedWeeks === 0 ? '1-ლი კვირა' : `${elapsedWeeks} კვირა`})
+              <span className="text-[11px] sm:text-xs font-mono text-zinc-500">
+                ({elapsedWeeks === 0 ? '1-ლი კვ.' : `${elapsedWeeks} კვ.`})
               </span>
             </div>
             <div className="text-[10px] text-zinc-400 truncate flex items-center gap-1 pt-0.5">
-              <span className="text-zinc-500">დაწყებულია:</span>
+              <span className="text-zinc-500">სტარტი:</span>
               <span className="font-semibold text-zinc-300 font-mono">
-                {startDate === getTodayStr() ? `დღეს (${formatDisplayDate(startDate)})` : formatDisplayDate(startDate)}
+                {startDate === getTodayStr() ? 'დღეს' : formatDisplayDate(startDate)}
               </span>
             </div>
           </div>
 
           {/* Card 2: Total Sessions Count (სულ ჩატარებული სესიები) */}
-          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3.5 space-y-1.5 hover:border-emerald-500/50 transition-all">
+          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-emerald-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5 text-emerald-400" />
-                <span>ჩატარებული სესიები</span>
+                <span>სესიები</span>
               </span>
               <button
                 onClick={() => setIsAddSessionOpen(true)}
@@ -669,19 +669,19 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               </span>
               <span className="text-xs font-medium text-zinc-400">სესია</span>
             </div>
-            <div className="text-[10px] text-zinc-400 truncate flex items-center gap-1.5 pt-0.5">
-              <span className="text-emerald-400 font-medium">🏋️ {loggedGymCount} დარბაზი</span>
+            <div className="text-[10px] text-zinc-400 truncate flex items-center gap-1 pt-0.5">
+              <span className="text-emerald-400 font-medium">🏋️ {loggedGymCount} <span className="hidden sm:inline">დარბაზი</span></span>
               <span className="text-zinc-600">·</span>
-              <span className="text-cyan-400 font-medium">🏊 {loggedPoolCount} აუზი</span>
+              <span className="text-cyan-400 font-medium">🏊 {loggedPoolCount} <span className="hidden sm:inline">აუზი</span></span>
             </div>
           </div>
 
           {/* Card 3: Current Week Progress (მიმდინარე კვირის გეგმა) */}
-          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3.5 space-y-1.5 hover:border-orange-500/50 transition-all">
+          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-orange-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
                 <Flame className="w-3.5 h-3.5 text-orange-400" />
-                <span>ამ კვირის გეგმა</span>
+                <span>ამ კვირაში</span>
               </span>
               <span className="text-[10px] font-mono font-bold text-orange-400">
                 {progressPercent}%
@@ -702,14 +702,14 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
           </div>
 
           {/* Card 4: Accumulated Hours & Pace (საერთო დრო & ტემპი) */}
-          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3.5 space-y-1.5 hover:border-cyan-500/50 transition-all">
+          <div className="bg-zinc-900/80 border border-zinc-850 rounded-xl p-3 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-cyan-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                <span>დაგროვილი დრო</span>
+                <span>საერთო დრო</span>
               </span>
               <span className="text-[10px] text-zinc-500 font-mono">
-                {totalSessionsCount > 0 ? `~${avgSessionsPerWeek}/კვირაში` : 'სტარტი'}
+                {totalSessionsCount > 0 ? `~${avgSessionsPerWeek}/კვ.` : 'სტარტი'}
               </span>
             </div>
             <div className="flex items-baseline gap-1.5">
@@ -720,21 +720,21 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
             </div>
             <div className="text-[10px] text-zinc-400 truncate pt-0.5">
               {totalSessionsCount === 0 ? (
-                <span className="text-zinc-500">პირველი სესია წინ არის 🚀</span>
+                <span className="text-zinc-500">სტარტი 🚀</span>
               ) : (
-                <>საშუალო რიტმი: <strong className="text-zinc-200 font-mono">{avgSessionsPerWeek}</strong> სესია/კვირაში</>
+                <><span className="hidden sm:inline">რიტმი: </span><strong className="text-zinc-200 font-mono">{avgSessionsPerWeek}</strong>/კვირაში</>
               )}
             </div>
           </div>
         </div>
 
         {/* Action Buttons & Integration Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
               onClick={handleSyncToTasks}
               disabled={isSyncing}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all shadow-sm ${
+              className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
                 syncSuccess
                   ? 'bg-emerald-600 text-white'
                   : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -743,7 +743,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               {isSyncing ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>მიმდინარეობს სინქრონიზაცია...</span>
+                  <span>სინქრონიზაცია...</span>
                 </>
               ) : syncSuccess ? (
                 <>
@@ -761,7 +761,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
             <button
               onClick={handleSendTelegramTest}
               disabled={isSendingTelegram}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-2 transition-all"
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center justify-center gap-1.5 transition-all"
             >
               {isSendingTelegram ? (
                 <>
@@ -771,14 +771,14 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               ) : (
                 <>
                   <Send className="w-3.5 h-3.5" />
-                  <span>Telegram შემოწმება</span>
+                  <span>Telegram ტესტი</span>
                 </>
               )}
             </button>
 
             <button
               onClick={() => setIsAddSessionOpen(true)}
-              className="px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>სესიის დამატება</span>
@@ -786,15 +786,15 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
 
             <button
               onClick={resetWeek}
-              className="px-3 py-2 bg-zinc-900/60 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 border border-zinc-800 rounded-xl text-xs transition-colors"
+              className="px-3 py-2 bg-zinc-900/60 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 border border-zinc-800 rounded-xl text-xs transition-colors flex items-center justify-center"
             >
               განულება
             </button>
           </div>
 
           {telegramStatus && (
-            <div className="text-xs px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center gap-1.5 animate-in fade-in">
-              <Bell className="w-3 h-3 text-blue-400" />
+            <div className="text-xs px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center gap-1.5 animate-in fade-in self-start sm:self-auto">
+              <Bell className="w-3 h-3 text-blue-400 shrink-0" />
               <span>{telegramStatus}</span>
             </div>
           )}
@@ -822,8 +822,8 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* 7 Columns on Desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
+        {/* 7 Columns on Desktop / Swipeable Ribbon on Mobile */}
+        <div className="flex sm:grid overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 scrollbar-none snap-x sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
           {schedule.map((day) => {
             const isCompleted = !!completedDays[day.id];
             const isRest = day.type === 'rest';
@@ -838,7 +838,7 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
               <div
                 key={day.id}
                 onClick={() => setSelectedDayId(day.id)}
-                className={`group relative rounded-2xl p-3 border transition-all duration-200 cursor-pointer flex flex-col justify-between select-none min-h-[185px] ${
+                className={`group relative rounded-2xl p-3 border transition-all duration-200 cursor-pointer flex flex-col justify-between select-none min-h-[175px] sm:min-h-[185px] min-w-[150px] sm:min-w-0 flex-1 shrink-0 snap-start ${
                   isSelected
                     ? isPool
                       ? 'bg-cyan-950/40 border-cyan-500 ring-2 ring-cyan-500/40 shadow-lg shadow-cyan-950/50'
