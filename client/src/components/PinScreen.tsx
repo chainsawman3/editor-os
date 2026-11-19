@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lock, User, Sparkles, Check, KeyRound } from 'lucide-react';
+import { FlowLogo } from './common/FlowLogo';
 
 interface PinScreenProps {
   onSuccess: (userId: string) => void;
@@ -111,18 +112,20 @@ export const PinScreen: React.FC<PinScreenProps> = ({ onSuccess }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-zinc-100 font-sans p-4 select-none">
       <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl flex flex-col items-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
-        {/* Brand Lock Header */}
-        <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center border border-amber-500/30 text-amber-400 shadow-inner">
-          <KeyRound className="w-6 h-6" />
-        </div>
-
-        <div className="text-center space-y-1">
-          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Flow OS Security
-          </h1>
-          <p className="text-xs text-zinc-400">
-            აირჩიეთ პროფილი და შეიყვანეთ პირადი PIN-კოდი
-          </p>
+        {/* Brand Logo & Lock Header */}
+        <div className="flex flex-col items-center space-y-3">
+          <FlowLogo size="xl" />
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">
+              <span>Flow OS</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 font-semibold tracking-wider uppercase">
+                Security
+              </span>
+            </h1>
+            <p className="text-xs text-zinc-400">
+              აირჩიეთ პროფილი და შეიყვანეთ პირადი PIN-კოდი
+            </p>
+          </div>
         </div>
 
         {/* Profile Selector Cards */}

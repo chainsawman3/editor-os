@@ -1,4 +1,5 @@
 import React from 'react';
+import { FlowLogo } from '../common/FlowLogo';
 import {
   FolderKanban,
   Target,
@@ -58,19 +59,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div
             onClick={() => handleTabClick('goals')}
             title="Go to Goals & Projects Hub"
-            className="flex items-center gap-3 cursor-pointer group flex-1"
+            className="flex items-center gap-3 cursor-pointer group flex-1 min-w-0"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700/80 flex items-center justify-center font-bold text-xs text-white shadow-sm group-hover:border-purple-500/50 transition-colors">
-              OS
-            </div>
-            <div>
-              <h1 className="font-bold text-sm text-zinc-100 tracking-tight group-hover:text-white transition-colors">
-                Flow OS
-              </h1>
-              <p className="text-[11px] text-zinc-400 font-medium group-hover:text-purple-400 transition-colors">
-                Goals & Projects Hub ↗
-              </p>
-            </div>
+            <FlowLogo size="md" showText={true} subtitle="Goals & Projects Hub ↗" />
           </div>
 
           {/* Close button on mobile */}

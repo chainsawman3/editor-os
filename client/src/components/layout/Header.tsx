@@ -1,5 +1,6 @@
 import React from 'react';
 import { Flame, Plus, Menu } from 'lucide-react';
+import { FlowLogo } from '../common/FlowLogo';
 
 interface HeaderProps {
   title: string;
@@ -26,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="h-14 bg-zinc-950 border-b border-zinc-800 px-3 sm:px-6 flex items-center justify-between shrink-0 font-sans select-none">
-      {/* Left: Mobile Menu Trigger + Title / Breadcrumb */}
+      {/* Left: Mobile Menu Trigger + Logo + Title / Breadcrumb */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {onToggleMobileMenu && (
           <button
@@ -37,6 +38,9 @@ export const Header: React.FC<HeaderProps> = ({
             <Menu className="w-4 h-4" />
           </button>
         )}
+        <div className="md:hidden shrink-0">
+          <FlowLogo size="sm" />
+        </div>
         <div className="min-w-0">
           <h2 className="text-xs sm:text-sm font-bold text-zinc-100 uppercase tracking-wide truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">{title}</h2>
           {subtitle && <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">{subtitle}</p>}
