@@ -19,7 +19,8 @@ import {
   Heart,
   Edit3,
   X as XIcon,
-  RotateCcw
+  RotateCcw,
+  Moon
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -269,6 +270,17 @@ export const WorkoutPage: React.FC<WorkoutPageProps> = ({ onNavigate }) => {
     if (timeMatch) return timeMatch[1];
     if (d.includes('საღამო თავისუფალი')) return 'საღამო თავის.';
     return d;
+  };
+
+  const getDurationDetails = (d?: string) => {
+    if (!d) return { time: '20:00', durationBadge: '60წთ' };
+    const timeMatch = d.match(/\((\d{1,2}:\d{2})\)/);
+    const minMatch = d.match(/(\d+(?:[–-]\d+)?\s*წუთი)/);
+
+    const time = timeMatch ? timeMatch[1] : d.match(/\d{1,2}:\d{2}/) ? d.match(/\d{1,2}:\d{2}/)![0] : '20:00';
+    const durationBadge = minMatch ? minMatch[1].replace(/\s*წუთი/, 'წთ') : '60წთ';
+
+    return { time, durationBadge };
   };
 
   const formatCleanTitle = (title: string) => {
@@ -695,36 +707,54 @@ ${selectedDay.focus} (${selectedDay.workNote})
                   </div>
                 </div>
 
-                {/* Card Footer: Clean Time on Left, Category Pill on Right */}
+                {/* Card Footer: Clean Time on Left, Duration / Category Pill on Right */}
                 <div className="mt-3 pt-2 border-t border-zinc-850/80 flex items-center justify-between text-[10px]">
-                  <div className="flex items-center gap-1 text-zinc-400 font-mono">
-                    <Clock className="w-3 h-3 text-zinc-500 shrink-0" />
-                    <span className="truncate">{cleanDuration}</span>
-                  </div>
+                  {isRest ? (
+                    <>
+                      <div className="flex items-center gap-1.5 text-zinc-400 font-medium">
+                        <Moon className="w-3 h-3 text-zinc-500 shrink-0" />
+                        <span>დასვენება</span>
+                      </div>
+                      <span className="text-[10px] text-zinc-500 font-mono shrink-0">
+                        {day.duration?.includes('საღამო') ? 'საღამო' : 'მთელი დღე'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      {(() => {
+                        const { time, durationBadge } = getDurationDetails(day.duration);
+                        return (
+                          <>
+                            <div className="flex items-center gap-1 text-zinc-300 font-mono">
+                              <Clock className="w-3 h-3 text-zinc-500 shrink-0" />
+                              <span>{time}</span>
+                            </div>
 
-                  <span
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 shrink-0 ${
-                      isPool
-                        ? 'text-cyan-300 bg-cyan-950/80 border border-cyan-800/60'
-                        : !isRest
-                        ? 'text-emerald-300 bg-emerald-950/80 border border-emerald-800/60'
-                        : 'text-zinc-400 bg-zinc-900 border border-zinc-800'
-                    }`}
-                  >
-                    {isPool ? (
-                      <>
-                        <Waves className="w-2.5 h-2.5" />
-                        <span>აუზი</span>
-                      </>
-                    ) : !isRest ? (
-                      <>
-                        <Dumbbell className="w-2.5 h-2.5" />
-                        <span>დარბაზი</span>
-                      </>
-                    ) : (
-                      <span>დასვენება</span>
-                    )}
-                  </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 shrink-0 ${
+                                isPool
+                                  ? 'text-cyan-300 bg-cyan-950/80 border border-cyan-800/60'
+                                  : 'text-emerald-300 bg-emerald-950/80 border border-emerald-800/60'
+                              }`}
+                              title={day.duration}
+                            >
+                              {isPool ? (
+                                <>
+                                  <Waves className="w-2.5 h-2.5" />
+                                  <span>{durationBadge}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Dumbbell className="w-2.5 h-2.5" />
+                                  <span>{durationBadge}</span>
+                                </>
+                              )}
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </>
+                  )}
                 </div>
               </div>
             );
